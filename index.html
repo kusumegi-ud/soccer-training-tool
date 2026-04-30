@@ -863,6 +863,34 @@
       <button class="rec-cancel" id="arrowCancel">完了</button>
     </div>
 
+    <div id="penPalette" style="
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--ui-bg);
+      border: 1px solid var(--ui-border);
+      padding: 6px 10px;
+      border-radius: 24px;
+      z-index: 26;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    ">
+      <span style="font-size: 11px; color: var(--accent); font-weight: 600; padding: 0 4px;">ペン</span>
+      <button class="pen-color-btn" data-color="#ffffff" style="width:24px;height:24px;border-radius:50%;border:2px solid transparent;background:#ffffff;cursor:pointer;padding:0;"></button>
+      <button class="pen-color-btn" data-color="#fbbf24" style="width:24px;height:24px;border-radius:50%;border:2px solid transparent;background:#fbbf24;cursor:pointer;padding:0;"></button>
+      <button class="pen-color-btn" data-color="#dc2626" style="width:24px;height:24px;border-radius:50%;border:2px solid transparent;background:#dc2626;cursor:pointer;padding:0;"></button>
+      <button class="pen-color-btn" data-color="#2563eb" style="width:24px;height:24px;border-radius:50%;border:2px solid transparent;background:#2563eb;cursor:pointer;padding:0;"></button>
+      <button class="pen-color-btn" data-color="#22c55e" style="width:24px;height:24px;border-radius:50%;border:2px solid transparent;background:#22c55e;cursor:pointer;padding:0;"></button>
+      <button class="pen-color-btn" data-color="#a855f7" style="width:24px;height:24px;border-radius:50%;border:2px solid transparent;background:#a855f7;cursor:pointer;padding:0;"></button>
+      <button class="pen-color-btn" data-color="#1a1a1a" style="width:24px;height:24px;border-radius:50%;border:2px solid transparent;background:#1a1a1a;cursor:pointer;padding:0;"></button>
+      <button class="rec-cancel" id="penCancel" style="margin-left: 4px;">完了</button>
+    </div>
+
     <div id="orderPicker" style="
       position: absolute;
       background: rgba(15, 20, 15, 0.96);
@@ -937,6 +965,88 @@
         font-weight: 600;
       ">この選手を削除</button>
     </div>
+
+    <div id="goalPicker" style="
+      position: absolute;
+      background: rgba(15, 20, 15, 0.96);
+      border: 1px solid var(--ui-border);
+      border-radius: 12px;
+      padding: 8px;
+      z-index: 60;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: none;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    ">
+      <div style="font-size: 10px; color: #a0a89c; padding: 2px 4px 6px; letter-spacing: 0.05em;">
+        ゴールの向き
+      </div>
+      <div style="display: flex; gap: 4px;">
+        <button class="goal-facing-btn" data-facing="up" style="width:36px;height:36px;border-radius:8px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:14px;">▲</button>
+        <button class="goal-facing-btn" data-facing="down" style="width:36px;height:36px;border-radius:8px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:14px;">▼</button>
+        <button class="goal-facing-btn" data-facing="left" style="width:36px;height:36px;border-radius:8px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:14px;">◀</button>
+        <button class="goal-facing-btn" data-facing="right" style="width:36px;height:36px;border-radius:8px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:14px;">▶</button>
+      </div>
+      <div style="font-size: 10px; color: #a0a89c; padding: 8px 4px 6px; letter-spacing: 0.05em;">
+        サイズ
+      </div>
+      <div style="display: flex; gap: 4px;">
+        <button class="goal-size-btn" data-size="small" style="flex:1;height:32px;border-radius:8px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:11px;font-weight:600;">小</button>
+        <button class="goal-size-btn" data-size="medium" style="flex:1;height:32px;border-radius:8px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:11px;font-weight:600;">中</button>
+        <button class="goal-size-btn" data-size="large" style="flex:1;height:32px;border-radius:8px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:11px;font-weight:600;">大</button>
+      </div>
+      <button id="goalPickerDelete" style="
+        width: 100%;
+        margin-top: 8px;
+        background: rgba(220, 38, 38, 0.2);
+        color: #f87171;
+        border: 1px solid rgba(220, 38, 38, 0.4);
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        cursor: pointer;
+        font-weight: 600;
+      ">このゴールを削除</button>
+    </div>
+
+    <div id="conePicker" style="
+      position: absolute;
+      background: rgba(15, 20, 15, 0.96);
+      border: 1px solid var(--ui-border);
+      border-radius: 12px;
+      padding: 8px;
+      z-index: 60;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: none;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    ">
+      <div style="font-size: 10px; color: #a0a89c; padding: 2px 4px 6px; letter-spacing: 0.05em;">
+        コーンの色
+      </div>
+      <div style="display: flex; gap: 4px; flex-wrap: wrap; max-width: 200px;">
+        <button class="cone-color-btn" data-color="#ff7a2a" style="width:32px;height:32px;border-radius:8px;border:2px solid transparent;background:#ff7a2a;cursor:pointer;"></button>
+        <button class="cone-color-btn" data-color="#fbbf24" style="width:32px;height:32px;border-radius:8px;border:2px solid transparent;background:#fbbf24;cursor:pointer;"></button>
+        <button class="cone-color-btn" data-color="#dc2626" style="width:32px;height:32px;border-radius:8px;border:2px solid transparent;background:#dc2626;cursor:pointer;"></button>
+        <button class="cone-color-btn" data-color="#2563eb" style="width:32px;height:32px;border-radius:8px;border:2px solid transparent;background:#2563eb;cursor:pointer;"></button>
+        <button class="cone-color-btn" data-color="#22c55e" style="width:32px;height:32px;border-radius:8px;border:2px solid transparent;background:#22c55e;cursor:pointer;"></button>
+        <button class="cone-color-btn" data-color="#a855f7" style="width:32px;height:32px;border-radius:8px;border:2px solid transparent;background:#a855f7;cursor:pointer;"></button>
+        <button class="cone-color-btn" data-color="#ec4899" style="width:32px;height:32px;border-radius:8px;border:2px solid transparent;background:#ec4899;cursor:pointer;"></button>
+        <button class="cone-color-btn" data-color="#1a1a1a" style="width:32px;height:32px;border-radius:8px;border:2px solid transparent;background:#1a1a1a;cursor:pointer;"></button>
+      </div>
+      <button id="conePickerDelete" style="
+        width: 100%;
+        margin-top: 8px;
+        background: rgba(220, 38, 38, 0.2);
+        color: #f87171;
+        border: 1px solid rgba(220, 38, 38, 0.4);
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        cursor: pointer;
+        font-weight: 600;
+      ">このコーンを削除</button>
+    </div>
   </div>
 
   <div class="bottombar">
@@ -999,6 +1109,7 @@
     recordPath: [],
     arrowDrawing: null,
     penStroke: null,
+    penColor: '#ffffff',     // current pen color
     playing: false,
     playStart: 0,
     playTime: 0,
@@ -1609,19 +1720,27 @@
       }
       } // end of front/back view else block
     } else if (o.type === 'cone') {
+      const baseColor = o.color || '#ff7a2a';
+      const darkColor = darken(baseColor, 0.25);
+
+      // Shadow ellipse on ground
       ctx.beginPath();
       ctx.ellipse(0, o.r * 0.9, o.r, o.r * 0.3, 0, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fill();
+
+      // Cone body with side shading gradient
       ctx.beginPath();
       ctx.moveTo(-o.r * 0.7, o.r * 0.8);
       ctx.lineTo(0, -o.r);
       ctx.lineTo(o.r * 0.7, o.r * 0.8);
       ctx.closePath();
       const cgrad = ctx.createLinearGradient(-o.r, 0, o.r, 0);
-      cgrad.addColorStop(0, '#cc4400');
-      cgrad.addColorStop(0.5, '#ff7a2a');
-      cgrad.addColorStop(1, '#cc4400');
+      cgrad.addColorStop(0, darkColor);
+      cgrad.addColorStop(0.5, baseColor);
+      cgrad.addColorStop(1, darkColor);
       ctx.fillStyle = cgrad; ctx.fill();
+
+      // White stripe band
       ctx.fillStyle = 'white';
       ctx.beginPath();
       ctx.moveTo(-o.r * 0.45, o.r * 0.1);
@@ -1629,6 +1748,8 @@
       ctx.lineTo(o.r * 0.55, o.r * 0.3);
       ctx.lineTo(-o.r * 0.55, o.r * 0.3);
       ctx.closePath(); ctx.fill();
+
+      // Base
       ctx.fillStyle = '#333';
       ctx.fillRect(-o.r, o.r * 0.8, o.r * 2, 3);
     } else if (o.type === 'ball') {
@@ -1698,6 +1819,22 @@
       ctx.fillStyle = hl;
       ctx.fill();
     } else if (o.type === 'goal') {
+      // Apply size scaling
+      const sizeMap = { small: 0.7, medium: 1.0, large: 1.4 };
+      const scale = sizeMap[o.size || 'medium'];
+
+      // Apply facing rotation: down (default), up, left, right
+      const facing = o.facing || 'down';
+      let rot = 0;
+      if (facing === 'up') rot = Math.PI;
+      else if (facing === 'left') rot = Math.PI / 2;
+      else if (facing === 'right') rot = -Math.PI / 2;
+
+      ctx.save();
+      ctx.rotate(rot);
+      ctx.scale(scale, scale);
+
+      // Goal frame (drawn with mouth opening "down" — facing the player)
       ctx.fillStyle = 'rgba(0,0,0,0.3)';
       ctx.fillRect(-o.r + 2, o.r * 0.4 + 2, o.r * 2, 4);
       ctx.strokeStyle = 'white'; ctx.lineWidth = 3;
@@ -1720,6 +1857,7 @@
         ctx.moveTo(-o.r, y); ctx.lineTo(o.r, y);
         ctx.stroke();
       }
+      ctx.restore();
     }
 
     if (ui.selectedId === o.id) {
@@ -1984,12 +2122,15 @@
       ui.tool = name;
       ui.arrowDrawing = null;
       showArrowBanner(true, name);
+      showPenPalette(false);
     } else if (name === 'pen') {
       ui.tool = name;
-      showArrowBanner(true, 'pen');
+      showArrowBanner(false);
+      showPenPalette(true);
     } else {
       ui.tool = name;
       showArrowBanner(false);
+      showPenPalette(false);
     }
     document.querySelectorAll('.tool').forEach(b => {
       b.classList.toggle('active', b.dataset.tool === name);
@@ -2005,12 +2146,25 @@
     const el = document.getElementById('arrowBanner');
     el.classList.toggle('show', show);
     if (show) {
-      const txt = type === 'pen' ? 'ペン: 自由に描いてください（ダブルタップで個別削除）' :
-                  type === 'arrow-pass' ? 'パス矢印: 始点から終点へドラッグ（連続描画OK）' :
+      const txt = type === 'arrow-pass' ? 'パス矢印: 始点から終点へドラッグ（連続描画OK）' :
                   type === 'arrow-shoot' ? 'シュート矢印: 始点から終点へドラッグ（連続描画OK）' :
                   'ドリブル矢印: 始点から終点へドラッグ（連続描画OK）';
       document.getElementById('arrowBannerText').textContent = txt;
     }
+  }
+
+  function showPenPalette(show) {
+    const el = document.getElementById('penPalette');
+    el.style.display = show ? 'flex' : 'none';
+    if (show) updatePenColorHighlight();
+  }
+
+  function updatePenColorHighlight() {
+    document.querySelectorAll('.pen-color-btn').forEach(b => {
+      const isCur = b.dataset.color === ui.penColor;
+      b.style.borderColor = isCur ? '#ffdd00' : 'transparent';
+      b.style.boxShadow = isCur ? '0 0 0 2px rgba(255, 221, 0, 0.4)' : 'none';
+    });
   }
 
   function createObject(type, x, y) {
@@ -2023,9 +2177,9 @@
     if (type === 'player-blue')   { o.color = '#2563eb'; o.number = ++project.counters.blue;   o.r = 14; o.facing = 'front'; }
     else if (type === 'player-red')    { o.color = '#dc2626'; o.number = ++project.counters.red;    o.r = 14; o.facing = 'front'; }
     else if (type === 'player-yellow') { o.color = '#fbbf24'; o.number = ++project.counters.yellow; o.r = 14; o.facing = 'front'; }
-    else if (type === 'cone')   { o.r = 14; }
+    else if (type === 'cone')   { o.r = 14; o.color = '#ff7a2a'; }  // default orange
     else if (type === 'ball')   { o.r = 13; }
-    else if (type === 'goal')   { o.r = 28; }
+    else if (type === 'goal')   { o.r = 28; o.facing = 'down'; o.size = 'medium'; }
     scene().objects.push(o);
     ui.selectedId = o.id;
     redraw();
@@ -2199,7 +2353,17 @@
     for (let i = scene().objects.length - 1; i >= 0; i--) {
       const o = scene().objects[i];
       const dx = x - o.x, dy = y - o.y;
-      const hitR = o.type.startsWith('player') ? o.r * 2.2 : o.r + 6;
+      let hitR;
+      if (o.type.startsWith('player')) {
+        hitR = o.r * 2.2;
+      } else if (o.type === 'goal') {
+        // Goal hit area scales with size setting
+        const sizeMap = { small: 0.7, medium: 1.0, large: 1.4 };
+        const scale = sizeMap[o.size || 'medium'];
+        hitR = o.r * scale + 6;
+      } else {
+        hitR = o.r + 6;
+      }
       if (dx*dx + dy*dy <= hitR * hitR) return o;
     }
     return null;
@@ -2452,6 +2616,154 @@
     facingPicker.addEventListener(evtName, (ev) => ev.stopPropagation());
   });
 
+  // ---------- Goal picker (orientation + size) ----------
+  let goalPickerId = null;
+  const goalPicker = document.getElementById('goalPicker');
+
+  function showGoalPicker(goal, x, y) {
+    goalPickerId = goal.id;
+    const wrapRect = fieldWrap.getBoundingClientRect();
+
+    // Highlight current facing
+    document.querySelectorAll('.goal-facing-btn').forEach(b => {
+      const isCur = b.dataset.facing === (goal.facing || 'down');
+      b.style.background = isCur ? '#ffdd00' : 'rgba(255,255,255,0.08)';
+      b.style.color = isCur ? '#000' : '#f5f5f0';
+      b.style.borderColor = isCur ? '#ffdd00' : 'transparent';
+    });
+    // Highlight current size
+    document.querySelectorAll('.goal-size-btn').forEach(b => {
+      const isCur = b.dataset.size === (goal.size || 'medium');
+      b.style.background = isCur ? '#ffdd00' : 'rgba(255,255,255,0.08)';
+      b.style.color = isCur ? '#000' : '#f5f5f0';
+      b.style.borderColor = isCur ? '#ffdd00' : 'transparent';
+    });
+
+    goalPicker.style.display = 'block';
+    const pw = goalPicker.offsetWidth || 200;
+    const ph = goalPicker.offsetHeight || 160;
+    let px = x + 14;
+    let py = y - ph / 2;
+    if (px + pw > wrapRect.width - 8) px = x - pw - 14;
+    if (px < 8) px = 8;
+    if (py < 8) py = 8;
+    if (py + ph > wrapRect.height - 8) py = wrapRect.height - ph - 8;
+    goalPicker.style.left = px + 'px';
+    goalPicker.style.top = py + 'px';
+  }
+
+  function hideGoalPicker() {
+    goalPicker.style.display = 'none';
+    goalPickerId = null;
+  }
+
+  document.querySelectorAll('.goal-facing-btn').forEach(b => {
+    const handler = (ev) => {
+      ev.stopPropagation();
+      ev.preventDefault();
+      if (!goalPickerId) return;
+      const g = scene().objects.find(o => o.id === goalPickerId);
+      if (!g) return;
+      saveHistory();
+      g.facing = b.dataset.facing;
+      hideGoalPicker();
+      redraw();
+    };
+    b.addEventListener('click', handler);
+    b.addEventListener('touchstart', handler, { passive: false });
+  });
+
+  document.querySelectorAll('.goal-size-btn').forEach(b => {
+    const handler = (ev) => {
+      ev.stopPropagation();
+      ev.preventDefault();
+      if (!goalPickerId) return;
+      const g = scene().objects.find(o => o.id === goalPickerId);
+      if (!g) return;
+      saveHistory();
+      g.size = b.dataset.size;
+      hideGoalPicker();
+      redraw();
+    };
+    b.addEventListener('click', handler);
+    b.addEventListener('touchstart', handler, { passive: false });
+  });
+
+  document.getElementById('goalPickerDelete').addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    if (!goalPickerId) return;
+    const id = goalPickerId;
+    hideGoalPicker();
+    deleteObject(id);
+  });
+
+  // Block events from goal picker bubbling
+  ['mousedown', 'touchstart', 'pointerdown', 'click'].forEach(evtName => {
+    goalPicker.addEventListener(evtName, (ev) => ev.stopPropagation());
+  });
+
+  // ---------- Cone picker (color) ----------
+  let conePickerId = null;
+  const conePicker = document.getElementById('conePicker');
+
+  function showConePicker(cone, x, y) {
+    conePickerId = cone.id;
+    const wrapRect = fieldWrap.getBoundingClientRect();
+
+    // Highlight current color
+    document.querySelectorAll('.cone-color-btn').forEach(b => {
+      const isCur = b.dataset.color === (cone.color || '#ff7a2a');
+      b.style.borderColor = isCur ? '#ffdd00' : 'transparent';
+      b.style.boxShadow = isCur ? '0 0 0 2px rgba(255, 221, 0, 0.4)' : 'none';
+    });
+
+    conePicker.style.display = 'block';
+    const pw = conePicker.offsetWidth || 220;
+    const ph = conePicker.offsetHeight || 130;
+    let px = x + 14;
+    let py = y - ph / 2;
+    if (px + pw > wrapRect.width - 8) px = x - pw - 14;
+    if (px < 8) px = 8;
+    if (py < 8) py = 8;
+    if (py + ph > wrapRect.height - 8) py = wrapRect.height - ph - 8;
+    conePicker.style.left = px + 'px';
+    conePicker.style.top = py + 'px';
+  }
+
+  function hideConePicker() {
+    conePicker.style.display = 'none';
+    conePickerId = null;
+  }
+
+  document.querySelectorAll('.cone-color-btn').forEach(b => {
+    const handler = (ev) => {
+      ev.stopPropagation();
+      ev.preventDefault();
+      if (!conePickerId) return;
+      const c = scene().objects.find(o => o.id === conePickerId);
+      if (!c) return;
+      saveHistory();
+      c.color = b.dataset.color;
+      hideConePicker();
+      redraw();
+    };
+    b.addEventListener('click', handler);
+    b.addEventListener('touchstart', handler, { passive: false });
+  });
+
+  document.getElementById('conePickerDelete').addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    if (!conePickerId) return;
+    const id = conePickerId;
+    hideConePicker();
+    deleteObject(id);
+  });
+
+  // Block events from cone picker bubbling
+  ['mousedown', 'touchstart', 'pointerdown', 'click'].forEach(evtName => {
+    conePicker.addEventListener(evtName, (ev) => ev.stopPropagation());
+  });
+
   // Block pointer events from inside the picker bubbling to fieldWrap's pointer handlers.
   ['mousedown', 'touchstart', 'pointerdown', 'click'].forEach(evtName => {
     document.getElementById('orderPicker').addEventListener(evtName, (ev) => {
@@ -2496,7 +2808,7 @@
     if (ui.tool === 'pen') {
       ui.penStroke = {
         id: Date.now() + Math.random(),
-        color: '#ffffff',
+        color: ui.penColor,
         width: 3,
         points: [{ x, y }],
       };
@@ -2517,11 +2829,16 @@
         ui.dragging = { id: hit.id, dx: x - hit.x, dy: y - hit.y };
         const now = Date.now();
         if (now - lastTap < 350 && hit.id === ui._lastTapId) {
-          // Double-tap on player → show facing/delete picker
-          // Double-tap on other objects (cone, ball, goal) → delete
+          // Double-tap action depends on type
           if (hit.type.startsWith('player')) {
             ui.dragging = null;
             showFacingPicker(hit, x, y);
+          } else if (hit.type === 'goal') {
+            ui.dragging = null;
+            showGoalPicker(hit, x, y);
+          } else if (hit.type === 'cone') {
+            ui.dragging = null;
+            showConePicker(hit, x, y);
           } else {
             deleteObject(hit.id);
             ui.dragging = null;
@@ -2689,6 +3006,24 @@
   }
   document.getElementById('recCancel').addEventListener('click', cancelRecording);
   document.getElementById('arrowCancel').addEventListener('click', () => setTool('select'));
+
+  // Pen color palette
+  document.querySelectorAll('.pen-color-btn').forEach(b => {
+    const handler = (ev) => {
+      ev.stopPropagation();
+      ev.preventDefault();
+      ui.penColor = b.dataset.color;
+      updatePenColorHighlight();
+    };
+    b.addEventListener('click', handler);
+    b.addEventListener('touchstart', handler, { passive: false });
+  });
+  document.getElementById('penCancel').addEventListener('click', () => setTool('select'));
+
+  // Block events from pen palette bubbling
+  ['mousedown', 'touchstart', 'pointerdown', 'click'].forEach(evtName => {
+    document.getElementById('penPalette').addEventListener(evtName, (ev) => ev.stopPropagation());
+  });
 
   function applyTime(t, sc = scene()) {
     sc.objects.forEach(o => {
