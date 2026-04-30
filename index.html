@@ -181,7 +181,6 @@
     z-index: 30;
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    max-height: calc(100% - 24px);
     width: 54px;
     overflow-y: auto;
     overflow-x: hidden;
@@ -3053,10 +3052,12 @@
       startTop: rect.top - wrapRect.top,
     };
     toolbarEl.classList.add('dragging');
-    // Lock current position before dragging
+    // Lock current position and dimensions before dragging
     toolbarEl.style.left = toolbarDrag.startLeft + 'px';
     toolbarEl.style.top = toolbarDrag.startTop + 'px';
     toolbarEl.style.transform = 'none';
+    // Lock the height so it doesn't recalculate as we move
+    toolbarEl.style.height = rect.height + 'px';
     // Listen on window so we don't lose drag if pointer slips off the handle
     window.addEventListener('pointermove', onToolbarMove, { passive: false });
     window.addEventListener('pointerup', onToolbarUp);
