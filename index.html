@@ -643,7 +643,7 @@
 
   <div class="menu" id="legendPanel" style="right: 168px; min-width: 240px;">
     <div style="font-size: 11px; color: var(--accent); padding: 8px 12px 6px; letter-spacing: 0.05em; font-weight: 700;">
-      矢印の凡例
+      使い方ガイド
     </div>
     <div style="padding: 0 12px 12px; font-size: 12px; color: #c8d0c0;">
       <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0;">
@@ -689,6 +689,26 @@
       <div style="height: 1px; background: rgba(255,221,0,0.15); margin: 6px 0;"></div>
       <div style="font-size: 10px; color: #a0a89c; padding: 4px 0; line-height: 1.5;">
         矢印を引くと、始点近くの対象（選手・ボール）に自動で紐づきます。番号バッジをタップで順番・対象を変更可能。
+      </div>
+
+      <div style="height: 1px; background: rgba(255,221,0,0.15); margin: 8px 0 6px;"></div>
+      <div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" style="flex-shrink: 0;">
+          <circle cx="12" cy="12" r="9"/>
+          <circle cx="12" cy="12" r="4" fill="#dc2626" stroke="none"/>
+        </svg>
+        <div style="color: #f5f5f0; font-weight: 700; font-size: 12px;">録画機能</div>
+      </div>
+      <div style="font-size: 10px; color: #a0a89c; padding: 2px 0 4px; line-height: 1.6;">
+        矢印では表現できないジグザグやカーブ等の複雑な動きを記録できます。
+      </div>
+      <div style="font-size: 10px; color: #c8d0c0; padding: 2px 0; line-height: 1.6;">
+        ① 録画ボタンをタップ<br>
+        ② 動かしたいアイコンをそのままドラッグして動きをなぞる<br>
+        ③ 指/マウスを離すと自動的に完了
+      </div>
+      <div style="font-size: 10px; color: #fde047; padding: 6px 0 2px; line-height: 1.5;">
+        💡 選手の足元にボールがある状態で録画すると、選手とボールがセットで動きます（ドリブルの記録に便利）。
       </div>
     </div>
   </div>
@@ -1424,9 +1444,20 @@
     const availW = W - margin * 2;
     const availH = H - margin * 2;
 
+    // Detect if the available area is portrait (taller than wide)
+    const isPortrait = availH > availW;
+
     let pitchAspect;  // width / height
+    let halfPortrait = false;  // true = half-court drawn vertically
     if (settings.lineMode === 'half') {
-      pitchAspect = 68 / 52.5;  // wider-than-tall
+      if (isPortrait) {
+        // Portrait: rotate the half-court so it fills the screen vertically.
+        // Penalty area / goal at top, halfway line at bottom.
+        pitchAspect = 68 / 52.5 < 1 ? 68 / 52.5 : 52.5 / 68;  // 52.5/68 ≈ 0.77 (taller)
+        halfPortrait = true;
+      } else {
+        pitchAspect = 68 / 52.5;  // landscape (wider-than-tall)
+      }
     } else {
       pitchAspect = 68 / 105;   // taller-than-wide (typical full pitch)
     }
@@ -1434,11 +1465,9 @@
     // Fit the pitch into the available area, preserving aspect ratio (letterbox)
     let pW, pH;
     if (availW / availH > pitchAspect) {
-      // Container is wider than the pitch wants → constrain by height
       pH = availH;
       pW = pH * pitchAspect;
     } else {
-      // Container is taller than the pitch wants → constrain by width
       pW = availW;
       pH = pW / pitchAspect;
     }
@@ -1451,26 +1480,44 @@
     bgCtx.lineWidth = 2;
 
     if (settings.lineMode === 'half') {
-      // ===== HALF COURT =====
-      // Outer touchlines (3 sides + halfway line at bottom)
-      bgCtx.strokeRect(pX, pY, pW, pH);
+      if (halfPortrait) {
+        // ===== HALF COURT (portrait/vertical) =====
+        // Pitch is now 52.5m tall × 68m wide → ratio 52.5/68 = 0.77 (taller-than-wide).
+        // Wait — actually we want pitch width (68m) on the screen X-axis, so the
+        // long-side fitting depends on the screen.
+        // Here we use pitchAspect = 52.5/68 (W/H), meaning pH > pW.
+        // Penalty area at top (goal end), halfway line at bottom.
+        bgCtx.strokeRect(pX, pY, pW, pH);
 
-      // Halfway line is the bottom edge of the rectangle (already drawn).
-      // Center circle (upper half — center is at bottom edge of the pitch)
-      const cr = pW * 0.0915;  // 9.15m / 68m × pitch width
-      bgCtx.beginPath();
-      bgCtx.arc(pCX, pY + pH, cr, Math.PI, 2 * Math.PI);
-      bgCtx.stroke();
+        // Center circle (top half visible at bottom edge — same as landscape half)
+        const cr = pW * 0.135;  // 9.15m / 68m × pitch_width
+        bgCtx.beginPath();
+        bgCtx.arc(pCX, pY + pH, cr, Math.PI, 2 * Math.PI);
+        bgCtx.stroke();
 
-      // Penalty area: 40.32m × 16.5m → 40.32/68 wide × 16.5/52.5 deep
-      const pbW = pW * (40.32 / 68);
-      const pbH = pH * (16.5 / 52.5);
-      bgCtx.strokeRect(pCX - pbW/2, pY, pbW, pbH);
+        // Penalty area: 40.32m wide × 16.5m deep
+        const pbW = pW * (40.32 / 68);
+        const pbH = pH * (16.5 / 52.5);
+        bgCtx.strokeRect(pCX - pbW/2, pY, pbW, pbH);
 
-      // Goal area: 18.32m × 5.5m
-      const gaW = pW * (18.32 / 68);
-      const gaH = pH * (5.5 / 52.5);
-      bgCtx.strokeRect(pCX - gaW/2, pY, gaW, gaH);
+        // Goal area: 18.32m × 5.5m
+        const gaW = pW * (18.32 / 68);
+        const gaH = pH * (5.5 / 52.5);
+        bgCtx.strokeRect(pCX - gaW/2, pY, gaW, gaH);
+      } else {
+        // ===== HALF COURT (landscape) =====
+        bgCtx.strokeRect(pX, pY, pW, pH);
+        const cr = pW * 0.0915;
+        bgCtx.beginPath();
+        bgCtx.arc(pCX, pY + pH, cr, Math.PI, 2 * Math.PI);
+        bgCtx.stroke();
+        const pbW = pW * (40.32 / 68);
+        const pbH = pH * (16.5 / 52.5);
+        bgCtx.strokeRect(pCX - pbW/2, pY, pbW, pbH);
+        const gaW = pW * (18.32 / 68);
+        const gaH = pH * (5.5 / 52.5);
+        bgCtx.strokeRect(pCX - gaW/2, pY, gaW, gaH);
+      }
     } else {
       // ===== FULL COURT =====
       // Outer rectangle
@@ -2295,6 +2342,25 @@
   // Find which object should follow this arrow
   // dribble / move -> nearest player
   // pass / shoot   -> nearest ball
+  function findBallAtFeet(player) {
+    // Player's feet are below center by ~r * 1.5 in the new tall design.
+    // Look for a ball within a generous radius around the feet area.
+    const feetX = player.x;
+    const feetY = player.y; // anchor IS the feet now (with the tall isometric model)
+    let bestBall = null;
+    let bestDist = Infinity;
+    const maxDist = player.r * 2.5;
+    scene().objects.forEach(o => {
+      if (o.type !== 'ball') return;
+      const d = Math.hypot(o.x - feetX, o.y - feetY);
+      if (d < maxDist && d < bestDist) {
+        bestBall = o;
+        bestDist = d;
+      }
+    });
+    return bestBall;
+  }
+
   function findNearestTarget(arrowType, x, y) {
     const wantBall = (arrowType === 'arrow-pass' || arrowType === 'arrow-shoot');
     let best = null;
@@ -2875,7 +2941,25 @@
         ui.dragging = { id: hit.id, dx: x - hit.x, dy: y - hit.y, recording: true };
         ui.recordStartTime = performance.now();
         ui.recordPath = [{t: 0, x: hit.x, y: hit.y}];
-        updateRecBanner('録画中... 指/マウスを離すと完了');
+
+        // If recording a player and there's a ball at their feet,
+        // record ball movement together (set as a pair).
+        ui.recordingBallId = null;
+        ui.recordBallPath = null;
+        ui.recordBallOffset = null;
+        if (hit.type.startsWith('player')) {
+          const ball = findBallAtFeet(hit);
+          if (ball) {
+            ui.recordingBallId = ball.id;
+            ui.recordBallOffset = { dx: ball.x - hit.x, dy: ball.y - hit.y };
+            ball.keyframes = [{t: 0, x: ball.x, y: ball.y}];
+            ui.recordBallPath = [{t: 0, x: ball.x, y: ball.y}];
+          }
+        }
+
+        updateRecBanner(ui.recordingBallId
+          ? '録画中... 選手とボールを一緒に動かします'
+          : '録画中... 指/マウスを離すと完了');
         redraw();
       } else {
         showHint('動かしたいアイコンを直接ドラッグしてください');
@@ -2995,6 +3079,16 @@
     if (ui.dragging.recording) {
       const t = (performance.now() - ui.recordStartTime) / 1000;
       ui.recordPath.push({t, x: o.x, y: o.y});
+
+      // If recording a player+ball pair, move and record the ball too.
+      if (ui.recordingBallId && ui.recordBallOffset) {
+        const ball = scene().objects.find(b => b.id === ui.recordingBallId);
+        if (ball) {
+          ball.x = clamp(o.x + ui.recordBallOffset.dx, 10, W - 10);
+          ball.y = clamp(o.y + ui.recordBallOffset.dy, 10, H - 10);
+          ui.recordBallPath.push({t, x: ball.x, y: ball.y});
+        }
+      }
     } else {
       o.keyframes[0] = {t: 0, x: o.x, y: o.y};
     }
@@ -3146,6 +3240,9 @@
     ui.recording = false;
     ui.recordingTargetId = null;
     ui.recordPath = [];
+    ui.recordingBallId = null;
+    ui.recordBallPath = null;
+    ui.recordBallOffset = null;
     showRecBanner(false);
     document.querySelectorAll('.tool').forEach(b => {
       b.classList.toggle('active', b.dataset.tool === 'select');
@@ -3161,11 +3258,30 @@
       if (simplified[simplified.length - 1] !== last) simplified.push(last);
       target.keyframes = simplified;
       scene().duration = Math.max(scene().duration, last.t);
-      showHint(`動きを記録しました（${last.t.toFixed(1)}秒）`);
+
+      // If we were recording a ball alongside the player, save its keyframes too.
+      if (ui.recordingBallId && ui.recordBallPath && ui.recordBallPath.length > 1) {
+        const ball = scene().objects.find(b => b.id === ui.recordingBallId);
+        if (ball) {
+          const ballSimplified = [];
+          for (let i = 0; i < ui.recordBallPath.length; i += 3) {
+            ballSimplified.push(ui.recordBallPath[i]);
+          }
+          const ballLast = ui.recordBallPath[ui.recordBallPath.length - 1];
+          if (ballSimplified[ballSimplified.length - 1] !== ballLast) ballSimplified.push(ballLast);
+          ball.keyframes = ballSimplified;
+        }
+        showHint(`選手とボールの動きを記録しました（${last.t.toFixed(1)}秒）`);
+      } else {
+        showHint(`動きを記録しました（${last.t.toFixed(1)}秒）`);
+      }
     } else {
       showHint('動きが短すぎます');
     }
     ui.recordPath = [];
+    ui.recordBallPath = null;
+    ui.recordingBallId = null;
+    ui.recordBallOffset = null;
     ui.recording = false;
     ui.recordingTargetId = null;
     showRecBanner(false);
