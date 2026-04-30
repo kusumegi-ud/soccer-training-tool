@@ -182,6 +182,7 @@
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     width: 54px;
+    max-height: 80vh;
     overflow-y: auto;
     overflow-x: hidden;
     scrollbar-width: none;
@@ -773,6 +774,10 @@
     <div class="menu-item" data-action="load">
       <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5-5 5 5M12 5v12"/></svg>
       JSON読み込み
+    </div>
+    <div class="menu-item" data-action="resetToolbar">
+      <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15.5-6.4L21 8M3 12l2.5 2.4M3 12h6"/><path d="M12 8v4l3 2"/></svg>
+      ツールバーの位置をリセット
     </div>
     <div class="menu-item" data-action="help">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r="0.5"/></svg>
@@ -2998,16 +3003,26 @@
   const toolbarHandle = document.getElementById('toolbarHandle');
   let toolbarDrag = null;
 
-  // Restore saved position
-  try {
-    const savedPos = localStorage.getItem('toolbarPosition');
-    if (savedPos) {
+  // Restore saved position (with validation)
+  function restoreToolbarPosition() {
+    try {
+      const savedPos = localStorage.getItem('toolbarPosition');
+      if (!savedPos) return;
       const { left, top } = JSON.parse(savedPos);
+      if (typeof left !== 'number' || typeof top !== 'number') return;
+      // Validate against current container size
+      const wrapRect = fieldWrap.getBoundingClientRect();
+      const tbW = 60;  // approximate toolbar width
+      const tbH = 100; // minimum sensible toolbar height
+      if (left < 0 || left + tbW > wrapRect.width) return; // out of bounds, skip
+      if (top < 0 || top + tbH > wrapRect.height) return;  // out of bounds, skip
       toolbarEl.style.left = left + 'px';
       toolbarEl.style.top = top + 'px';
       toolbarEl.style.transform = 'none';
-    }
-  } catch (_) {}
+    } catch (_) {}
+  }
+  // Apply on next tick so the layout has been computed
+  setTimeout(restoreToolbarPosition, 0);
 
   function onToolbarMove(e) {
     if (!toolbarDrag) return;
@@ -3568,6 +3583,16 @@
           r.readAsText(f);
         };
         inp.click();
+      } else if (a === 'resetToolbar') {
+        try {
+          localStorage.removeItem('toolbarPosition');
+        } catch (_) {}
+        // Reset inline styles set during dragging
+        toolbarEl.style.left = '';
+        toolbarEl.style.top = '';
+        toolbarEl.style.transform = '';
+        toolbarEl.style.height = '';
+        showHint('ツールバーの位置をリセットしました');
       } else if (a === 'help') {
         alert(
           '【使い方】\n\n' +
