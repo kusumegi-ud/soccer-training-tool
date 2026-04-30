@@ -648,6 +648,16 @@
     <div style="padding: 0 12px 12px; font-size: 12px; color: #c8d0c0;">
       <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0;">
         <svg width="40" height="14" viewBox="0 0 40 14" style="flex-shrink: 0;">
+          <line x1="2" y1="7" x2="32" y2="7" stroke="#ffffff" stroke-width="2" stroke-dasharray="3,3" stroke-linecap="round"/>
+          <polygon points="34,7 26,3 27,7 26,11" fill="#ffffff"/>
+        </svg>
+        <div>
+          <div style="color: #ffffff; font-weight: 700; font-size: 12px;">移動</div>
+          <div style="font-size: 10px; color: #a0a89c;">選手だけが移動（ボールは動かない）</div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0;">
+        <svg width="40" height="14" viewBox="0 0 40 14" style="flex-shrink: 0;">
           <line x1="2" y1="7" x2="32" y2="7" stroke="#fde047" stroke-width="2.5" stroke-linecap="round"/>
           <polygon points="34,7 26,3 27,7 26,11" fill="#fde047"/>
         </svg>
@@ -926,6 +936,12 @@
         <span class="tool-label">ゴール</span>
       </button>
       <div class="tool-divider"></div>
+      <button class="tool" data-tool="arrow-move">
+        <div class="arrow-preview">
+          <svg viewBox="0 0 24 14"><line x1="2" y1="7" x2="18" y2="7" stroke="#ffffff" stroke-width="2" stroke-dasharray="2,2" stroke-linecap="round"/><polygon points="18,7 13,4 14,7 13,10" fill="#ffffff"/></svg>
+        </div>
+        <span class="tool-label">移動矢印（選手のみ）</span>
+      </button>
       <button class="tool" data-tool="arrow-dribble">
         <div class="arrow-preview">
           <svg viewBox="0 0 24 14"><line x1="2" y1="7" x2="18" y2="7" stroke="#ffdd00" stroke-width="2.5" stroke-linecap="round"/><polygon points="18,7 13,4 14,7 13,10" fill="#ffdd00"/></svg>
@@ -1383,7 +1399,7 @@
   function drawBackground() {
     bgCtx.clearRect(0, 0, W, H);
 
-    // Draw realistic grass texture
+    // Draw realistic grass texture (full canvas)
     if (!grassCanvas || grassW !== W || grassH !== H) {
       grassCanvas = generateGrassTexture(W, H);
       grassW = W;
@@ -1392,66 +1408,97 @@
     if (grassCanvas) {
       bgCtx.drawImage(grassCanvas, 0, 0);
     } else {
-      // Fallback: solid green base
       bgCtx.fillStyle = '#357c38';
       bgCtx.fillRect(0, 0, W, H);
     }
 
-    // Skip lines if disabled
     if (settings.lineMode === 'none') return;
+
+    // ===== Compute pitch rectangle with proper aspect ratio =====
+    // Real soccer pitch is roughly 105m × 68m (ratio 1.54:1, length:width)
+    // For full court: long side (105) is vertical, short side (68) horizontal
+    //   → pitch aspect ratio (W:H) = 68:105 ≈ 0.65
+    // For half court: half-pitch is roughly 52.5m deep × 68m wide
+    //   → pitch aspect ratio (W:H) = 68:52.5 ≈ 1.30
+    const margin = 20;
+    const availW = W - margin * 2;
+    const availH = H - margin * 2;
+
+    let pitchAspect;  // width / height
+    if (settings.lineMode === 'half') {
+      pitchAspect = 68 / 52.5;  // wider-than-tall
+    } else {
+      pitchAspect = 68 / 105;   // taller-than-wide (typical full pitch)
+    }
+
+    // Fit the pitch into the available area, preserving aspect ratio (letterbox)
+    let pW, pH;
+    if (availW / availH > pitchAspect) {
+      // Container is wider than the pitch wants → constrain by height
+      pH = availH;
+      pW = pH * pitchAspect;
+    } else {
+      // Container is taller than the pitch wants → constrain by width
+      pW = availW;
+      pH = pW / pitchAspect;
+    }
+    const pX = (W - pW) / 2;       // pitch left
+    const pY = (H - pH) / 2;       // pitch top
+    const pCX = pX + pW / 2;       // pitch center X
+    const pCY = pY + pH / 2;       // pitch center Y
 
     bgCtx.strokeStyle = 'rgba(255,255,255,0.7)';
     bgCtx.lineWidth = 2;
-    const m = 20;
 
     if (settings.lineMode === 'half') {
       // ===== HALF COURT =====
-      // Treat the visible area as one attacking half: penalty area at top,
-      // halfway line at the bottom (with center circle arc).
+      // Outer touchlines (3 sides + halfway line at bottom)
+      bgCtx.strokeRect(pX, pY, pW, pH);
 
-      // Outer touchlines (left, right, top — opponent goal end)
+      // Halfway line is the bottom edge of the rectangle (already drawn).
+      // Center circle (upper half — center is at bottom edge of the pitch)
+      const cr = pW * 0.0915;  // 9.15m / 68m × pitch width
       bgCtx.beginPath();
-      bgCtx.moveTo(m, H - m);
-      bgCtx.lineTo(m, m);
-      bgCtx.lineTo(W - m, m);
-      bgCtx.lineTo(W - m, H - m);
+      bgCtx.arc(pCX, pY + pH, cr, Math.PI, 2 * Math.PI);
       bgCtx.stroke();
 
-      // Halfway line (bottom of the visible area)
-      bgCtx.beginPath();
-      bgCtx.moveTo(m, H - m);
-      bgCtx.lineTo(W - m, H - m);
-      bgCtx.stroke();
+      // Penalty area: 40.32m × 16.5m → 40.32/68 wide × 16.5/52.5 deep
+      const pbW = pW * (40.32 / 68);
+      const pbH = pH * (16.5 / 52.5);
+      bgCtx.strokeRect(pCX - pbW/2, pY, pbW, pbH);
 
-      // Center circle arc (only the upper half is visible since center is at the bottom edge)
-      const cr = Math.min(W, H) * 0.12;
-      bgCtx.beginPath();
-      bgCtx.arc(W/2, H - m, cr, Math.PI, 2 * Math.PI);
-      bgCtx.stroke();
-
-      // Penalty area (top of the half = opponent's goal area)
-      const pbW = Math.min(W * 0.55, 380);
-      const pbH = Math.min(H * 0.30, 160);
-      bgCtx.strokeRect((W - pbW)/2, m, pbW, pbH);
-
-      // Goal area (smaller box inside penalty area)
-      const gaW = pbW * 0.5;
-      const gaH = pbH * 0.45;
-      bgCtx.strokeRect((W - gaW)/2, m, gaW, gaH);
+      // Goal area: 18.32m × 5.5m
+      const gaW = pW * (18.32 / 68);
+      const gaH = pH * (5.5 / 52.5);
+      bgCtx.strokeRect(pCX - gaW/2, pY, gaW, gaH);
     } else {
       // ===== FULL COURT =====
-      bgCtx.strokeRect(m, m, W - 2*m, H - 2*m);
+      // Outer rectangle
+      bgCtx.strokeRect(pX, pY, pW, pH);
+
+      // Halfway line
       bgCtx.beginPath();
-      bgCtx.moveTo(m, H/2); bgCtx.lineTo(W - m, H/2); bgCtx.stroke();
+      bgCtx.moveTo(pX, pCY);
+      bgCtx.lineTo(pX + pW, pCY);
+      bgCtx.stroke();
+
+      // Center circle (radius 9.15m × pitch_width / 68)
+      const cr = pW * 0.135;  // 9.15m / 68m
       bgCtx.beginPath();
-      bgCtx.arc(W/2, H/2, Math.min(W, H) * 0.12, 0, Math.PI * 2); bgCtx.stroke();
-      const pbW = Math.min(W * 0.5, 360);
-      const pbH = Math.min(H * 0.18, 100);
-      bgCtx.strokeRect((W - pbW)/2, m, pbW, pbH);
-      bgCtx.strokeRect((W - pbW)/2, H - m - pbH, pbW, pbH);
-      const gaW = pbW * 0.5, gaH = pbH * 0.45;
-      bgCtx.strokeRect((W - gaW)/2, m, gaW, gaH);
-      bgCtx.strokeRect((W - gaW)/2, H - m - gaH, gaW, gaH);
+      bgCtx.arc(pCX, pCY, cr, 0, Math.PI * 2);
+      bgCtx.stroke();
+
+      // Penalty areas at both ends
+      const pbW = pW * (40.32 / 68);
+      const pbH = pH * (16.5 / 105);
+      bgCtx.strokeRect(pCX - pbW/2, pY, pbW, pbH);
+      bgCtx.strokeRect(pCX - pbW/2, pY + pH - pbH, pbW, pbH);
+
+      // Goal areas
+      const gaW = pW * (18.32 / 68);
+      const gaH = pH * (5.5 / 105);
+      bgCtx.strokeRect(pCX - gaW/2, pY, gaW, gaH);
+      bgCtx.strokeRect(pCX - gaW/2, pY + pH - gaH, gaW, gaH);
     }
   }
 
@@ -1962,6 +2009,7 @@
     if (a.type === 'arrow-dribble') { color = '#ffdd00'; width = 3; dash = []; }
     else if (a.type === 'arrow-pass') { color = '#4ade80'; width = 2.5; dash = [9, 6]; }
     else if (a.type === 'arrow-shoot') { color = '#f87171'; width = 5; dash = []; }
+    else if (a.type === 'arrow-move') { color = '#ffffff'; width = 2.5; dash = [4, 4]; }
 
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
@@ -2146,6 +2194,7 @@
     if (show) {
       const txt = type === 'arrow-pass' ? 'パス矢印: 始点から終点へドラッグ（連続描画OK）' :
                   type === 'arrow-shoot' ? 'シュート矢印: 始点から終点へドラッグ（連続描画OK）' :
+                  type === 'arrow-move' ? '移動矢印: 選手だけを動かす（ボールは動かない）' :
                   'ドリブル矢印: 始点から終点へドラッグ（連続描画OK）';
       document.getElementById('arrowBannerText').textContent = txt;
     }
@@ -2222,7 +2271,8 @@
     let speed;
     if (type === 'arrow-shoot') speed = 600;
     else if (type === 'arrow-pass') speed = 400;
-    else speed = 180;
+    else if (type === 'arrow-move') speed = 200;     // similar to dribble but no ball
+    else speed = 180;                                 // dribble
 
     const moveDuration = Math.max(0.4, dist / speed);
 
@@ -2243,8 +2293,8 @@
   }
 
   // Find which object should follow this arrow
-  // dribble -> nearest player
-  // pass / shoot -> nearest ball
+  // dribble / move -> nearest player
+  // pass / shoot   -> nearest ball
   function findNearestTarget(arrowType, x, y) {
     const wantBall = (arrowType === 'arrow-pass' || arrowType === 'arrow-shoot');
     let best = null;
@@ -2485,11 +2535,13 @@
 
     // ----- Targets (which object the arrow moves) -----
     targetsDiv.innerHTML = '';
-    // Filter: dribble arrows can target players; pass/shoot can target balls.
-    // But to give flexibility, show all sensible candidates.
+    // Filter:
+    // - dribble & move → players only
+    // - pass / shoot → ball + players (allow flexibility)
     const candidates = scene().objects.filter(o => {
-      if (arrow.type === 'arrow-dribble') return o.type.startsWith('player');
-      // pass / shoot
+      if (arrow.type === 'arrow-dribble' || arrow.type === 'arrow-move') {
+        return o.type.startsWith('player');
+      }
       return o.type === 'ball' || o.type.startsWith('player');
     });
 
