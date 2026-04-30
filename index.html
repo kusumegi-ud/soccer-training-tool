@@ -159,18 +159,8 @@
   }
 
   .field-wrap::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(
-      90deg,
-      var(--field-dark) 0,
-      var(--field-dark) 60px,
-      var(--field-light) 60px,
-      var(--field-light) 120px
-    );
-    opacity: 0.5;
-    pointer-events: none;
+    /* Stripes are now drawn on canvas — disable CSS pattern */
+    display: none;
   }
   .field-wrap.no-stripes::before {
     display: none;
@@ -1062,13 +1052,88 @@
   }
   window.addEventListener('resize', resize);
 
+  // Cached grass texture canvas (regenerated on resize)
+  let grassCanvas = null;
+  let grassW = 0, grassH = 0;
+
+  function generateGrassTexture(w, h) {
+    const c = document.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    const g = c.getContext('2d');
+
+    // 1) Base gradient — slightly varying green
+    const baseGrad = g.createLinearGradient(0, 0, 0, h);
+    baseGrad.addColorStop(0, '#2d5f2e');
+    baseGrad.addColorStop(0.5, '#357c38');
+    baseGrad.addColorStop(1, '#2d5f2e');
+    g.fillStyle = baseGrad;
+    g.fillRect(0, 0, w, h);
+
+    // 2) Mowing stripes (alternate light/dark bands)
+    if (settings.showStripes) {
+      const stripeW = 60;
+      for (let x = 0; x < w; x += stripeW * 2) {
+        g.fillStyle = 'rgba(255,255,255,0.06)';
+        g.fillRect(x, 0, stripeW, h);
+        g.fillStyle = 'rgba(0,0,0,0.06)';
+        g.fillRect(x + stripeW, 0, stripeW, h);
+      }
+    }
+
+    // 3) Random noise speckles (color variation)
+    const imgData = g.getImageData(0, 0, w, h);
+    const data = imgData.data;
+    for (let i = 0; i < data.length; i += 4) {
+      const noise = (Math.random() - 0.5) * 30;
+      data[i]   = Math.max(0, Math.min(255, data[i]   + noise));     // R
+      data[i+1] = Math.max(0, Math.min(255, data[i+1] + noise * 1.2)); // G (more variation)
+      data[i+2] = Math.max(0, Math.min(255, data[i+2] + noise));     // B
+    }
+    g.putImageData(imgData, 0, 0);
+
+    // 4) Tiny grass blades (short vertical strokes)
+    const bladeCount = Math.floor((w * h) / 80);
+    for (let i = 0; i < bladeCount; i++) {
+      const x = Math.random() * w;
+      const y = Math.random() * h;
+      const len = 2 + Math.random() * 3;
+      const lightness = Math.random();
+      // Mix of darker and lighter blades
+      if (lightness < 0.4) {
+        g.strokeStyle = `rgba(50, 90, 50, ${0.3 + Math.random() * 0.3})`;
+      } else if (lightness < 0.8) {
+        g.strokeStyle = `rgba(120, 160, 80, ${0.2 + Math.random() * 0.3})`;
+      } else {
+        g.strokeStyle = `rgba(180, 200, 120, ${0.15 + Math.random() * 0.2})`;
+      }
+      g.lineWidth = 0.6;
+      g.beginPath();
+      g.moveTo(x, y);
+      // slight angle for natural look
+      const angle = (Math.random() - 0.5) * 0.6;
+      g.lineTo(x + Math.sin(angle) * len, y - Math.cos(angle) * len);
+      g.stroke();
+    }
+
+    return c;
+  }
+
   function drawBackground() {
     bgCtx.clearRect(0, 0, W, H);
+
+    // Draw realistic grass texture
+    if (!grassCanvas || grassW !== W || grassH !== H) {
+      grassCanvas = generateGrassTexture(W, H);
+      grassW = W;
+      grassH = H;
+    }
+    bgCtx.drawImage(grassCanvas, 0, 0);
 
     // Skip lines if user disabled them
     if (!settings.showLines) return;
 
-    bgCtx.strokeStyle = 'rgba(255,255,255,0.5)';
+    bgCtx.strokeStyle = 'rgba(255,255,255,0.7)';
     bgCtx.lineWidth = 2;
     const m = 20;
     bgCtx.strokeRect(m, m, W - 2*m, H - 2*m);
@@ -1078,7 +1143,7 @@
     bgCtx.arc(W/2, H/2, Math.min(W, H) * 0.12, 0, Math.PI * 2); bgCtx.stroke();
     bgCtx.beginPath();
     bgCtx.arc(W/2, H/2, 3, 0, Math.PI * 2);
-    bgCtx.fillStyle = 'rgba(255,255,255,0.5)'; bgCtx.fill();
+    bgCtx.fillStyle = 'rgba(255,255,255,0.7)'; bgCtx.fill();
     const pbW = Math.min(W * 0.5, 360);
     const pbH = Math.min(H * 0.18, 100);
     bgCtx.strokeRect((W - pbW)/2, m, pbW, pbH);
@@ -1089,8 +1154,9 @@
   }
 
   function applyStripesSetting() {
-    // Toggle the field stripes pattern (CSS pseudo-element on .field-wrap::before)
-    fieldWrap.classList.toggle('no-stripes', !settings.showStripes);
+    // Regenerate the grass texture with new stripe setting
+    grassCanvas = null;
+    drawBackground();
   }
 
   function drawObject(ctx, o) {
