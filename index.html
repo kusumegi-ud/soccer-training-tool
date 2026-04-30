@@ -188,7 +188,7 @@
   .toolbar::-webkit-scrollbar { display: none; }
 
   .toolbar-handle {
-    height: 18px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -201,6 +201,7 @@
     margin-bottom: 2px;
     flex-shrink: 0;
     transition: background 0.15s, color 0.15s;
+    background: rgba(255, 221, 0, 0.05);
   }
   .toolbar-handle:hover {
     background: rgba(255, 221, 0, 0.1);
@@ -2994,6 +2995,10 @@
   const toolbarHandle = document.getElementById('toolbarHandle');
   let toolbarDrag = null;
 
+  // Set touch-action: none on the whole toolbar to prevent
+  // mobile browsers from interpreting touches as scrolls.
+  toolbarEl.style.touchAction = 'none';
+
   // Restore saved position
   try {
     const savedPos = localStorage.getItem('toolbarPosition');
@@ -3004,6 +3009,37 @@
       toolbarEl.style.transform = 'none';
     }
   } catch (_) {}
+
+  function onToolbarMove(e) {
+    if (!toolbarDrag) return;
+    e.preventDefault();
+    const dx = e.clientX - toolbarDrag.startX;
+    const dy = e.clientY - toolbarDrag.startY;
+    const wrapRect = fieldWrap.getBoundingClientRect();
+    const tbW = toolbarEl.offsetWidth;
+    const tbH = toolbarEl.offsetHeight;
+    let newLeft = toolbarDrag.startLeft + dx;
+    let newTop = toolbarDrag.startTop + dy;
+    newLeft = Math.max(0, Math.min(wrapRect.width - tbW, newLeft));
+    newTop = Math.max(0, Math.min(wrapRect.height - tbH, newTop));
+    toolbarEl.style.left = newLeft + 'px';
+    toolbarEl.style.top = newTop + 'px';
+  }
+
+  function onToolbarUp(e) {
+    if (!toolbarDrag) return;
+    toolbarDrag = null;
+    toolbarEl.classList.remove('dragging');
+    // Save position to localStorage
+    try {
+      const left = parseFloat(toolbarEl.style.left) || 0;
+      const top = parseFloat(toolbarEl.style.top) || 0;
+      localStorage.setItem('toolbarPosition', JSON.stringify({ left, top }));
+    } catch (_) {}
+    window.removeEventListener('pointermove', onToolbarMove);
+    window.removeEventListener('pointerup', onToolbarUp);
+    window.removeEventListener('pointercancel', onToolbarUp);
+  }
 
   toolbarHandle.addEventListener('pointerdown', (e) => {
     e.preventDefault();
@@ -3016,42 +3052,15 @@
       startLeft: rect.left - wrapRect.left,
       startTop: rect.top - wrapRect.top,
     };
-    toolbarHandle.setPointerCapture(e.pointerId);
     toolbarEl.classList.add('dragging');
-    // Lock current position before dragging (in case it's still using the original transform)
+    // Lock current position before dragging
     toolbarEl.style.left = toolbarDrag.startLeft + 'px';
     toolbarEl.style.top = toolbarDrag.startTop + 'px';
     toolbarEl.style.transform = 'none';
-  });
-
-  toolbarHandle.addEventListener('pointermove', (e) => {
-    if (!toolbarDrag) return;
-    e.preventDefault();
-    const dx = e.clientX - toolbarDrag.startX;
-    const dy = e.clientY - toolbarDrag.startY;
-    const wrapRect = fieldWrap.getBoundingClientRect();
-    const tbW = toolbarEl.offsetWidth;
-    const tbH = toolbarEl.offsetHeight;
-    let newLeft = toolbarDrag.startLeft + dx;
-    let newTop = toolbarDrag.startTop + dy;
-    // Constrain within fieldWrap bounds
-    newLeft = Math.max(0, Math.min(wrapRect.width - tbW, newLeft));
-    newTop = Math.max(0, Math.min(wrapRect.height - tbH, newTop));
-    toolbarEl.style.left = newLeft + 'px';
-    toolbarEl.style.top = newTop + 'px';
-  });
-
-  toolbarHandle.addEventListener('pointerup', (e) => {
-    if (!toolbarDrag) return;
-    toolbarHandle.releasePointerCapture(e.pointerId);
-    toolbarDrag = null;
-    toolbarEl.classList.remove('dragging');
-    // Save position to localStorage
-    try {
-      const left = parseFloat(toolbarEl.style.left) || 0;
-      const top = parseFloat(toolbarEl.style.top) || 0;
-      localStorage.setItem('toolbarPosition', JSON.stringify({ left, top }));
-    } catch (_) {}
+    // Listen on window so we don't lose drag if pointer slips off the handle
+    window.addEventListener('pointermove', onToolbarMove, { passive: false });
+    window.addEventListener('pointerup', onToolbarUp);
+    window.addEventListener('pointercancel', onToolbarUp);
   });
 
   function armRecording() {
