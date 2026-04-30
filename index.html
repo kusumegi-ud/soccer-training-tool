@@ -187,6 +187,33 @@
   }
   .toolbar::-webkit-scrollbar { display: none; }
 
+  .toolbar-handle {
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    border-radius: 4px;
+    margin-bottom: 2px;
+    flex-shrink: 0;
+    transition: background 0.15s, color 0.15s;
+  }
+  .toolbar-handle:hover {
+    background: rgba(255, 221, 0, 0.1);
+    color: var(--accent);
+  }
+  .toolbar-handle:active {
+    cursor: grabbing;
+  }
+  .toolbar.dragging {
+    transition: none;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+
   .tool {
     width: 42px; height: 42px;
     border-radius: 8px;
@@ -590,8 +617,24 @@
     </div>
     <div class="scenes-bar" id="scenesBar"></div>
     <div class="top-actions">
+      <button class="icon-btn" id="legendBtn" title="矢印の凡例">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </button>
       <button class="icon-btn" id="undoBtn" title="元に戻す">
-        <svg viewBox="0 0 24 24"><path d="M3 7v6h6M3 13a9 9 0 1 0 3-7"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 14 4 9 9 4"/>
+          <path d="M4 9h11a5 5 0 0 1 5 5v0a5 5 0 0 1-5 5H11"/>
+        </svg>
+      </button>
+      <button class="icon-btn" id="redoBtn" title="やり直す">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 14 20 9 15 4"/>
+          <path d="M20 9H9a5 5 0 0 0-5 5v0a5 5 0 0 0 5 5h4"/>
+        </svg>
       </button>
       <button class="icon-btn" id="settingsBtn" title="設定">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -602,26 +645,88 @@
     </div>
   </div>
 
-  <div class="menu" id="settingsPanel" style="right: 56px;">
+  <div class="menu" id="legendPanel" style="right: 168px; min-width: 240px;">
+    <div style="font-size: 11px; color: var(--accent); padding: 8px 12px 6px; letter-spacing: 0.05em; font-weight: 700;">
+      矢印の凡例
+    </div>
+    <div style="padding: 0 12px 12px; font-size: 12px; color: #c8d0c0;">
+      <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0;">
+        <svg width="40" height="14" viewBox="0 0 40 14" style="flex-shrink: 0;">
+          <line x1="2" y1="7" x2="32" y2="7" stroke="#fde047" stroke-width="2.5" stroke-linecap="round"/>
+          <polygon points="34,7 26,3 27,7 26,11" fill="#fde047"/>
+        </svg>
+        <div>
+          <div style="color: #fde047; font-weight: 700; font-size: 12px;">ドリブル</div>
+          <div style="font-size: 10px; color: #a0a89c;">選手がボールを運ぶ</div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0;">
+        <svg width="40" height="14" viewBox="0 0 40 14" style="flex-shrink: 0;">
+          <line x1="2" y1="7" x2="32" y2="7" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 3"/>
+          <polygon points="34,7 26,3 27,7 26,11" fill="#22c55e"/>
+        </svg>
+        <div>
+          <div style="color: #22c55e; font-weight: 700; font-size: 12px;">パス</div>
+          <div style="font-size: 10px; color: #a0a89c;">ボールを味方に渡す</div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0;">
+        <svg width="40" height="14" viewBox="0 0 40 14" style="flex-shrink: 0;">
+          <line x1="2" y1="7" x2="32" y2="7" stroke="#f87171" stroke-width="3.5" stroke-linecap="round"/>
+          <polygon points="34,7 26,3 27,7 26,11" fill="#f87171"/>
+        </svg>
+        <div>
+          <div style="color: #f87171; font-weight: 700; font-size: 12px;">シュート</div>
+          <div style="font-size: 10px; color: #a0a89c;">ゴールを狙う強いキック</div>
+        </div>
+      </div>
+      <div style="height: 1px; background: rgba(255,221,0,0.15); margin: 6px 0;"></div>
+      <div style="font-size: 10px; color: #a0a89c; padding: 4px 0; line-height: 1.5;">
+        矢印を引くと、始点近くの対象（選手・ボール）に自動で紐づきます。番号バッジをタップで順番・対象を変更可能。
+      </div>
+    </div>
+  </div>
+
+  <div class="menu" id="settingsPanel" style="right: 56px; min-width: 220px;">
     <div style="font-size: 10px; color: #a0a89c; padding: 6px 12px 4px; letter-spacing: 0.05em; font-weight: 600;">
       設定
     </div>
     <div style="padding: 0 12px 8px;">
-      <label style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; cursor: pointer; font-size: 13px;">
-        <span>フィールドラインを表示</span>
-        <input type="checkbox" id="settingShowLines" checked style="
-          width: 36px; height: 20px;
-          appearance: none;
-          -webkit-appearance: none;
-          background: rgba(255,255,255,0.15);
-          border-radius: 10px;
-          position: relative;
-          cursor: pointer;
-          outline: none;
-          transition: background 0.2s;
-          flex-shrink: 0;
-        ">
-      </label>
+      <div style="padding: 8px 0; font-size: 13px;">
+        <div style="margin-bottom: 6px; color: #c8d0c0;">フィールドライン</div>
+        <div style="display: flex; gap: 4px;">
+          <button class="line-mode-btn" data-mode="full" style="
+            flex: 1; padding: 8px 4px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            background: rgba(255,255,255,0.06);
+            color: #f5f5f0;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+          ">フル</button>
+          <button class="line-mode-btn" data-mode="half" style="
+            flex: 1; padding: 8px 4px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            background: rgba(255,255,255,0.06);
+            color: #f5f5f0;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+          ">ハーフ</button>
+          <button class="line-mode-btn" data-mode="none" style="
+            flex: 1; padding: 8px 4px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            background: rgba(255,255,255,0.06);
+            color: #f5f5f0;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+          ">なし</button>
+        </div>
+      </div>
       <label style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; cursor: pointer; font-size: 13px;">
         <span>ストライプ模様を表示</span>
         <input type="checkbox" id="settingShowStripes" checked style="
@@ -677,6 +782,13 @@
     <canvas id="iconCanvas"></canvas>
 
     <div class="toolbar" id="toolbar">
+      <div class="toolbar-handle" id="toolbarHandle" title="ドラッグして移動">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="6" cy="6" r="1.5"/><circle cx="18" cy="6" r="1.5"/>
+          <circle cx="6" cy="12" r="1.5"/><circle cx="18" cy="12" r="1.5"/>
+          <circle cx="6" cy="18" r="1.5"/><circle cx="18" cy="18" r="1.5"/>
+        </svg>
+      </div>
       <button class="tool active" data-tool="select">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M3 3l7 17 2-7 7-2L3 3z"/>
@@ -891,6 +1003,35 @@
       <button class="rec-cancel" id="penCancel" style="margin-left: 4px;">完了</button>
     </div>
 
+    <div id="conePalette" style="
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--ui-bg);
+      border: 1px solid var(--ui-border);
+      padding: 6px 10px;
+      border-radius: 24px;
+      z-index: 26;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    ">
+      <span style="font-size: 11px; color: var(--accent); font-weight: 600; padding: 0 4px;">コーン</span>
+      <button class="cone-color-pal-btn" data-color="#ff7a2a" style="width:24px;height:24px;border-radius:50%;border:2px solid transparent;background:#ff7a2a;cursor:pointer;padding:0;"></button>
+      <button class="cone-color-pal-btn" data-color="#fbbf24" style="width:24px;height:24px;border-radius:50%;border:2px solid transparent;background:#fbbf24;cursor:pointer;padding:0;"></button>
+      <button class="cone-color-pal-btn" data-color="#dc2626" style="width:24px;height:24px;border-radius:50%;border:2px solid transparent;background:#dc2626;cursor:pointer;padding:0;"></button>
+      <button class="cone-color-pal-btn" data-color="#2563eb" style="width:24px;height:24px;border-radius:50%;border:2px solid transparent;background:#2563eb;cursor:pointer;padding:0;"></button>
+      <button class="cone-color-pal-btn" data-color="#22c55e" style="width:24px;height:24px;border-radius:50%;border:2px solid transparent;background:#22c55e;cursor:pointer;padding:0;"></button>
+      <button class="cone-color-pal-btn" data-color="#a855f7" style="width:24px;height:24px;border-radius:50%;border:2px solid transparent;background:#a855f7;cursor:pointer;padding:0;"></button>
+      <button class="cone-color-pal-btn" data-color="#ec4899" style="width:24px;height:24px;border-radius:50%;border:2px solid transparent;background:#ec4899;cursor:pointer;padding:0;"></button>
+      <button class="cone-color-pal-btn" data-color="#1a1a1a" style="width:24px;height:24px;border-radius:50%;border:2px solid transparent;background:#1a1a1a;cursor:pointer;padding:0;"></button>
+      <button class="rec-cancel" id="coneCancel" style="margin-left: 4px;">完了</button>
+    </div>
+
     <div id="orderPicker" style="
       position: absolute;
       background: rgba(15, 20, 15, 0.96);
@@ -948,8 +1089,8 @@
       </div>
       <div style="display: flex; gap: 4px;">
         <button class="facing-btn" data-facing="left" style="width:36px;height:36px;border-radius:8px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:16px;">◀</button>
-        <button class="facing-btn" data-facing="front" style="width:36px;height:36px;border-radius:8px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:13px;">前</button>
-        <button class="facing-btn" data-facing="back" style="width:36px;height:36px;border-radius:8px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:13px;">後</button>
+        <button class="facing-btn" data-facing="front" style="width:36px;height:36px;border-radius:8px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:16px;">▼</button>
+        <button class="facing-btn" data-facing="back" style="width:36px;height:36px;border-radius:8px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:16px;">▲</button>
         <button class="facing-btn" data-facing="right" style="width:36px;height:36px;border-radius:8px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:16px;">▶</button>
       </div>
       <button id="facingPickerDelete" style="
@@ -1110,6 +1251,7 @@
     arrowDrawing: null,
     penStroke: null,
     penColor: '#ffffff',     // current pen color
+    coneColor: '#ff7a2a',    // current cone color (for new cones)
     playing: false,
     playStart: 0,
     playTime: 0,
@@ -1123,14 +1265,19 @@
 
   // App-wide settings (saved to localStorage)
   const settings = {
-    showLines: true,
+    lineMode: 'full',     // 'full' | 'half' | 'none'
     showStripes: true,
   };
-  // Load saved settings
+  // Migrate old setting if needed
   try {
     const saved = localStorage.getItem('trainingBoardSettings');
     if (saved) {
       const obj = JSON.parse(saved);
+      // Backward compatibility: convert old showLines bool to lineMode
+      if ('showLines' in obj && !('lineMode' in obj)) {
+        obj.lineMode = obj.showLines ? 'full' : 'none';
+        delete obj.showLines;
+      }
       Object.assign(settings, obj);
     }
   } catch (_) {}
@@ -1250,27 +1397,62 @@
       bgCtx.fillRect(0, 0, W, H);
     }
 
-    // Skip lines if user disabled them
-    if (!settings.showLines) return;
+    // Skip lines if disabled
+    if (settings.lineMode === 'none') return;
 
     bgCtx.strokeStyle = 'rgba(255,255,255,0.7)';
     bgCtx.lineWidth = 2;
     const m = 20;
-    bgCtx.strokeRect(m, m, W - 2*m, H - 2*m);
-    bgCtx.beginPath();
-    bgCtx.moveTo(m, H/2); bgCtx.lineTo(W - m, H/2); bgCtx.stroke();
-    bgCtx.beginPath();
-    bgCtx.arc(W/2, H/2, Math.min(W, H) * 0.12, 0, Math.PI * 2); bgCtx.stroke();
-    bgCtx.beginPath();
-    bgCtx.arc(W/2, H/2, 3, 0, Math.PI * 2);
-    bgCtx.fillStyle = 'rgba(255,255,255,0.7)'; bgCtx.fill();
-    const pbW = Math.min(W * 0.5, 360);
-    const pbH = Math.min(H * 0.18, 100);
-    bgCtx.strokeRect((W - pbW)/2, m, pbW, pbH);
-    bgCtx.strokeRect((W - pbW)/2, H - m - pbH, pbW, pbH);
-    const gaW = pbW * 0.5, gaH = pbH * 0.45;
-    bgCtx.strokeRect((W - gaW)/2, m, gaW, gaH);
-    bgCtx.strokeRect((W - gaW)/2, H - m - gaH, gaW, gaH);
+
+    if (settings.lineMode === 'half') {
+      // ===== HALF COURT =====
+      // Treat the visible area as one attacking half: penalty area at top,
+      // halfway line at the bottom (with center circle arc).
+
+      // Outer touchlines (left, right, top — opponent goal end)
+      bgCtx.beginPath();
+      bgCtx.moveTo(m, H - m);
+      bgCtx.lineTo(m, m);
+      bgCtx.lineTo(W - m, m);
+      bgCtx.lineTo(W - m, H - m);
+      bgCtx.stroke();
+
+      // Halfway line (bottom of the visible area)
+      bgCtx.beginPath();
+      bgCtx.moveTo(m, H - m);
+      bgCtx.lineTo(W - m, H - m);
+      bgCtx.stroke();
+
+      // Center circle arc (only the upper half is visible since center is at the bottom edge)
+      const cr = Math.min(W, H) * 0.12;
+      bgCtx.beginPath();
+      bgCtx.arc(W/2, H - m, cr, Math.PI, 2 * Math.PI);
+      bgCtx.stroke();
+
+      // Penalty area (top of the half = opponent's goal area)
+      const pbW = Math.min(W * 0.55, 380);
+      const pbH = Math.min(H * 0.30, 160);
+      bgCtx.strokeRect((W - pbW)/2, m, pbW, pbH);
+
+      // Goal area (smaller box inside penalty area)
+      const gaW = pbW * 0.5;
+      const gaH = pbH * 0.45;
+      bgCtx.strokeRect((W - gaW)/2, m, gaW, gaH);
+    } else {
+      // ===== FULL COURT =====
+      bgCtx.strokeRect(m, m, W - 2*m, H - 2*m);
+      bgCtx.beginPath();
+      bgCtx.moveTo(m, H/2); bgCtx.lineTo(W - m, H/2); bgCtx.stroke();
+      bgCtx.beginPath();
+      bgCtx.arc(W/2, H/2, Math.min(W, H) * 0.12, 0, Math.PI * 2); bgCtx.stroke();
+      const pbW = Math.min(W * 0.5, 360);
+      const pbH = Math.min(H * 0.18, 100);
+      bgCtx.strokeRect((W - pbW)/2, m, pbW, pbH);
+      bgCtx.strokeRect((W - pbW)/2, H - m - pbH, pbW, pbH);
+      const gaW = pbW * 0.5, gaH = pbH * 0.45;
+      bgCtx.strokeRect((W - gaW)/2, m, gaW, gaH);
+      bgCtx.strokeRect((W - gaW)/2, H - m - gaH, gaW, gaH);
+    }
   }
 
   function applyStripesSetting() {
@@ -1284,441 +1466,243 @@
     ctx.translate(o.x, o.y);
 
     if (o.type.startsWith('player')) {
+      // ============================================================
+      // Simple flat-design player (3/4 angle, tall figure).
+      // - No floor ring, no shadow gradients.
+      // - Rectangular torso (no V-tapered jersey).
+      // - No facial features (eyes / mouth) — just hair on head.
+      // ============================================================
       const facing = o.facing || 'front';
-      // For left/right we'll do a true side-view drawing.
-      // For left, mirror at the end so the side-view code is shared with right.
       const isSide = (facing === 'left' || facing === 'right');
       if (facing === 'left') ctx.scale(-1, 1);
 
-      // Slim athletic humanoid: flat colors, jersey + shorts
       const unit = o.r;
-      const headR = unit * 0.45;
-      const headY = -unit * 1.15;
-      const neckH = unit * 0.12;
-      const shoulderY = headY + headR + neckH;
-      const shoulderW = unit * 1.15;
-      const torsoH = unit * 1.15;
-      const torsoBottomY = shoulderY + torsoH;
-      const shortsH = unit * 0.55;
-      const legH = unit * 1.0;
-      const legW = unit * 0.32;
-      const armLen = unit * 1.0;
-      const armW = unit * 0.28;
-
       const skin = '#e8c5a0';
-      const hair = '#2a1810';
-      const shortsColor = '#1a1a1a';
+      const hair = '#1a1410';
+      const shortsColor = '#ffffff';
+      const shoeColor = '#1a1a1a';
       const jerseyColor = o.color;
+      const sockColor = jerseyColor;
       const numberColor = (o.color === '#fbbf24') ? '#222' : '#fff';
 
+      // === Vertical layout (anchor at feet) — 70% scale of original ===
+      const feetY = 0;
+      const shoeH = unit * 0.18;
+      const shoeTopY = feetY - shoeH;
+      const sockH = unit * 0.4;
+      const sockTopY = shoeTopY - sockH;
+      const legH = unit * 0.5;
+      const legTopY = sockTopY - legH;
+      const shortsH = unit * 0.4;
+      const shortsTopY = legTopY - shortsH;
+      const torsoH = unit * 0.8;
+      const torsoTopY = shortsTopY - torsoH;
+      const neckH = unit * 0.06;
+      const headR = unit * 0.32;
+      const headCY = torsoTopY - neckH - headR;
+
+      // Widths
+      const shoulderW = unit * 1.4;
+      const torsoW = unit * 1.05;
+      const shortsW = unit * 1.0;
+      const legW = unit * 0.3;
+      const legGap = unit * 0.18;
+      const armW = unit * 0.26;
+
       if (isSide) {
-        // ========== SIDE VIEW ==========
-        // Right-facing reference (left is flipped via scale).
-        // Stagger legs front/back to convey depth, single visible arm, profile head with nose.
+        // ===================== SIDE VIEW =====================
+        const sideTorsoW = torsoW * 0.42;
 
-        // Drop shadow under feet
-        ctx.beginPath();
-        ctx.ellipse(unit*0.05, torsoBottomY + shortsH + legH + 2, unit * 0.7, unit * 0.16, 0, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(0,0,0,0.35)';
-        ctx.fill();
-
-        const sideTorsoW = unit * 0.75;  // narrower from the side
-        const sideShortsW = sideTorsoW * 0.95;
-        const legStartY = torsoBottomY + shortsH;
-
-        // ===== Back leg (further away) — drawn first, slightly behind =====
-        ctx.fillStyle = '#d4a981'; // slightly darker skin tone for distance
-        const backLegX = -sideTorsoW * 0.15;
-        roundRect(ctx, backLegX - legW/2, legStartY, legW * 0.9, legH * 0.95, legW * 0.35);
-        ctx.fill();
-        // Back leg sock (matches team color, slightly muted)
-        const backSockTopY = legStartY + legH * 0.55;
-        ctx.fillStyle = jerseyColor;
-        ctx.globalAlpha = 0.85;
-        ctx.fillRect(backLegX - legW/2, backSockTopY, legW * 0.9, legH * 0.42);
-        ctx.globalAlpha = 1;
-        ctx.fillStyle = '#1a1a1a';
-        ctx.fillRect(backLegX - legW/2, backSockTopY, legW * 0.9, legH * 0.06);
-        // Back leg shoe
-        ctx.fillStyle = '#1a1a1a';
-        ctx.beginPath();
-        ctx.moveTo(backLegX - legW * 0.5, legStartY + legH - unit*0.05);
-        ctx.lineTo(backLegX + legW * 0.7, legStartY + legH - unit*0.05);
-        ctx.lineTo(backLegX + legW * 0.85, legStartY + legH * 0.95);
-        ctx.lineTo(backLegX - legW * 0.5, legStartY + legH * 0.95);
-        ctx.closePath();
-        ctx.fill();
-
-        // ===== Back arm (subtle, slightly behind torso) =====
-        ctx.fillStyle = '#d4a981';
-        const backArmX = -sideTorsoW * 0.05;
-        roundRect(ctx, backArmX - armW/2, shoulderY + unit*0.1, armW * 0.85, armLen * 0.95, armW * 0.4);
-        ctx.fill();
-        // Back arm sleeve
-        ctx.fillStyle = jerseyColor;
-        ctx.beginPath();
-        ctx.moveTo(backArmX - armW*0.5, shoulderY + unit*0.05);
-        ctx.quadraticCurveTo(backArmX, shoulderY - unit*0.05, backArmX + armW*0.5, shoulderY + unit*0.05);
-        ctx.lineTo(backArmX + armW*0.45, shoulderY + armLen * 0.4);
-        ctx.lineTo(backArmX - armW*0.45, shoulderY + armLen * 0.4);
-        ctx.closePath();
-        ctx.fill();
-
-        // ===== Shorts (side view) =====
-        ctx.fillStyle = shortsColor;
-        ctx.beginPath();
-        ctx.moveTo(-sideShortsW * 0.4, torsoBottomY - 1);
-        ctx.lineTo(sideShortsW * 0.6, torsoBottomY - 1);
-        ctx.quadraticCurveTo(sideShortsW * 0.7, torsoBottomY + shortsH * 0.5, sideShortsW * 0.5, torsoBottomY + shortsH);
-        ctx.lineTo(-sideShortsW * 0.35, torsoBottomY + shortsH);
-        ctx.quadraticCurveTo(-sideShortsW * 0.5, torsoBottomY + shortsH * 0.5, -sideShortsW * 0.4, torsoBottomY - 1);
-        ctx.closePath();
-        ctx.fill();
-
-        // ===== Jersey (side view, narrower) =====
-        ctx.fillStyle = jerseyColor;
-        ctx.beginPath();
-        // back side (left edge)
-        ctx.moveTo(-sideTorsoW * 0.5, shoulderY + unit*0.05);
-        // top of shoulder, slight curve forward
-        ctx.quadraticCurveTo(-sideTorsoW * 0.3, shoulderY - unit*0.05, sideTorsoW * 0.5, shoulderY + unit*0.1);
-        // chest bulge slightly forward
-        ctx.quadraticCurveTo(sideTorsoW * 0.65, shoulderY + torsoH * 0.4, sideTorsoW * 0.5, torsoBottomY);
-        // hem bottom
-        ctx.lineTo(-sideTorsoW * 0.45, torsoBottomY);
-        // back of torso curve
-        ctx.quadraticCurveTo(-sideTorsoW * 0.55, shoulderY + torsoH * 0.5, -sideTorsoW * 0.5, shoulderY + unit*0.05);
-        ctx.closePath();
-        ctx.fill();
-
-        // ===== Front leg (closer, drawn over shorts) =====
-        ctx.fillStyle = skin;
-        const frontLegX = sideTorsoW * 0.2;
-        roundRect(ctx, frontLegX - legW/2, legStartY, legW, legH, legW * 0.4);
-        ctx.fill();
-        // Front leg sock (full team color, vibrant)
-        const frontSockTopY = legStartY + legH * 0.55;
-        ctx.fillStyle = jerseyColor;
-        ctx.fillRect(frontLegX - legW/2, frontSockTopY, legW, legH * 0.42);
-        ctx.fillStyle = '#1a1a1a';
-        ctx.fillRect(frontLegX - legW/2, frontSockTopY, legW, legH * 0.06);
-        // Front shoe (with toe pointing forward = right)
-        ctx.fillStyle = '#1a1a1a';
-        ctx.beginPath();
-        ctx.moveTo(frontLegX - legW * 0.6, legStartY + legH - unit*0.05);
-        ctx.lineTo(frontLegX + legW * 0.5, legStartY + legH - unit*0.1);
-        // Long toe extends forward
-        ctx.quadraticCurveTo(frontLegX + legW * 1.7, legStartY + legH - unit*0.05,
-                              frontLegX + legW * 1.9, legStartY + legH * 0.98);
-        ctx.lineTo(frontLegX + legW * 1.6, legStartY + legH * 1.02);
-        ctx.lineTo(frontLegX - legW * 0.6, legStartY + legH * 1.02);
-        ctx.closePath();
-        ctx.fill();
-        // Shoe stripe
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 1.2;
-        ctx.beginPath();
-        ctx.moveTo(frontLegX - legW * 0.3, legStartY + legH + unit*0.06);
-        ctx.quadraticCurveTo(frontLegX + legW * 0.6, legStartY + legH + unit*0.18,
-                              frontLegX + legW * 1.5, legStartY + legH * 0.99);
-        ctx.stroke();
-
-        // ===== Front arm (visible, slightly forward) =====
-        ctx.fillStyle = skin;
-        const frontArmX = sideTorsoW * 0.5;
-        // Arm shape with slight forward angle
-        ctx.beginPath();
-        ctx.moveTo(frontArmX - armW*0.4, shoulderY + armLen * 0.4);
-        ctx.lineTo(frontArmX + armW*0.4, shoulderY + armLen * 0.4);
-        ctx.quadraticCurveTo(frontArmX + armW*0.6, shoulderY + armLen * 0.7,
-                              frontArmX + armW*0.5, shoulderY + armLen);
-        ctx.lineTo(frontArmX - armW*0.4, shoulderY + armLen);
-        ctx.quadraticCurveTo(frontArmX - armW*0.5, shoulderY + armLen * 0.7,
-                              frontArmX - armW*0.4, shoulderY + armLen * 0.4);
-        ctx.closePath();
-        ctx.fill();
-
-        // Front sleeve (cap sleeve covering shoulder + upper arm)
-        ctx.fillStyle = jerseyColor;
-        ctx.beginPath();
-        ctx.moveTo(frontArmX - armW*0.5, shoulderY + unit*0.05);
-        ctx.quadraticCurveTo(frontArmX, shoulderY - unit*0.08,
-                              frontArmX + armW*0.55, shoulderY + unit*0.08);
-        ctx.lineTo(frontArmX + armW*0.55, shoulderY + armLen * 0.42);
-        ctx.lineTo(frontArmX - armW*0.5, shoulderY + armLen * 0.42);
-        ctx.closePath();
-        ctx.fill();
-
-        // ===== Number on jersey (side view) =====
-        // Reset all transforms and re-translate to player center to draw upright text.
-        ctx.save();
-        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);  // identity (with DPR)
-        ctx.translate(o.x, o.y);
-        ctx.fillStyle = numberColor;
-        const fontSize = Math.round(torsoH * 0.4);
-        ctx.font = `bold ${fontSize}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        // For both left and right, place number slightly forward of center
-        const numXOffset = (facing === 'left') ? -sideTorsoW * 0.05 : sideTorsoW * 0.05;
-        ctx.fillText(o.number, numXOffset, shoulderY + torsoH * 0.55);
-        ctx.restore();
-
-        // ===== Profile head (with nose) =====
-        // Head circle
-        ctx.fillStyle = skin;
-        ctx.beginPath();
-        ctx.arc(0, headY, headR, 0, Math.PI * 2);
-        ctx.fill();
-        // Nose - small triangle pointing forward (right)
-        ctx.fillStyle = skin;
-        ctx.beginPath();
-        ctx.moveTo(headR * 0.85, headY - headR * 0.05);
-        ctx.lineTo(headR * 1.15, headY + headR * 0.05);
-        ctx.lineTo(headR * 0.85, headY + headR * 0.18);
-        ctx.closePath();
-        ctx.fill();
-        // Nose outline
-        ctx.strokeStyle = 'rgba(0,0,0,0.2)';
-        ctx.lineWidth = 0.8;
-        ctx.beginPath();
-        ctx.moveTo(headR * 0.85, headY - headR * 0.05);
-        ctx.lineTo(headR * 1.15, headY + headR * 0.05);
-        ctx.lineTo(headR * 0.85, headY + headR * 0.18);
-        ctx.stroke();
-
-        // No hair (per user request)
-
-        // Eye dot (small, on the visible cheek side)
-        ctx.fillStyle = '#1a1a1a';
-        ctx.beginPath();
-        ctx.arc(headR * 0.4, headY - headR * 0.05, headR * 0.1, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Mouth (small line on the side, near the cheek/jaw)
-        ctx.strokeStyle = '#1a1a1a';
-        ctx.lineWidth = 1.2;
-        ctx.lineCap = 'round';
-        ctx.beginPath();
-        ctx.moveTo(headR * 0.6, headY + headR * 0.4);
-        ctx.lineTo(headR * 0.85, headY + headR * 0.42);
-        ctx.stroke();
-      } else {
-        // ========== FRONT / BACK VIEW (existing logic) ==========
-
-      // ===== Drop shadow under feet =====
-      ctx.beginPath();
-      ctx.ellipse(0, torsoBottomY + shortsH + legH + 2, unit * 0.78, unit * 0.16, 0, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(0,0,0,0.35)';
-      ctx.fill();
-
-      // ===== Legs (skin, below shorts) =====
-      ctx.fillStyle = skin;
-      const legStartY = torsoBottomY + shortsH;
-      drawLeg(ctx, -legW * 1.1, legStartY, legW, legH);
-      drawLeg(ctx, legW * 0.1, legStartY, legW, legH);
-
-      // ===== Socks (lower portion of legs) =====
-      const sockColor = jerseyColor;        // matching team color
-      const sockTrim = '#1a1a1a';
-      const sockTopY = legStartY + legH * 0.55;  // socks start at mid-calf
-      const sockBottomY = legStartY + legH;
-      const sockH = sockBottomY - sockTopY;
-
-      [-1, 1].forEach(side => {
-        const lx = (side === -1) ? -legW * 1.1 : legW * 0.1;
-        // Sock body
+        // Back leg (further)
+        const backLegX = -sideTorsoW * 0.2;
+        // Back sock
         ctx.fillStyle = sockColor;
-        ctx.beginPath();
-        ctx.moveTo(lx, sockTopY);
-        ctx.lineTo(lx + legW * 0.9, sockTopY);
-        ctx.lineTo(lx + legW * 0.85, sockBottomY);
-        ctx.lineTo(lx + legW * 0.05, sockBottomY);
-        ctx.closePath();
-        ctx.fill();
-        // Top trim band (darker stripe at the top of the sock)
-        ctx.fillStyle = sockTrim;
-        ctx.fillRect(lx - 0.5, sockTopY, legW * 0.95, sockH * 0.15);
-      });
-
-      // ===== Spike shoes =====
-      const shoeColor = '#1a1a1a';
-      const shoeAccent = '#ffffff';
-      const shoeY = legStartY + legH - unit*0.05;
-      const shoeW = legW * 1.6;
-      const shoeH = unit * 0.32;
-
-      [-1, 1].forEach(side => {
-        const cx = side * (legW * 0.65);
-        // Shoe body — angled forward (toe slightly outward)
+        ctx.fillRect(backLegX - legW * 0.45, sockTopY, legW * 0.9, sockH);
+        // Back skin (thigh)
+        ctx.fillStyle = skin;
+        ctx.fillRect(backLegX - legW * 0.45, legTopY, legW * 0.9, legH);
+        // Back shoe
         ctx.fillStyle = shoeColor;
         ctx.beginPath();
-        ctx.moveTo(cx - shoeW * 0.35, shoeY);
-        ctx.lineTo(cx - legW * 0.4, shoeY);
-        ctx.quadraticCurveTo(cx - legW * 0.2, shoeY - shoeH*0.15, cx + legW * 0.4, shoeY);
-        ctx.lineTo(cx + shoeW * 0.55, shoeY + shoeH * 0.45);
-        ctx.quadraticCurveTo(cx + shoeW * 0.6, shoeY + shoeH, cx + shoeW * 0.4, shoeY + shoeH);
-        ctx.lineTo(cx - shoeW * 0.3, shoeY + shoeH);
-        ctx.quadraticCurveTo(cx - shoeW * 0.4, shoeY + shoeH, cx - shoeW * 0.4, shoeY + shoeH * 0.5);
+        ctx.ellipse(backLegX + legW * 0.1, feetY - shoeH * 0.4, legW * 0.85, shoeH * 0.7, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Back arm
+        ctx.fillStyle = skin;
+        const backArmX = -sideTorsoW * 0.15;
+        ctx.fillRect(backArmX - armW/2, torsoTopY + torsoH * 0.3, armW * 0.85, torsoH * 0.85);
+        // Back sleeve
+        ctx.fillStyle = jerseyColor;
+        ctx.fillRect(backArmX - armW/2 - 1, torsoTopY + torsoH * 0.05, armW * 0.95, torsoH * 0.4);
+
+        // Shorts (rectangular for side view)
+        ctx.fillStyle = shortsColor;
+        ctx.fillRect(-sideTorsoW * 0.55, shortsTopY, sideTorsoW * 1.15, shortsH);
+
+        // Jersey body (rectangular, side view)
+        ctx.fillStyle = jerseyColor;
+        ctx.fillRect(-sideTorsoW * 0.5, torsoTopY, sideTorsoW, torsoH);
+
+        // Front leg
+        const frontLegX = sideTorsoW * 0.25;
+        // Front sock
+        ctx.fillStyle = sockColor;
+        ctx.fillRect(frontLegX - legW/2, sockTopY, legW, sockH);
+        // Front thigh
+        ctx.fillStyle = skin;
+        ctx.fillRect(frontLegX - legW/2, legTopY, legW, legH);
+        // Front shoe (toe forward)
+        ctx.fillStyle = shoeColor;
+        ctx.beginPath();
+        ctx.ellipse(frontLegX + legW * 0.5, feetY - shoeH * 0.4, legW * 1.1, shoeH * 0.7, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Front arm
+        ctx.fillStyle = skin;
+        const frontArmX = sideTorsoW * 0.6;
+        ctx.fillRect(frontArmX - armW/2, torsoTopY + torsoH * 0.3, armW, torsoH * 0.85);
+        // Front sleeve
+        ctx.fillStyle = jerseyColor;
+        ctx.fillRect(frontArmX - armW/2 - 1, torsoTopY + torsoH * 0.05, armW + 2, torsoH * 0.4);
+
+        // Number on jersey (side, smaller)
+        ctx.save();
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        ctx.translate(o.x, o.y);
+        ctx.fillStyle = numberColor;
+        ctx.font = `bold ${Math.round(torsoH * 0.42)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const numXOffset = (facing === 'left') ? -sideTorsoW * 0.05 : sideTorsoW * 0.05;
+        ctx.fillText(o.number, numXOffset, torsoTopY + torsoH * 0.55);
+        ctx.restore();
+
+        // Head (skin)
+        ctx.fillStyle = skin;
+        ctx.beginPath();
+        ctx.arc(0, headCY, headR, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Hair (back + top + forehead bangs)
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(0, headCY, headR, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.fillStyle = hair;
+        // Back of head (covers back-half + top)
+        ctx.fillRect(-headR * 1.1, headCY - headR * 1.1, headR * 1.4, headR * 1.5);
+        // Top hair coming forward
+        ctx.beginPath();
+        ctx.moveTo(headR * 0.3, headCY - headR);
+        ctx.quadraticCurveTo(headR * 0.7, headCY - headR * 0.6, headR * 0.4, headCY - headR * 0.2);
+        ctx.lineTo(-headR * 0.2, headCY - headR * 0.2);
+        ctx.lineTo(-headR * 0.2, headCY - headR * 1.1);
+        ctx.closePath();
+        ctx.fill();
+        // Forehead bangs (a small fringe falling forward from the top)
+        ctx.beginPath();
+        ctx.moveTo(headR * 0.2, headCY - headR * 0.7);
+        ctx.quadraticCurveTo(headR * 0.95, headCY - headR * 0.5,
+                              headR * 0.95, headCY - headR * 0.05);
+        ctx.quadraticCurveTo(headR * 0.85, headCY + headR * 0.05,
+                              headR * 0.7, headCY - headR * 0.1);
+        ctx.quadraticCurveTo(headR * 0.55, headCY - headR * 0.35,
+                              headR * 0.2, headCY - headR * 0.7);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      } else {
+        // ===================== FRONT / BACK VIEW =====================
+
+        // Arms (skin, hanging on each side)
+        ctx.fillStyle = skin;
+        // Left arm
+        ctx.fillRect(-shoulderW/2 + unit*0.02, torsoTopY + torsoH * 0.5, armW, torsoH * 0.55);
+        // Right arm
+        ctx.fillRect(shoulderW/2 - armW - unit*0.02, torsoTopY + torsoH * 0.5, armW, torsoH * 0.55);
+
+        // Sleeves (jersey color, short cap)
+        ctx.fillStyle = jerseyColor;
+        ctx.fillRect(-shoulderW/2, torsoTopY + unit*0.02, armW + unit*0.05, torsoH * 0.5);
+        ctx.fillRect(shoulderW/2 - armW - unit*0.05, torsoTopY + unit*0.02, armW + unit*0.05, torsoH * 0.5);
+
+        // Shorts (simple rectangle with V-cut at bottom for legs)
+        ctx.fillStyle = shortsColor;
+        ctx.beginPath();
+        ctx.moveTo(-shortsW/2, shortsTopY);
+        ctx.lineTo(shortsW/2, shortsTopY);
+        ctx.lineTo(shortsW/2, shortsTopY + shortsH);
+        ctx.lineTo(unit*0.06, shortsTopY + shortsH);
+        ctx.lineTo(0, shortsTopY + shortsH - unit*0.1);
+        ctx.lineTo(-unit*0.06, shortsTopY + shortsH);
+        ctx.lineTo(-shortsW/2, shortsTopY + shortsH);
         ctx.closePath();
         ctx.fill();
 
-        // White stripe accent (subtle, for visibility on dark green field)
-        ctx.strokeStyle = shoeAccent;
-        ctx.lineWidth = 1.2;
+        // Jersey (rectangular, no taper)
+        ctx.fillStyle = jerseyColor;
+        ctx.fillRect(-torsoW/2, torsoTopY, torsoW, torsoH);
+
+        // Legs (V-split, simple rectangles)
+        ctx.fillStyle = skin;
+        // Left leg
+        ctx.fillRect(-legGap/2 - legW, legTopY, legW, legH);
+        // Right leg
+        ctx.fillRect(legGap/2, legTopY, legW, legH);
+
+        // Socks
+        ctx.fillStyle = sockColor;
+        ctx.fillRect(-legGap/2 - legW, sockTopY, legW, sockH);
+        ctx.fillRect(legGap/2, sockTopY, legW, sockH);
+
+        // Shoes
+        ctx.fillStyle = shoeColor;
         ctx.beginPath();
-        ctx.moveTo(cx - shoeW * 0.15, shoeY + shoeH * 0.35);
-        ctx.quadraticCurveTo(cx + shoeW * 0.15, shoeY + shoeH * 0.55, cx + shoeW * 0.45, shoeY + shoeH * 0.55);
-        ctx.stroke();
-      });
-
-      // ===== Shorts =====
-      ctx.fillStyle = shortsColor;
-      const shortsW = shoulderW * 0.78;
-      ctx.beginPath();
-      // top of shorts (waist)
-      ctx.moveTo(-shortsW/2, torsoBottomY - 1);
-      ctx.lineTo(shortsW/2, torsoBottomY - 1);
-      // right side curve down
-      ctx.quadraticCurveTo(shortsW/2 + unit*0.05, torsoBottomY + shortsH*0.4, shortsW/2 - unit*0.02, torsoBottomY + shortsH);
-      // right leg opening — small inward dip
-      ctx.lineTo(unit*0.05, torsoBottomY + shortsH);
-      // crotch dip
-      ctx.quadraticCurveTo(0, torsoBottomY + shortsH * 0.7, -unit*0.05, torsoBottomY + shortsH);
-      // left leg opening
-      ctx.lineTo(-shortsW/2 + unit*0.02, torsoBottomY + shortsH);
-      // left side curve up
-      ctx.quadraticCurveTo(-shortsW/2 - unit*0.05, torsoBottomY + shortsH*0.4, -shortsW/2, torsoBottomY - 1);
-      ctx.closePath();
-      ctx.fill();
-
-      // ===== Arms (skin, slim) =====
-      ctx.fillStyle = skin;
-      drawArm(ctx, -shoulderW/2 - armW*0.4, shoulderY + unit*0.05, armW, armLen, -1);
-      drawArm(ctx, shoulderW/2 - armW*0.6, shoulderY + unit*0.05, armW, armLen, 1);
-
-      // ===== Jersey (V-tapered, flat color, flat shoulders) =====
-      ctx.fillStyle = jerseyColor;
-      const waistW = shoulderW * 0.72;
-      const collarDip = unit * 0.18;
-      const flatShoulderY = shoulderY + unit*0.05;
-
-      ctx.beginPath();
-      // Left shoulder
-      ctx.moveTo(-shoulderW/2, flatShoulderY);
-      // Flat top to neck
-      ctx.lineTo(-unit*0.18, flatShoulderY);
-      // V-neck dip
-      ctx.quadraticCurveTo(0, flatShoulderY + collarDip, unit*0.18, flatShoulderY);
-      // Flat top to right shoulder
-      ctx.lineTo(shoulderW/2, flatShoulderY);
-      // Right side — taper to waist
-      ctx.quadraticCurveTo(shoulderW*0.5, flatShoulderY + torsoH*0.45, waistW/2, torsoBottomY);
-      // Hem
-      ctx.lineTo(-waistW/2, torsoBottomY);
-      // Left side back to shoulder
-      ctx.quadraticCurveTo(-shoulderW*0.5, flatShoulderY + torsoH*0.45, -shoulderW/2, flatShoulderY);
-      ctx.closePath();
-      ctx.fill();
-
-      // ===== Short sleeves — cover shoulder + upper arm =====
-      // Flat shoulder line (no rugby pads, no shoulder bulge).
-      const sleeveLen = armLen * 0.38;
-      const sleeveTopY = shoulderY + unit*0.05;
-      ctx.fillStyle = jerseyColor;
-
-      // Left sleeve — straight horizontal top, shoulder is flush with torso top
-      ctx.beginPath();
-      ctx.moveTo(-shoulderW/2 + unit*0.02, sleeveTopY);
-      // Outer top — flat horizontal
-      ctx.lineTo(-shoulderW/2 - armW*0.5, sleeveTopY);
-      // Outer side straight down to cuff
-      ctx.lineTo(-shoulderW/2 - armW*0.5, sleeveTopY + sleeveLen);
-      // Cuff bottom (slight inward)
-      ctx.lineTo(-shoulderW/2 + unit*0.05, sleeveTopY + sleeveLen + unit*0.03);
-      // Inner side back up
-      ctx.lineTo(-shoulderW/2 + unit*0.08, sleeveTopY + unit*0.1);
-      ctx.closePath();
-      ctx.fill();
-
-      // Right sleeve (mirrored)
-      ctx.beginPath();
-      ctx.moveTo(shoulderW/2 - unit*0.02, sleeveTopY);
-      ctx.lineTo(shoulderW/2 + armW*0.5, sleeveTopY);
-      ctx.lineTo(shoulderW/2 + armW*0.5, sleeveTopY + sleeveLen);
-      ctx.lineTo(shoulderW/2 - unit*0.05, sleeveTopY + sleeveLen + unit*0.03);
-      ctx.lineTo(shoulderW/2 - unit*0.08, sleeveTopY + unit*0.1);
-      ctx.closePath();
-      ctx.fill();
-
-      // Sleeve cuff hem (thin shadow line)
-      ctx.strokeStyle = 'rgba(0,0,0,0.2)';
-      ctx.lineWidth = 0.8;
-      ctx.beginPath();
-      ctx.moveTo(-shoulderW/2 - armW*0.5, sleeveTopY + sleeveLen);
-      ctx.lineTo(-shoulderW/2 + unit*0.05, sleeveTopY + sleeveLen + unit*0.03);
-      ctx.moveTo(shoulderW/2 + armW*0.5, sleeveTopY + sleeveLen);
-      ctx.lineTo(shoulderW/2 - unit*0.05, sleeveTopY + sleeveLen + unit*0.03);
-      ctx.stroke();
-
-      // ===== Neck (small skin patch) =====
-      ctx.fillStyle = skin;
-      ctx.fillRect(-unit*0.15, shoulderY - neckH*0.3, unit*0.3, neckH);
-
-      // ===== Head =====
-      ctx.fillStyle = skin;
-      ctx.beginPath();
-      ctx.arc(0, headY, headR, 0, Math.PI * 2);
-      ctx.fill();
-
-      if (facing === 'back') {
-        // Back of head — full coverage (no face details)
-        // Just leave skin-colored head; could add a small accent but keep clean.
-      } else {
-        // Front view — add face details (eyes and mouth)
-        // No hair for now per user request.
-
-        // Eyes — two small dark dots
-        ctx.fillStyle = '#1a1a1a';
-        const eyeY = headY - headR * 0.05;
-        const eyeOffsetX = headR * 0.32;
-        const eyeR = headR * 0.1;
-        ctx.beginPath();
-        ctx.arc(-eyeOffsetX, eyeY, eyeR, 0, Math.PI * 2);
+        ctx.ellipse(-legGap/2 - legW * 0.5, feetY - shoeH * 0.4, legW * 0.7, shoeH * 0.75, 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.beginPath();
-        ctx.arc(eyeOffsetX, eyeY, eyeR, 0, Math.PI * 2);
+        ctx.ellipse(legGap/2 + legW * 0.5, feetY - shoeH * 0.4, legW * 0.7, shoeH * 0.75, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Mouth — small subtle smile line
-        ctx.strokeStyle = '#1a1a1a';
-        ctx.lineWidth = 1.2;
-        ctx.lineCap = 'round';
+        // Head (skin)
+        ctx.fillStyle = skin;
         ctx.beginPath();
-        ctx.moveTo(-headR * 0.18, headY + headR * 0.4);
-        ctx.quadraticCurveTo(0, headY + headR * 0.55,
-                              headR * 0.18, headY + headR * 0.4);
-        ctx.stroke();
-      }
+        ctx.arc(0, headCY, headR, 0, Math.PI * 2);
+        ctx.fill();
 
-      // ===== Number on jersey (hide for back-facing — back numbers can be drawn here too if desired) =====
-      if (facing !== 'back') {
+        if (facing === 'back') {
+          // Back of head — full hair
+          ctx.fillStyle = hair;
+          ctx.beginPath();
+          ctx.arc(0, headCY, headR, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          // Front view — hair covers top 65% of head
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(0, headCY, headR, 0, Math.PI * 2);
+          ctx.clip();
+          ctx.fillStyle = hair;
+          ctx.beginPath();
+          ctx.moveTo(-headR * 1.1, headCY - headR * 1.1);
+          ctx.lineTo(headR * 1.1, headCY - headR * 1.1);
+          ctx.lineTo(headR * 1.1, headCY - headR * 0.05);
+          ctx.quadraticCurveTo(headR * 0.6, headCY + headR * 0.05, headR * 0.3, headCY - headR * 0.15);
+          ctx.quadraticCurveTo(0, headCY - headR * 0.35, -headR * 0.3, headCY - headR * 0.15);
+          ctx.quadraticCurveTo(-headR * 0.6, headCY + headR * 0.05, -headR * 1.1, headCY - headR * 0.05);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        }
+
+        // Number on jersey (rectangular center)
         ctx.fillStyle = numberColor;
         const fontSize = Math.round(torsoH * 0.5);
         ctx.font = `bold ${fontSize}px sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(o.number, 0, shoulderY + torsoH * 0.58);
-      } else {
-        // Back number (looks good on the back of jersey)
-        ctx.fillStyle = numberColor;
-        const fontSize = Math.round(torsoH * 0.55);
-        ctx.font = `bold ${fontSize}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(o.number, 0, shoulderY + torsoH * 0.58);
+        ctx.fillText(o.number, 0, torsoTopY + torsoH * 0.55);
       }
-      } // end of front/back view else block
     } else if (o.type === 'cone') {
       const baseColor = o.color || '#ff7a2a';
       const darkColor = darken(baseColor, 0.25);
@@ -1820,7 +1804,7 @@
       ctx.fill();
     } else if (o.type === 'goal') {
       // Apply size scaling
-      const sizeMap = { small: 0.7, medium: 1.0, large: 1.4 };
+      const sizeMap = { small: 0.7, medium: 1.0, large: 2.1 };
       const scale = sizeMap[o.size || 'medium'];
 
       // Apply facing rotation: down (default), up, left, right
@@ -1864,10 +1848,16 @@
       ctx.strokeStyle = '#ffdd00';
       ctx.lineWidth = 2;
       ctx.setLineDash([4, 3]);
-      ctx.beginPath();
-      const ringR = o.type.startsWith('player') ? o.r * 2.2 : o.r + 6;
-      ctx.arc(0, 0, ringR, 0, Math.PI * 2);
-      ctx.stroke();
+      if (o.type.startsWith('player')) {
+        // Tall player: oval ring around the figure
+        ctx.beginPath();
+        ctx.ellipse(0, -o.r * 1.4, o.r * 1.3, o.r * 1.9, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      } else {
+        ctx.beginPath();
+        ctx.arc(0, 0, o.r + 6, 0, Math.PI * 2);
+        ctx.stroke();
+      }
       ctx.setLineDash([]);
     }
     if (ui.recording && ui.recordingTargetId === o.id) {
@@ -2123,14 +2113,22 @@
       ui.arrowDrawing = null;
       showArrowBanner(true, name);
       showPenPalette(false);
+      showConePalette(false);
     } else if (name === 'pen') {
       ui.tool = name;
       showArrowBanner(false);
       showPenPalette(true);
+      showConePalette(false);
+    } else if (name === 'cone') {
+      ui.tool = name;
+      showArrowBanner(false);
+      showPenPalette(false);
+      showConePalette(true);
     } else {
       ui.tool = name;
       showArrowBanner(false);
       showPenPalette(false);
+      showConePalette(false);
     }
     document.querySelectorAll('.tool').forEach(b => {
       b.classList.toggle('active', b.dataset.tool === name);
@@ -2167,6 +2165,33 @@
     });
   }
 
+  function showConePalette(show) {
+    const el = document.getElementById('conePalette');
+    el.style.display = show ? 'flex' : 'none';
+    if (show) updateConeColorHighlight();
+  }
+
+  function updateConeColorHighlight() {
+    document.querySelectorAll('.cone-color-pal-btn').forEach(b => {
+      const isCur = b.dataset.color === ui.coneColor;
+      b.style.borderColor = isCur ? '#ffdd00' : 'transparent';
+      b.style.boxShadow = isCur ? '0 0 0 2px rgba(255, 221, 0, 0.4)' : 'none';
+    });
+  }
+
+  function nextPlayerNumber(playerType) {
+    // Find the smallest positive integer not currently used by this type in the current scene.
+    const usedNumbers = new Set();
+    scene().objects.forEach(o => {
+      if (o.type === playerType && typeof o.number === 'number') {
+        usedNumbers.add(o.number);
+      }
+    });
+    let n = 1;
+    while (usedNumbers.has(n)) n++;
+    return n;
+  }
+
   function createObject(type, x, y) {
     saveHistory();
     const o = {
@@ -2174,11 +2199,11 @@
       type, x, y,
       keyframes: [{t: 0, x, y}],
     };
-    if (type === 'player-blue')   { o.color = '#2563eb'; o.number = ++project.counters.blue;   o.r = 14; o.facing = 'front'; }
-    else if (type === 'player-red')    { o.color = '#dc2626'; o.number = ++project.counters.red;    o.r = 14; o.facing = 'front'; }
-    else if (type === 'player-yellow') { o.color = '#fbbf24'; o.number = ++project.counters.yellow; o.r = 14; o.facing = 'front'; }
-    else if (type === 'cone')   { o.r = 14; o.color = '#ff7a2a'; }  // default orange
-    else if (type === 'ball')   { o.r = 13; }
+    if (type === 'player-blue')   { o.color = '#2563eb'; o.number = nextPlayerNumber('player-blue');   o.r = 14; o.facing = 'front'; }
+    else if (type === 'player-red')    { o.color = '#dc2626'; o.number = nextPlayerNumber('player-red');    o.r = 14; o.facing = 'front'; }
+    else if (type === 'player-yellow') { o.color = '#fbbf24'; o.number = nextPlayerNumber('player-yellow'); o.r = 14; o.facing = 'front'; }
+    else if (type === 'cone')   { o.r = 14; o.color = ui.coneColor; }
+    else if (type === 'ball')   { o.r = 10; }
     else if (type === 'goal')   { o.r = 28; o.facing = 'down'; o.size = 'medium'; }
     scene().objects.push(o);
     ui.selectedId = o.id;
@@ -2352,19 +2377,25 @@
   function hitTest(x, y) {
     for (let i = scene().objects.length - 1; i >= 0; i--) {
       const o = scene().objects[i];
-      const dx = x - o.x, dy = y - o.y;
-      let hitR;
+      const dx = x - o.x;
+      const dy = y - o.y;
       if (o.type.startsWith('player')) {
-        hitR = o.r * 2.2;
+        // Player: tall figure with feet at o.y, body extending up by ~3*r (after 70% scale)
+        const halfW = o.r * 1.1;
+        const top = -o.r * 3.2;
+        const bottom = o.r * 0.4;
+        if (dx >= -halfW && dx <= halfW && dy >= top && dy <= bottom) {
+          return o;
+        }
       } else if (o.type === 'goal') {
-        // Goal hit area scales with size setting
-        const sizeMap = { small: 0.7, medium: 1.0, large: 1.4 };
+        const sizeMap = { small: 0.7, medium: 1.0, large: 2.1 };
         const scale = sizeMap[o.size || 'medium'];
-        hitR = o.r * scale + 6;
+        const hitR = o.r * scale + 6;
+        if (dx*dx + dy*dy <= hitR * hitR) return o;
       } else {
-        hitR = o.r + 6;
+        const hitR = o.r + 6;
+        if (dx*dx + dy*dy <= hitR * hitR) return o;
       }
-      if (dx*dx + dy*dy <= hitR * hitR) return o;
     }
     return null;
   }
@@ -2873,7 +2904,11 @@
     }
 
     createObject(ui.tool, x, y);
-    setTimeout(() => setTool('select'), 50);
+    // For cone tool, stay in cone mode for continuous placement.
+    // For other tools (player, ball, goal), auto-return to select.
+    if (ui.tool !== 'cone') {
+      setTimeout(() => setTool('select'), 50);
+    }
   }
 
   function pointerMove(e) {
@@ -2954,6 +2989,71 @@
   // Prevent default touch behaviors (scrolling, zoom) on the field
   fieldWrap.style.touchAction = 'none';
 
+  // ---------- Draggable toolbar ----------
+  const toolbarEl = document.getElementById('toolbar');
+  const toolbarHandle = document.getElementById('toolbarHandle');
+  let toolbarDrag = null;
+
+  // Restore saved position
+  try {
+    const savedPos = localStorage.getItem('toolbarPosition');
+    if (savedPos) {
+      const { left, top } = JSON.parse(savedPos);
+      toolbarEl.style.left = left + 'px';
+      toolbarEl.style.top = top + 'px';
+      toolbarEl.style.transform = 'none';
+    }
+  } catch (_) {}
+
+  toolbarHandle.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = toolbarEl.getBoundingClientRect();
+    const wrapRect = fieldWrap.getBoundingClientRect();
+    toolbarDrag = {
+      startX: e.clientX,
+      startY: e.clientY,
+      startLeft: rect.left - wrapRect.left,
+      startTop: rect.top - wrapRect.top,
+    };
+    toolbarHandle.setPointerCapture(e.pointerId);
+    toolbarEl.classList.add('dragging');
+    // Lock current position before dragging (in case it's still using the original transform)
+    toolbarEl.style.left = toolbarDrag.startLeft + 'px';
+    toolbarEl.style.top = toolbarDrag.startTop + 'px';
+    toolbarEl.style.transform = 'none';
+  });
+
+  toolbarHandle.addEventListener('pointermove', (e) => {
+    if (!toolbarDrag) return;
+    e.preventDefault();
+    const dx = e.clientX - toolbarDrag.startX;
+    const dy = e.clientY - toolbarDrag.startY;
+    const wrapRect = fieldWrap.getBoundingClientRect();
+    const tbW = toolbarEl.offsetWidth;
+    const tbH = toolbarEl.offsetHeight;
+    let newLeft = toolbarDrag.startLeft + dx;
+    let newTop = toolbarDrag.startTop + dy;
+    // Constrain within fieldWrap bounds
+    newLeft = Math.max(0, Math.min(wrapRect.width - tbW, newLeft));
+    newTop = Math.max(0, Math.min(wrapRect.height - tbH, newTop));
+    toolbarEl.style.left = newLeft + 'px';
+    toolbarEl.style.top = newTop + 'px';
+  });
+
+  toolbarHandle.addEventListener('pointerup', (e) => {
+    if (!toolbarDrag) return;
+    toolbarHandle.releasePointerCapture(e.pointerId);
+    toolbarDrag = null;
+    toolbarEl.classList.remove('dragging');
+    // Save position to localStorage
+    try {
+      const left = parseFloat(toolbarEl.style.left) || 0;
+      const top = parseFloat(toolbarEl.style.top) || 0;
+      localStorage.setItem('toolbarPosition', JSON.stringify({ left, top }));
+    } catch (_) {}
+  });
+
   function armRecording() {
     ui.recording = true;
     ui.recordingTargetId = null;
@@ -3023,6 +3123,24 @@
   // Block events from pen palette bubbling
   ['mousedown', 'touchstart', 'pointerdown', 'click'].forEach(evtName => {
     document.getElementById('penPalette').addEventListener(evtName, (ev) => ev.stopPropagation());
+  });
+
+  // Cone color palette
+  document.querySelectorAll('.cone-color-pal-btn').forEach(b => {
+    const handler = (ev) => {
+      ev.stopPropagation();
+      ev.preventDefault();
+      ui.coneColor = b.dataset.color;
+      updateConeColorHighlight();
+    };
+    b.addEventListener('click', handler);
+    b.addEventListener('touchstart', handler, { passive: false });
+  });
+  document.getElementById('coneCancel').addEventListener('click', () => setTool('select'));
+
+  // Block events from cone palette bubbling
+  ['mousedown', 'touchstart', 'pointerdown', 'click'].forEach(evtName => {
+    document.getElementById('conePalette').addEventListener(evtName, (ev) => ev.stopPropagation());
   });
 
   function applyTime(t, sc = scene()) {
@@ -3272,9 +3390,24 @@
       counters: { ...project.counters },
     });
     if (ui.history.length > 30) ui.history.shift();
+    // Once a new action happens, redo stack is invalidated
+    ui.redoStack = [];
   }
-  document.getElementById('undoBtn').addEventListener('click', () => {
-    if (ui.history.length === 0) { showHint('元に戻す履歴がありません'); return; }
+
+  function undo() {
+    if (ui.history.length === 0) {
+      showHint('元に戻す履歴がありません');
+      return;
+    }
+    // Save current state to redo stack before reverting
+    ui.redoStack = ui.redoStack || [];
+    ui.redoStack.push({
+      scenes: JSON.parse(JSON.stringify(project.scenes)),
+      activeIdx: project.activeIdx,
+      counters: { ...project.counters },
+    });
+    if (ui.redoStack.length > 30) ui.redoStack.shift();
+
     const prev = ui.history.pop();
     project.scenes = prev.scenes;
     project.activeIdx = prev.activeIdx;
@@ -3282,45 +3415,95 @@
     ui.selectedId = null;
     renderScenes();
     redraw();
-  });
+  }
+
+  function redo() {
+    if (!ui.redoStack || ui.redoStack.length === 0) {
+      showHint('やり直しできる履歴がありません');
+      return;
+    }
+    // Save current state to history stack before re-applying
+    ui.history.push({
+      scenes: JSON.parse(JSON.stringify(project.scenes)),
+      activeIdx: project.activeIdx,
+      counters: { ...project.counters },
+    });
+    if (ui.history.length > 30) ui.history.shift();
+
+    const next = ui.redoStack.pop();
+    project.scenes = next.scenes;
+    project.activeIdx = next.activeIdx;
+    project.counters = next.counters;
+    ui.selectedId = null;
+    renderScenes();
+    redraw();
+  }
+
+  document.getElementById('undoBtn').addEventListener('click', undo);
+  document.getElementById('redoBtn').addEventListener('click', redo);
 
   const menu = document.getElementById('menu');
   const settingsPanel = document.getElementById('settingsPanel');
+  const legendPanel = document.getElementById('legendPanel');
 
   document.getElementById('menuBtn').addEventListener('click', e => {
     e.stopPropagation();
     settingsPanel.classList.remove('show');
+    legendPanel.classList.remove('show');
     menu.classList.toggle('show');
   });
   document.getElementById('settingsBtn').addEventListener('click', e => {
     e.stopPropagation();
     menu.classList.remove('show');
+    legendPanel.classList.remove('show');
     settingsPanel.classList.toggle('show');
+  });
+  document.getElementById('legendBtn').addEventListener('click', e => {
+    e.stopPropagation();
+    menu.classList.remove('show');
+    settingsPanel.classList.remove('show');
+    legendPanel.classList.toggle('show');
   });
   document.addEventListener('click', () => {
     menu.classList.remove('show');
     settingsPanel.classList.remove('show');
+    legendPanel.classList.remove('show');
   });
   // Prevent panel clicks from closing
   settingsPanel.addEventListener('click', e => e.stopPropagation());
+  legendPanel.addEventListener('click', e => e.stopPropagation());
 
-  // Settings toggle handlers
-  const linesToggle = document.getElementById('settingShowLines');
+  // Settings handlers
   const stripesToggle = document.getElementById('settingShowStripes');
-
-  // Initialize toggle states from saved settings
-  linesToggle.checked = settings.showLines;
   stripesToggle.checked = settings.showStripes;
-
-  linesToggle.addEventListener('change', () => {
-    settings.showLines = linesToggle.checked;
-    saveSettings();
-    drawBackground();
-  });
   stripesToggle.addEventListener('change', () => {
     settings.showStripes = stripesToggle.checked;
     saveSettings();
     applyStripesSetting();
+  });
+
+  // Line mode buttons (full / half / none)
+  function updateLineModeHighlight() {
+    document.querySelectorAll('.line-mode-btn').forEach(b => {
+      const isCur = b.dataset.mode === settings.lineMode;
+      b.style.background = isCur ? '#ffdd00' : 'rgba(255,255,255,0.06)';
+      b.style.color = isCur ? '#000' : '#f5f5f0';
+      b.style.borderColor = isCur ? '#ffdd00' : 'transparent';
+    });
+  }
+  updateLineModeHighlight();
+
+  document.querySelectorAll('.line-mode-btn').forEach(b => {
+    const handler = (ev) => {
+      ev.stopPropagation();
+      ev.preventDefault();
+      settings.lineMode = b.dataset.mode;
+      saveSettings();
+      updateLineModeHighlight();
+      drawBackground();
+    };
+    b.addEventListener('click', handler);
+    b.addEventListener('touchstart', handler, { passive: false });
   });
 
   document.querySelectorAll('.menu-item').forEach(item => {
