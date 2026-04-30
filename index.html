@@ -172,6 +172,9 @@
     opacity: 0.5;
     pointer-events: none;
   }
+  .field-wrap.no-stripes::before {
+    display: none;
+  }
 
   .toolbar {
     position: absolute;
@@ -520,6 +523,23 @@
     color: var(--text);
   }
   .menu-item:hover { background: rgba(255, 221, 0, 0.1); }
+
+  /* Toggle switch */
+  input[type="checkbox"]::after {
+    content: '';
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 16px; height: 16px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s, background 0.2s;
+  }
+  input[type="checkbox"]:checked {
+    background: var(--accent) !important;
+  }
+  input[type="checkbox"]:checked::after {
+    transform: translateX(16px);
+  }
   .menu-item svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
 
   .modal-bg {
@@ -583,9 +603,50 @@
       <button class="icon-btn" id="undoBtn" title="元に戻す">
         <svg viewBox="0 0 24 24"><path d="M3 7v6h6M3 13a9 9 0 1 0 3-7"/></svg>
       </button>
+      <button class="icon-btn" id="settingsBtn" title="設定">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
       <button class="icon-btn" id="menuBtn" title="メニュー">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
       </button>
+    </div>
+  </div>
+
+  <div class="menu" id="settingsPanel" style="right: 56px;">
+    <div style="font-size: 10px; color: #a0a89c; padding: 6px 12px 4px; letter-spacing: 0.05em; font-weight: 600;">
+      設定
+    </div>
+    <div style="padding: 0 12px 8px;">
+      <label style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; cursor: pointer; font-size: 13px;">
+        <span>フィールドラインを表示</span>
+        <input type="checkbox" id="settingShowLines" checked style="
+          width: 36px; height: 20px;
+          appearance: none;
+          -webkit-appearance: none;
+          background: rgba(255,255,255,0.15);
+          border-radius: 10px;
+          position: relative;
+          cursor: pointer;
+          outline: none;
+          transition: background 0.2s;
+          flex-shrink: 0;
+        ">
+      </label>
+      <label style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; cursor: pointer; font-size: 13px;">
+        <span>ストライプ模様を表示</span>
+        <input type="checkbox" id="settingShowStripes" checked style="
+          width: 36px; height: 20px;
+          appearance: none;
+          -webkit-appearance: none;
+          background: rgba(255,255,255,0.15);
+          border-radius: 10px;
+          position: relative;
+          cursor: pointer;
+          outline: none;
+          transition: background 0.2s;
+          flex-shrink: 0;
+        ">
+      </label>
     </div>
   </div>
 
@@ -823,7 +884,8 @@
       -webkit-backdrop-filter: blur(8px);
       display: none;
       box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-      min-width: 160px;
+      min-width: 200px;
+      max-width: 260px;
     ">
       <div style="font-size: 10px; color: #a0a89c; padding: 4px 6px 6px; letter-spacing: 0.05em;">
         この矢印の番号
@@ -832,9 +894,14 @@
       <div style="font-size: 10px; color: #a0a89c; padding: 6px 6px 0; line-height: 1.4;">
         同じ番号 = 同時に動く
       </div>
+      <div style="height: 1px; background: rgba(255,221,0,0.15); margin: 8px 2px;"></div>
+      <div style="font-size: 10px; color: #a0a89c; padding: 0 6px 6px; letter-spacing: 0.05em;">
+        動かす対象
+      </div>
+      <div id="orderPickerTargets" style="display: flex; flex-wrap: wrap; gap: 4px; padding: 0 2px;"></div>
       <button id="orderPickerDelete" style="
         width: 100%;
-        margin-top: 8px;
+        margin-top: 10px;
         background: rgba(220, 38, 38, 0.2);
         color: #f87171;
         border: 1px solid rgba(220, 38, 38, 0.4);
@@ -941,7 +1008,7 @@
     recordStartTime: 0,
     recordPath: [],
     arrowDrawing: null,
-    penStroke: null,         // current stroke being drawn { points: [{x,y}], color }
+    penStroke: null,
     playing: false,
     playStart: 0,
     playTime: 0,
@@ -952,6 +1019,25 @@
     playAll: false,
     playAllSceneIdx: 0,
   };
+
+  // App-wide settings (saved to localStorage)
+  const settings = {
+    showLines: true,
+    showStripes: true,
+  };
+  // Load saved settings
+  try {
+    const saved = localStorage.getItem('trainingBoardSettings');
+    if (saved) {
+      const obj = JSON.parse(saved);
+      Object.assign(settings, obj);
+    }
+  } catch (_) {}
+  function saveSettings() {
+    try {
+      localStorage.setItem('trainingBoardSettings', JSON.stringify(settings));
+    } catch (_) {}
+  }
 
   let DPR = Math.max(1, window.devicePixelRatio || 1);
   let W = 0, H = 0;
@@ -978,6 +1064,10 @@
 
   function drawBackground() {
     bgCtx.clearRect(0, 0, W, H);
+
+    // Skip lines if user disabled them
+    if (!settings.showLines) return;
+
     bgCtx.strokeStyle = 'rgba(255,255,255,0.5)';
     bgCtx.lineWidth = 2;
     const m = 20;
@@ -996,6 +1086,11 @@
     const gaW = pbW * 0.5, gaH = pbH * 0.45;
     bgCtx.strokeRect((W - gaW)/2, m, gaW, gaH);
     bgCtx.strokeRect((W - gaW)/2, H - m - gaH, gaW, gaH);
+  }
+
+  function applyStripesSetting() {
+    // Toggle the field stripes pattern (CSS pseudo-element on .field-wrap::before)
+    fieldWrap.classList.toggle('no-stripes', !settings.showStripes);
   }
 
   function drawObject(ctx, o) {
@@ -2079,8 +2174,9 @@
     orderPickerArrowId = arrow.id;
     const picker = document.getElementById('orderPicker');
     const optsDiv = document.getElementById('orderPickerOptions');
+    const targetsDiv = document.getElementById('orderPickerTargets');
 
-    // Always show the full range: 0 ... (max + 1)
+    // ----- Order numbers -----
     const maxOrder = scene().arrows.reduce((m, a) => Math.max(m, a.order), 0);
     const choices = [];
     for (let o = 0; o <= maxOrder + 1; o++) choices.push(o);
@@ -2117,10 +2213,77 @@
       optsDiv.appendChild(btn);
     });
 
+    // ----- Targets (which object the arrow moves) -----
+    targetsDiv.innerHTML = '';
+    // Filter: dribble arrows can target players; pass/shoot can target balls.
+    // But to give flexibility, show all sensible candidates.
+    const candidates = scene().objects.filter(o => {
+      if (arrow.type === 'arrow-dribble') return o.type.startsWith('player');
+      // pass / shoot
+      return o.type === 'ball' || o.type.startsWith('player');
+    });
+
+    if (candidates.length === 0) {
+      const msg = document.createElement('div');
+      msg.style.cssText = 'font-size: 10px; color: #a0a89c; padding: 4px;';
+      msg.textContent = '対象アイコンがありません';
+      targetsDiv.appendChild(msg);
+    }
+
+    candidates.forEach(target => {
+      const btn = document.createElement('button');
+      const isCurrent = target.id === arrow.targetId;
+
+      // Label: 青1, 赤2, ボール etc.
+      let label = '';
+      if (target.type === 'player-blue') label = `青${target.number}`;
+      else if (target.type === 'player-red') label = `赤${target.number}`;
+      else if (target.type === 'player-yellow') label = `黄${target.number}`;
+      else if (target.type === 'ball') label = '⚽';
+
+      // Color based on target type
+      let bg = 'rgba(255,255,255,0.08)';
+      let fg = '#f5f5f0';
+      if (isCurrent) {
+        if (target.type === 'player-blue') { bg = '#2563eb'; fg = '#fff'; }
+        else if (target.type === 'player-red') { bg = '#dc2626'; fg = '#fff'; }
+        else if (target.type === 'player-yellow') { bg = '#fbbf24'; fg = '#222'; }
+        else if (target.type === 'ball') { bg = '#fff'; fg = '#000'; }
+      }
+
+      btn.textContent = label;
+      btn.style.cssText = `
+        background: ${bg};
+        color: ${fg};
+        border: 1px solid ${isCurrent ? '#ffdd00' : 'transparent'};
+        padding: 6px 10px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 12px;
+        min-width: 36px;
+      `;
+      const handlePick = (ev) => {
+        ev.stopPropagation();
+        ev.preventDefault();
+        const a = scene().arrows.find(x => x.id === orderPickerArrowId);
+        if (!a) return;
+        saveHistory();
+        a.targetId = target.id;
+        rebuildAnimation();
+        hideOrderPicker();
+        redraw();
+      };
+      btn.addEventListener('click', handlePick);
+      btn.addEventListener('touchstart', handlePick, { passive: false });
+      targetsDiv.appendChild(btn);
+    });
+
+    // ----- Position the picker -----
     const wrapRect = fieldWrap.getBoundingClientRect();
     picker.style.display = 'block';
-    const pw = picker.offsetWidth || 180;
-    const ph = picker.offsetHeight || 130;
+    const pw = picker.offsetWidth || 220;
+    const ph = picker.offsetHeight || 180;
     let px = x + 14;
     let py = y - ph / 2;
     if (px + pw > wrapRect.width - 8) px = x - pw - 14;
@@ -2712,11 +2875,43 @@
   });
 
   const menu = document.getElementById('menu');
+  const settingsPanel = document.getElementById('settingsPanel');
+
   document.getElementById('menuBtn').addEventListener('click', e => {
     e.stopPropagation();
+    settingsPanel.classList.remove('show');
     menu.classList.toggle('show');
   });
-  document.addEventListener('click', () => menu.classList.remove('show'));
+  document.getElementById('settingsBtn').addEventListener('click', e => {
+    e.stopPropagation();
+    menu.classList.remove('show');
+    settingsPanel.classList.toggle('show');
+  });
+  document.addEventListener('click', () => {
+    menu.classList.remove('show');
+    settingsPanel.classList.remove('show');
+  });
+  // Prevent panel clicks from closing
+  settingsPanel.addEventListener('click', e => e.stopPropagation());
+
+  // Settings toggle handlers
+  const linesToggle = document.getElementById('settingShowLines');
+  const stripesToggle = document.getElementById('settingShowStripes');
+
+  // Initialize toggle states from saved settings
+  linesToggle.checked = settings.showLines;
+  stripesToggle.checked = settings.showStripes;
+
+  linesToggle.addEventListener('change', () => {
+    settings.showLines = linesToggle.checked;
+    saveSettings();
+    drawBackground();
+  });
+  stripesToggle.addEventListener('change', () => {
+    settings.showStripes = stripesToggle.checked;
+    saveSettings();
+    applyStripesSetting();
+  });
 
   document.querySelectorAll('.menu-item').forEach(item => {
     item.addEventListener('click', () => {
@@ -2797,6 +2992,7 @@
   }
 
   function init() {
+    applyStripesSetting();
     resize();
     renderScenes();
     setTimeout(() => {
