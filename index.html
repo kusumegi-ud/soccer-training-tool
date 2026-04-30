@@ -2210,13 +2210,12 @@
   });
 
   // Block events from picker bubbling
-  ['mousedown', 'touchstart', 'click'].forEach(evtName => {
+  ['mousedown', 'touchstart', 'pointerdown', 'click'].forEach(evtName => {
     facingPicker.addEventListener(evtName, (ev) => ev.stopPropagation());
   });
 
   // Block pointer events from inside the picker bubbling to fieldWrap's pointer handlers.
-  // Without this, tapping a button also triggers a pointerDown on the canvas underneath.
-  ['mousedown', 'touchstart', 'click'].forEach(evtName => {
+  ['mousedown', 'touchstart', 'pointerdown', 'click'].forEach(evtName => {
     document.getElementById('orderPicker').addEventListener(evtName, (ev) => {
       ev.stopPropagation();
     });
@@ -2224,8 +2223,7 @@
 
   function getPos(e) {
     const rect = fieldWrap.getBoundingClientRect();
-    const t = (e.touches && e.touches[0]) || e;
-    return { x: t.clientX - rect.left, y: t.clientY - rect.top };
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
   }
 
   let lastTap = 0;
@@ -2393,12 +2391,13 @@
 
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
 
-  fieldWrap.addEventListener('mousedown', pointerDown);
-  fieldWrap.addEventListener('mousemove', pointerMove);
-  window.addEventListener('mouseup', pointerUp);
-  fieldWrap.addEventListener('touchstart', pointerDown, { passive: false });
-  fieldWrap.addEventListener('touchmove',  pointerMove,  { passive: false });
-  window.addEventListener('touchend', pointerUp);
+  // Use Pointer Events API for unified mouse/touch/stylus handling
+  fieldWrap.addEventListener('pointerdown', pointerDown);
+  fieldWrap.addEventListener('pointermove', pointerMove);
+  window.addEventListener('pointerup', pointerUp);
+  window.addEventListener('pointercancel', pointerUp);
+  // Prevent default touch behaviors (scrolling, zoom) on the field
+  fieldWrap.style.touchAction = 'none';
 
   function armRecording() {
     ui.recording = true;
