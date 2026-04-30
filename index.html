@@ -1,0 +1,2813 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Soccer Training Designer v2</title>
+<style>
+  :root {
+    --bg-deep: #0a0e0a;
+    --field-dark: #1f4a2c;
+    --field-mid: #2a5a37;
+    --field-light: #336b41;
+    --accent: #ffdd00;
+    --accent-glow: rgba(255, 221, 0, 0.4);
+    --player-blue: #2563eb;
+    --player-red: #dc2626;
+    --player-yellow: #fbbf24;
+    --cone-orange: #ff6b1a;
+    --arrow-pass: #4ade80;
+    --arrow-shoot: #f87171;
+    --arrow-dribble: #ffdd00;
+    --ui-bg: rgba(15, 20, 15, 0.94);
+    --ui-bg-solid: #14191a;
+    --ui-border: rgba(255, 221, 0, 0.25);
+    --text: #f5f5f0;
+    --text-dim: #a0a89c;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg-deep);
+    font-family: 'Helvetica Neue', 'Hiragino Sans', sans-serif;
+    color: var(--text);
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+
+  #app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    background: var(--ui-bg);
+    border-bottom: 1px solid var(--ui-border);
+    z-index: 50;
+    flex-shrink: 0;
+    gap: 8px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  .logo-mark {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: grid; place-items: center;
+    color: #000; font-size: 12px;
+  }
+  .logo-text span { color: var(--accent); }
+
+  .scenes-bar {
+    flex: 1;
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    padding: 0 4px;
+    scrollbar-width: none;
+  }
+  .scenes-bar::-webkit-scrollbar { display: none; }
+
+  .scene-tab {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid transparent;
+    color: var(--text-dim);
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    white-space: nowrap;
+    transition: all 0.15s;
+    display: flex; align-items: center; gap: 6px;
+    flex-shrink: 0;
+  }
+  .scene-tab.active {
+    background: rgba(255, 221, 0, 0.15);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .scene-num {
+    background: rgba(0,0,0,0.4);
+    border-radius: 50%;
+    width: 16px; height: 16px;
+    display: grid; place-items: center;
+    font-size: 10px; font-weight: 700;
+  }
+  .scene-tab.active .scene-num { background: var(--accent); color: #000; }
+  .scene-add {
+    background: transparent;
+    border: 1px dashed var(--text-dim);
+    color: var(--text-dim);
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .scene-add:hover { color: var(--accent); border-color: var(--accent); }
+
+  .top-actions { display: flex; gap: 4px; align-items: center; flex-shrink: 0; }
+
+  .icon-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text);
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: grid; place-items: center;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .icon-btn:hover, .icon-btn.active {
+    background: rgba(255, 221, 0, 0.12);
+    border-color: var(--ui-border);
+  }
+  .icon-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+  .field-wrap {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: var(--field-mid);
+  }
+
+  canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    touch-action: none;
+  }
+
+  .field-wrap::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--field-dark) 0,
+      var(--field-dark) 60px,
+      var(--field-light) 60px,
+      var(--field-light) 120px
+    );
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  .toolbar {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: var(--ui-bg);
+    border: 1px solid var(--ui-border);
+    border-radius: 12px;
+    padding: 6px;
+    z-index: 30;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    max-height: calc(100% - 24px);
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .toolbar::-webkit-scrollbar { display: none; }
+
+  .tool {
+    width: 42px; height: 42px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: rgba(255,255,255,0.03);
+    color: var(--text);
+    cursor: pointer;
+    display: grid; place-items: center;
+    transition: all 0.15s;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .tool:hover { background: rgba(255, 221, 0, 0.1); }
+  .tool.active {
+    background: rgba(255, 221, 0, 0.2);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(255, 221, 0, 0.15);
+  }
+
+  .tool-label {
+    position: absolute;
+    left: 52px; top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0,0,0,0.9);
+    color: var(--accent);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+    z-index: 100;
+  }
+  .tool:hover .tool-label { opacity: 1; }
+
+  .tool-divider {
+    height: 1px;
+    background: var(--ui-border);
+    margin: 3px 2px;
+    flex-shrink: 0;
+  }
+
+  .icon-player {
+    width: 22px; height: 26px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .icon-player svg { width: 100%; height: 100%; }
+  .icon-player .num {
+    position: absolute;
+    color: white;
+    font-size: 8px;
+    font-weight: 800;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -25%);
+    pointer-events: none;
+    line-height: 1;
+  }
+  .icon-player.yellow .num { color: #222; }
+  .icon-cone {
+    width: 0; height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 16px solid var(--cone-orange);
+    position: relative;
+  }
+  .icon-cone::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; left: -7px;
+    width: 14px; height: 2px;
+    background: white;
+  }
+  .icon-ball {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: white;
+    border: 1px solid #333;
+  }
+  .icon-goal {
+    width: 24px; height: 12px;
+    border: 2px solid white;
+    border-bottom: none;
+    border-radius: 2px 2px 0 0;
+  }
+  .arrow-preview {
+    width: 24px; height: 14px;
+    position: relative;
+  }
+  .arrow-preview svg { width: 100%; height: 100%; }
+
+  .bottombar {
+    background: var(--ui-bg);
+    border-top: 1px solid var(--ui-border);
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 50;
+    flex-shrink: 0;
+  }
+
+  .play-btn {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    cursor: pointer;
+    display: grid; place-items: center;
+    box-shadow: 0 0 16px var(--accent-glow);
+    transition: transform 0.1s;
+    flex-shrink: 0;
+  }
+  .play-btn:active { transform: scale(0.94); }
+  .play-btn svg { width: 18px; height: 18px; fill: currentColor; }
+
+  .timeline-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  .timeline-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .timeline-info b { color: var(--accent); font-weight: 600; }
+
+  .timeline {
+    height: 6px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 3px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .timeline-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), #ff9500);
+    width: 0%;
+    transition: width 0.05s linear;
+  }
+
+  .speed-toggle {
+    display: flex;
+    background: rgba(0,0,0,0.4);
+    border-radius: 8px;
+    padding: 2px;
+    gap: 1px;
+    flex-shrink: 0;
+  }
+  .speed-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    padding: 4px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .speed-btn.active {
+    background: var(--accent);
+    color: #000;
+  }
+
+  .play-all-btn {
+    background: rgba(74, 222, 128, 0.15);
+    border: 1px solid rgba(74, 222, 128, 0.4);
+    color: #4ade80;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .play-all-btn:hover { background: rgba(74, 222, 128, 0.25); }
+
+  .hint {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--ui-bg);
+    border: 1px solid var(--ui-border);
+    color: var(--accent);
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    z-index: 25;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+    max-width: 80%;
+    text-align: center;
+    line-height: 1.5;
+  }
+  .hint.show { opacity: 1; }
+
+  .rec-banner {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(220, 38, 38, 0.95);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    z-index: 26;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 4px 16px rgba(220, 38, 38, 0.5);
+    max-width: 90%;
+  }
+  .rec-banner.show { display: flex; }
+  .rec-dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: white;
+    animation: pulse 1s infinite;
+    flex-shrink: 0;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .rec-cancel {
+    background: rgba(0,0,0,0.3);
+    border: none;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  .arrow-banner {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--ui-bg);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    z-index: 26;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .arrow-banner.show { display: flex; }
+
+  @media (max-width: 768px) {
+    .toolbar {
+      left: 50%;
+      top: auto;
+      bottom: 70px;
+      transform: translateX(-50%);
+      flex-direction: row;
+      padding: 5px;
+      max-width: calc(100% - 20px);
+      overflow-x: auto;
+      max-height: none;
+    }
+    .tool { width: 38px; height: 38px; }
+    .tool-label { display: none; }
+    .tool-divider {
+      width: 1px;
+      height: auto;
+      margin: 2px 3px;
+    }
+    .bottombar { padding: 6px 10px; gap: 6px; }
+    .play-btn { width: 38px; height: 38px; }
+    .speed-toggle { display: none; }
+    .play-all-btn { padding: 4px 8px; font-size: 10px; }
+    .scene-tab { padding: 4px 8px; font-size: 11px; }
+    .logo-text { display: none; }
+  }
+
+  .menu {
+    position: absolute;
+    top: 56px;
+    right: 12px;
+    background: var(--ui-bg);
+    border: 1px solid var(--ui-border);
+    border-radius: 10px;
+    padding: 4px;
+    z-index: 100;
+    min-width: 180px;
+    display: none;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .menu.show { display: block; }
+  .menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text);
+  }
+  .menu-item:hover { background: rgba(255, 221, 0, 0.1); }
+  .menu-item svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+  .modal-bg {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    backdrop-filter: blur(4px);
+  }
+  .modal-bg.show { display: flex; }
+  .modal {
+    background: var(--ui-bg-solid);
+    border: 1px solid var(--ui-border);
+    border-radius: 14px;
+    padding: 18px;
+    width: 90%;
+    max-width: 320px;
+  }
+  .modal h3 {
+    color: var(--accent);
+    margin-bottom: 12px;
+    font-size: 14px;
+    letter-spacing: 0.05em;
+  }
+  .modal input {
+    width: 100%;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--ui-border);
+    color: var(--text);
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+  .modal input:focus { outline: none; border-color: var(--accent); }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  .modal-btn {
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .modal-btn.primary { background: var(--accent); color: #000; }
+  .modal-btn.secondary { background: rgba(255,255,255,0.1); color: var(--text); }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div class="topbar">
+    <div class="logo">
+      <div class="logo-mark">⚽</div>
+      <div class="logo-text">TRAINING<span>.</span>BOARD</div>
+    </div>
+    <div class="scenes-bar" id="scenesBar"></div>
+    <div class="top-actions">
+      <button class="icon-btn" id="undoBtn" title="元に戻す">
+        <svg viewBox="0 0 24 24"><path d="M3 7v6h6M3 13a9 9 0 1 0 3-7"/></svg>
+      </button>
+      <button class="icon-btn" id="menuBtn" title="メニュー">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="menu" id="menu">
+    <div class="menu-item" data-action="renameScene">
+      <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      シーン名を変更
+    </div>
+    <div class="menu-item" data-action="duplicateScene">
+      <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      シーンを複製
+    </div>
+    <div class="menu-item" data-action="deleteScene">
+      <svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+      シーンを削除
+    </div>
+    <div class="menu-item" data-action="clearScene">
+      <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-7"/><path d="M21 4v5h-5"/></svg>
+      シーンをクリア
+    </div>
+    <div class="menu-item" data-action="save">
+      <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2zM17 21v-8H7v8M7 3v5h8"/></svg>
+      JSON保存
+    </div>
+    <div class="menu-item" data-action="load">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5-5 5 5M12 5v12"/></svg>
+      JSON読み込み
+    </div>
+    <div class="menu-item" data-action="help">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r="0.5"/></svg>
+      使い方
+    </div>
+  </div>
+
+  <div class="field-wrap" id="fieldWrap">
+    <canvas id="bgCanvas"></canvas>
+    <canvas id="pathCanvas"></canvas>
+    <canvas id="iconCanvas"></canvas>
+
+    <div class="toolbar" id="toolbar">
+      <button class="tool active" data-tool="select">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 3l7 17 2-7 7-2L3 3z"/>
+        </svg>
+        <span class="tool-label">選択 / 移動</span>
+      </button>
+      <div class="tool-divider"></div>
+      <button class="tool" data-tool="player-blue">
+        <div class="icon-player">
+          <svg viewBox="0 0 22 28" fill="none">
+            <!-- legs (skin) -->
+            <!-- legs (skin upper, sock lower) -->
+            <path d="M7.2 21 L9.3 21 L9.3 23 L7.3 23 Z" fill="#e8c5a0"/>
+            <path d="M12.7 21 L14.8 21 L14.7 23 L12.7 23 Z" fill="#e8c5a0"/>
+            <!-- socks -->
+            <path d="M7.3 23 L9.3 23 L9.3 25.5 L7.5 25.5 Z" fill="#2563eb"/>
+            <path d="M12.7 23 L14.7 23 L14.5 25.5 L12.7 25.5 Z" fill="#2563eb"/>
+            <!-- sock band -->
+            <path d="M7.3 23 L9.3 23 L9.3 23.4 L7.3 23.4 Z" fill="#1a1a1a"/>
+            <path d="M12.7 23 L14.7 23 L14.7 23.4 L12.7 23.4 Z" fill="#1a1a1a"/>
+            <!-- spike shoes (left + right) -->
+            <path d="M5.5 25.5 L9.5 25.5 L10 27 L6 27 Z" fill="#1a1a1a"/>
+            <path d="M12.5 25.5 L16.5 25.5 L16 27 L12 27 Z" fill="#1a1a1a"/>
+            <path d="M5.5 26.4 L10 26.4 L10 26.7 L6 26.7 Z" fill="#ffffff"/>
+            <path d="M12 26.4 L16.5 26.4 L16 26.7 L12 26.7 Z" fill="#ffffff"/>
+            <!-- shorts -->
+            <path d="M5.5 17 L16.5 17 L15.5 21 L11.5 21 L11 19.8 L10.5 21 L6.5 21 Z" fill="#1a1a1a"/>
+            <!-- arms (skin) -->
+            <path d="M3 9.5 L4.8 9.5 L4 17 L2.5 17 Z" fill="#e8c5a0"/>
+            <path d="M17.2 9.5 L19 9.5 L19.5 17 L18 17 Z" fill="#e8c5a0"/>
+            <!-- jersey -->
+            <path d="M5 9.5 L17 9.5 Q16.5 12 16.5 17 L5.5 17 Q5.5 12 5 9.5 Z" fill="#2563eb"/>
+            <!-- short sleeves (rounded shoulder) -->
+            <path d="M5 9.5 L3.2 9.5 L3.2 11.5 L5 11.5 Z" fill="#2563eb"/>
+            <path d="M17 9.5 L18.8 9.5 L18.8 11.5 L17 11.5 Z" fill="#2563eb"/>
+            <path d="M9.5 8 Q11 9.5 12.5 8 Q11 8.3 9.5 8 Z" fill="#0e1f4a"/>
+            <!-- head -->
+            <circle cx="11" cy="5" r="2.6" fill="#e8c5a0"/>
+            <!-- eyes -->
+            <circle cx="9.9" cy="4.7" r="0.35" fill="#1a1a1a"/>
+            <circle cx="12.1" cy="4.7" r="0.35" fill="#1a1a1a"/>
+            <!-- mouth -->
+            <path d="M10.3 6 Q11 6.4 11.7 6" stroke="#1a1a1a" stroke-width="0.4" stroke-linecap="round" fill="none"/>
+          </svg>
+        </div>
+        <span class="tool-label">選手（青）</span>
+      </button>
+      <button class="tool" data-tool="player-red">
+        <div class="icon-player">
+          <svg viewBox="0 0 22 28" fill="none">
+            <!-- legs (skin upper, sock lower) -->
+            <path d="M7.2 21 L9.3 21 L9.3 23 L7.3 23 Z" fill="#e8c5a0"/>
+            <path d="M12.7 21 L14.8 21 L14.7 23 L12.7 23 Z" fill="#e8c5a0"/>
+            <!-- socks -->
+            <path d="M7.3 23 L9.3 23 L9.3 25.5 L7.5 25.5 Z" fill="#dc2626"/>
+            <path d="M12.7 23 L14.7 23 L14.5 25.5 L12.7 25.5 Z" fill="#dc2626"/>
+            <!-- sock band -->
+            <path d="M7.3 23 L9.3 23 L9.3 23.4 L7.3 23.4 Z" fill="#1a1a1a"/>
+            <path d="M12.7 23 L14.7 23 L14.7 23.4 L12.7 23.4 Z" fill="#1a1a1a"/>
+            <path d="M5.5 25.5 L9.5 25.5 L10 27 L6 27 Z" fill="#1a1a1a"/>
+            <path d="M12.5 25.5 L16.5 25.5 L16 27 L12 27 Z" fill="#1a1a1a"/>
+            <path d="M5.5 26.4 L10 26.4 L10 26.7 L6 26.7 Z" fill="#ffffff"/>
+            <path d="M12 26.4 L16.5 26.4 L16 26.7 L12 26.7 Z" fill="#ffffff"/>
+            <path d="M5.5 17 L16.5 17 L15.5 21 L11.5 21 L11 19.8 L10.5 21 L6.5 21 Z" fill="#1a1a1a"/>
+            <path d="M3 9.5 L4.8 9.5 L4 17 L2.5 17 Z" fill="#e8c5a0"/>
+            <path d="M17.2 9.5 L19 9.5 L19.5 17 L18 17 Z" fill="#e8c5a0"/>
+            <path d="M5 9.5 L17 9.5 Q16.5 12 16.5 17 L5.5 17 Q5.5 12 5 9.5 Z" fill="#dc2626"/>
+            <path d="M5 9.5 L3.2 9.5 L3.2 11.5 L5 11.5 Z" fill="#dc2626"/>
+            <path d="M17 9.5 L18.8 9.5 L18.8 11.5 L17 11.5 Z" fill="#dc2626"/>
+            <path d="M9.5 8 Q11 9.5 12.5 8 Q11 8.3 9.5 8 Z" fill="#7a0e0e"/>
+            <circle cx="11" cy="5" r="2.6" fill="#e8c5a0"/>
+            <!-- eyes -->
+            <circle cx="9.9" cy="4.7" r="0.35" fill="#1a1a1a"/>
+            <circle cx="12.1" cy="4.7" r="0.35" fill="#1a1a1a"/>
+            <!-- mouth -->
+            <path d="M10.3 6 Q11 6.4 11.7 6" stroke="#1a1a1a" stroke-width="0.4" stroke-linecap="round" fill="none"/>
+          </svg>
+        </div>
+        <span class="tool-label">選手（赤）</span>
+      </button>
+      <button class="tool" data-tool="player-yellow">
+        <div class="icon-player yellow">
+          <svg viewBox="0 0 22 28" fill="none">
+            <!-- legs (skin upper, sock lower) -->
+            <path d="M7.2 21 L9.3 21 L9.3 23 L7.3 23 Z" fill="#e8c5a0"/>
+            <path d="M12.7 21 L14.8 21 L14.7 23 L12.7 23 Z" fill="#e8c5a0"/>
+            <!-- socks -->
+            <path d="M7.3 23 L9.3 23 L9.3 25.5 L7.5 25.5 Z" fill="#fbbf24"/>
+            <path d="M12.7 23 L14.7 23 L14.5 25.5 L12.7 25.5 Z" fill="#fbbf24"/>
+            <!-- sock band -->
+            <path d="M7.3 23 L9.3 23 L9.3 23.4 L7.3 23.4 Z" fill="#1a1a1a"/>
+            <path d="M12.7 23 L14.7 23 L14.7 23.4 L12.7 23.4 Z" fill="#1a1a1a"/>
+            <path d="M5.5 25.5 L9.5 25.5 L10 27 L6 27 Z" fill="#1a1a1a"/>
+            <path d="M12.5 25.5 L16.5 25.5 L16 27 L12 27 Z" fill="#1a1a1a"/>
+            <path d="M5.5 26.4 L10 26.4 L10 26.7 L6 26.7 Z" fill="#ffffff"/>
+            <path d="M12 26.4 L16.5 26.4 L16 26.7 L12 26.7 Z" fill="#ffffff"/>
+            <path d="M5.5 17 L16.5 17 L15.5 21 L11.5 21 L11 19.8 L10.5 21 L6.5 21 Z" fill="#1a1a1a"/>
+            <path d="M3 9.5 L4.8 9.5 L4 17 L2.5 17 Z" fill="#e8c5a0"/>
+            <path d="M17.2 9.5 L19 9.5 L19.5 17 L18 17 Z" fill="#e8c5a0"/>
+            <path d="M5 9.5 L17 9.5 Q16.5 12 16.5 17 L5.5 17 Q5.5 12 5 9.5 Z" fill="#fbbf24"/>
+            <path d="M5 9.5 L3.2 9.5 L3.2 11.5 L5 11.5 Z" fill="#fbbf24"/>
+            <path d="M17 9.5 L18.8 9.5 L18.8 11.5 L17 11.5 Z" fill="#fbbf24"/>
+            <path d="M9.5 8 Q11 9.5 12.5 8 Q11 8.3 9.5 8 Z" fill="#a87600"/>
+            <circle cx="11" cy="5" r="2.6" fill="#e8c5a0"/>
+            <!-- eyes -->
+            <circle cx="9.9" cy="4.7" r="0.35" fill="#1a1a1a"/>
+            <circle cx="12.1" cy="4.7" r="0.35" fill="#1a1a1a"/>
+            <!-- mouth -->
+            <path d="M10.3 6 Q11 6.4 11.7 6" stroke="#1a1a1a" stroke-width="0.4" stroke-linecap="round" fill="none"/>
+          </svg>
+        </div>
+        <span class="tool-label">選手（黄）</span>
+      </button>
+      <div class="tool-divider"></div>
+      <button class="tool" data-tool="cone">
+        <div class="icon-cone"></div>
+        <span class="tool-label">コーン</span>
+      </button>
+      <button class="tool" data-tool="ball">
+        <svg width="22" height="22" viewBox="0 0 22 22">
+          <circle cx="11" cy="11" r="9.5" fill="#fff" stroke="#1a1a1a" stroke-width="1"/>
+          <!-- center pentagon -->
+          <polygon points="11,7 14.3,9.4 13,13.2 9,13.2 7.7,9.4" fill="#1a1a1a"/>
+          <!-- edge patches -->
+          <polygon points="11,2.5 12.4,5 9.6,5" fill="#1a1a1a"/>
+          <polygon points="19,9 17.5,11.4 15.5,9.5" fill="#1a1a1a"/>
+          <polygon points="3,9 4.5,11.4 6.5,9.5" fill="#1a1a1a"/>
+          <polygon points="6,18 8.5,16 9.5,18" fill="#1a1a1a"/>
+          <polygon points="16,18 13.5,16 12.5,18" fill="#1a1a1a"/>
+        </svg>
+        <span class="tool-label">ボール</span>
+      </button>
+      <button class="tool" data-tool="goal">
+        <div class="icon-goal"></div>
+        <span class="tool-label">ゴール</span>
+      </button>
+      <div class="tool-divider"></div>
+      <button class="tool" data-tool="arrow-dribble">
+        <div class="arrow-preview">
+          <svg viewBox="0 0 24 14"><line x1="2" y1="7" x2="18" y2="7" stroke="#ffdd00" stroke-width="2.5" stroke-linecap="round"/><polygon points="18,7 13,4 14,7 13,10" fill="#ffdd00"/></svg>
+        </div>
+        <span class="tool-label">ドリブル矢印（実線）</span>
+      </button>
+      <button class="tool" data-tool="arrow-pass">
+        <div class="arrow-preview">
+          <svg viewBox="0 0 24 14"><line x1="2" y1="7" x2="18" y2="7" stroke="#4ade80" stroke-width="2" stroke-dasharray="3,2" stroke-linecap="round"/><polygon points="18,7 13,4 14,7 13,10" fill="#4ade80"/></svg>
+        </div>
+        <span class="tool-label">パス矢印（破線）</span>
+      </button>
+      <button class="tool" data-tool="arrow-shoot">
+        <div class="arrow-preview">
+          <svg viewBox="0 0 24 14"><line x1="2" y1="7" x2="17" y2="7" stroke="#f87171" stroke-width="3.5" stroke-linecap="round"/><polygon points="18,7 12,3 13,7 12,11" fill="#f87171"/></svg>
+        </div>
+        <span class="tool-label">シュート矢印（太線）</span>
+      </button>
+      <div class="tool-divider"></div>
+      <button class="tool" data-tool="pen">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 19l7-7 3 3-7 7-3-3z"/>
+          <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
+          <path d="M2 2l7.586 7.586"/>
+          <circle cx="11" cy="11" r="2"/>
+        </svg>
+        <span class="tool-label">ペン（手描き）</span>
+      </button>
+      <div class="tool-divider"></div>
+      <button class="tool" data-tool="record">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="9"/>
+          <circle cx="12" cy="12" r="4" fill="#dc2626" stroke="none"/>
+        </svg>
+        <span class="tool-label">動きを記録</span>
+      </button>
+    </div>
+
+    <div class="hint" id="hint"></div>
+    <div class="rec-banner" id="recBanner">
+      <div class="rec-dot"></div>
+      <span id="recBannerText">動かしたいアイコンをドラッグしてください</span>
+      <button class="rec-cancel" id="recCancel">キャンセル</button>
+    </div>
+    <div class="arrow-banner" id="arrowBanner">
+      <span id="arrowBannerText">始点から終点へドラッグ</span>
+      <button class="rec-cancel" id="arrowCancel">完了</button>
+    </div>
+
+    <div id="orderPicker" style="
+      position: absolute;
+      background: rgba(15, 20, 15, 0.96);
+      border: 1px solid var(--ui-border);
+      border-radius: 12px;
+      padding: 8px;
+      z-index: 60;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: none;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      min-width: 160px;
+    ">
+      <div style="font-size: 10px; color: #a0a89c; padding: 4px 6px 6px; letter-spacing: 0.05em;">
+        この矢印の番号
+      </div>
+      <div id="orderPickerOptions" style="display: flex; flex-wrap: wrap; gap: 4px; padding: 0 2px;"></div>
+      <div style="font-size: 10px; color: #a0a89c; padding: 6px 6px 0; line-height: 1.4;">
+        同じ番号 = 同時に動く
+      </div>
+      <button id="orderPickerDelete" style="
+        width: 100%;
+        margin-top: 8px;
+        background: rgba(220, 38, 38, 0.2);
+        color: #f87171;
+        border: 1px solid rgba(220, 38, 38, 0.4);
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        cursor: pointer;
+        font-weight: 600;
+      ">この矢印を削除</button>
+    </div>
+
+    <div id="facingPicker" style="
+      position: absolute;
+      background: rgba(15, 20, 15, 0.96);
+      border: 1px solid var(--ui-border);
+      border-radius: 12px;
+      padding: 8px;
+      z-index: 60;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: none;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    ">
+      <div style="font-size: 10px; color: #a0a89c; padding: 2px 4px 6px; letter-spacing: 0.05em;">
+        体の向き
+      </div>
+      <div style="display: flex; gap: 4px;">
+        <button class="facing-btn" data-facing="left" style="width:36px;height:36px;border-radius:8px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:16px;">◀</button>
+        <button class="facing-btn" data-facing="front" style="width:36px;height:36px;border-radius:8px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:13px;">前</button>
+        <button class="facing-btn" data-facing="back" style="width:36px;height:36px;border-radius:8px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:13px;">後</button>
+        <button class="facing-btn" data-facing="right" style="width:36px;height:36px;border-radius:8px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:16px;">▶</button>
+      </div>
+      <button id="facingPickerDelete" style="
+        width: 100%;
+        margin-top: 8px;
+        background: rgba(220, 38, 38, 0.2);
+        color: #f87171;
+        border: 1px solid rgba(220, 38, 38, 0.4);
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        cursor: pointer;
+        font-weight: 600;
+      ">この選手を削除</button>
+    </div>
+  </div>
+
+  <div class="bottombar">
+    <button class="play-btn" id="playBtn" title="再生">
+      <svg viewBox="0 0 24 24" id="playIcon"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+    </button>
+    <div class="timeline-area">
+      <div class="timeline-info">
+        <span><b id="timeNow">0.0</b>s / <span id="timeTotal">0.0</span>s</span>
+        <span id="objCount">アイコン: 0</span>
+      </div>
+      <div class="timeline" id="timeline">
+        <div class="timeline-fill" id="timelineFill"></div>
+      </div>
+    </div>
+    <button class="play-all-btn" id="playAllBtn" title="全シーン連続再生">▶ 全再生</button>
+    <div class="speed-toggle">
+      <button class="speed-btn" data-speed="0.5">0.5x</button>
+      <button class="speed-btn active" data-speed="1">1x</button>
+      <button class="speed-btn" data-speed="2">2x</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3 id="modalTitle">シーン名を入力</h3>
+    <input type="text" id="modalInput" placeholder="例: ドリブル開始">
+    <div class="modal-actions">
+      <button class="modal-btn secondary" id="modalCancel">キャンセル</button>
+      <button class="modal-btn primary" id="modalOk">OK</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const fieldWrap = document.getElementById('fieldWrap');
+  const bgCanvas   = document.getElementById('bgCanvas');
+  const pathCanvas = document.getElementById('pathCanvas');
+  const iconCanvas = document.getElementById('iconCanvas');
+  const bgCtx   = bgCanvas.getContext('2d');
+  const pathCtx = pathCanvas.getContext('2d');
+  const iconCtx = iconCanvas.getContext('2d');
+
+  const project = {
+    scenes: [
+      { name: 'シーン 1', objects: [], arrows: [], drawings: [], duration: 0 }
+    ],
+    activeIdx: 0,
+    counters: { blue: 0, red: 0, yellow: 0 },
+  };
+
+  const ui = {
+    tool: 'select',
+    selectedId: null,
+    recording: false,
+    recordingTargetId: null,
+    recordStartTime: 0,
+    recordPath: [],
+    arrowDrawing: null,
+    penStroke: null,         // current stroke being drawn { points: [{x,y}], color }
+    playing: false,
+    playStart: 0,
+    playTime: 0,
+    speed: 1,
+    dragging: null,
+    history: [],
+    _lastTapId: null,
+    playAll: false,
+    playAllSceneIdx: 0,
+  };
+
+  let DPR = Math.max(1, window.devicePixelRatio || 1);
+  let W = 0, H = 0;
+  const scene = () => project.scenes[project.activeIdx];
+
+  function resize() {
+    DPR = Math.max(1, window.devicePixelRatio || 1);
+    const rect = fieldWrap.getBoundingClientRect();
+    W = rect.width;
+    H = rect.height;
+    [bgCanvas, pathCanvas, iconCanvas].forEach(c => {
+      c.width  = Math.floor(W * DPR);
+      c.height = Math.floor(H * DPR);
+      c.style.width  = W + 'px';
+      c.style.height = H + 'px';
+    });
+    bgCtx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    pathCtx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    iconCtx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    drawBackground();
+    redraw();
+  }
+  window.addEventListener('resize', resize);
+
+  function drawBackground() {
+    bgCtx.clearRect(0, 0, W, H);
+    bgCtx.strokeStyle = 'rgba(255,255,255,0.5)';
+    bgCtx.lineWidth = 2;
+    const m = 20;
+    bgCtx.strokeRect(m, m, W - 2*m, H - 2*m);
+    bgCtx.beginPath();
+    bgCtx.moveTo(m, H/2); bgCtx.lineTo(W - m, H/2); bgCtx.stroke();
+    bgCtx.beginPath();
+    bgCtx.arc(W/2, H/2, Math.min(W, H) * 0.12, 0, Math.PI * 2); bgCtx.stroke();
+    bgCtx.beginPath();
+    bgCtx.arc(W/2, H/2, 3, 0, Math.PI * 2);
+    bgCtx.fillStyle = 'rgba(255,255,255,0.5)'; bgCtx.fill();
+    const pbW = Math.min(W * 0.5, 360);
+    const pbH = Math.min(H * 0.18, 100);
+    bgCtx.strokeRect((W - pbW)/2, m, pbW, pbH);
+    bgCtx.strokeRect((W - pbW)/2, H - m - pbH, pbW, pbH);
+    const gaW = pbW * 0.5, gaH = pbH * 0.45;
+    bgCtx.strokeRect((W - gaW)/2, m, gaW, gaH);
+    bgCtx.strokeRect((W - gaW)/2, H - m - gaH, gaW, gaH);
+  }
+
+  function drawObject(ctx, o) {
+    ctx.save();
+    ctx.translate(o.x, o.y);
+
+    if (o.type.startsWith('player')) {
+      const facing = o.facing || 'front';
+      // For left/right we'll do a true side-view drawing.
+      // For left, mirror at the end so the side-view code is shared with right.
+      const isSide = (facing === 'left' || facing === 'right');
+      if (facing === 'left') ctx.scale(-1, 1);
+
+      // Slim athletic humanoid: flat colors, jersey + shorts
+      const unit = o.r;
+      const headR = unit * 0.45;
+      const headY = -unit * 1.15;
+      const neckH = unit * 0.12;
+      const shoulderY = headY + headR + neckH;
+      const shoulderW = unit * 1.15;
+      const torsoH = unit * 1.15;
+      const torsoBottomY = shoulderY + torsoH;
+      const shortsH = unit * 0.55;
+      const legH = unit * 1.0;
+      const legW = unit * 0.32;
+      const armLen = unit * 1.0;
+      const armW = unit * 0.28;
+
+      const skin = '#e8c5a0';
+      const hair = '#2a1810';
+      const shortsColor = '#1a1a1a';
+      const jerseyColor = o.color;
+      const numberColor = (o.color === '#fbbf24') ? '#222' : '#fff';
+
+      if (isSide) {
+        // ========== SIDE VIEW ==========
+        // Right-facing reference (left is flipped via scale).
+        // Stagger legs front/back to convey depth, single visible arm, profile head with nose.
+
+        // Drop shadow under feet
+        ctx.beginPath();
+        ctx.ellipse(unit*0.05, torsoBottomY + shortsH + legH + 2, unit * 0.7, unit * 0.16, 0, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.fill();
+
+        const sideTorsoW = unit * 0.75;  // narrower from the side
+        const sideShortsW = sideTorsoW * 0.95;
+        const legStartY = torsoBottomY + shortsH;
+
+        // ===== Back leg (further away) — drawn first, slightly behind =====
+        ctx.fillStyle = '#d4a981'; // slightly darker skin tone for distance
+        const backLegX = -sideTorsoW * 0.15;
+        roundRect(ctx, backLegX - legW/2, legStartY, legW * 0.9, legH * 0.95, legW * 0.35);
+        ctx.fill();
+        // Back leg sock (matches team color, slightly muted)
+        const backSockTopY = legStartY + legH * 0.55;
+        ctx.fillStyle = jerseyColor;
+        ctx.globalAlpha = 0.85;
+        ctx.fillRect(backLegX - legW/2, backSockTopY, legW * 0.9, legH * 0.42);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = '#1a1a1a';
+        ctx.fillRect(backLegX - legW/2, backSockTopY, legW * 0.9, legH * 0.06);
+        // Back leg shoe
+        ctx.fillStyle = '#1a1a1a';
+        ctx.beginPath();
+        ctx.moveTo(backLegX - legW * 0.5, legStartY + legH - unit*0.05);
+        ctx.lineTo(backLegX + legW * 0.7, legStartY + legH - unit*0.05);
+        ctx.lineTo(backLegX + legW * 0.85, legStartY + legH * 0.95);
+        ctx.lineTo(backLegX - legW * 0.5, legStartY + legH * 0.95);
+        ctx.closePath();
+        ctx.fill();
+
+        // ===== Back arm (subtle, slightly behind torso) =====
+        ctx.fillStyle = '#d4a981';
+        const backArmX = -sideTorsoW * 0.05;
+        roundRect(ctx, backArmX - armW/2, shoulderY + unit*0.1, armW * 0.85, armLen * 0.95, armW * 0.4);
+        ctx.fill();
+        // Back arm sleeve
+        ctx.fillStyle = jerseyColor;
+        ctx.beginPath();
+        ctx.moveTo(backArmX - armW*0.5, shoulderY + unit*0.05);
+        ctx.quadraticCurveTo(backArmX, shoulderY - unit*0.05, backArmX + armW*0.5, shoulderY + unit*0.05);
+        ctx.lineTo(backArmX + armW*0.45, shoulderY + armLen * 0.4);
+        ctx.lineTo(backArmX - armW*0.45, shoulderY + armLen * 0.4);
+        ctx.closePath();
+        ctx.fill();
+
+        // ===== Shorts (side view) =====
+        ctx.fillStyle = shortsColor;
+        ctx.beginPath();
+        ctx.moveTo(-sideShortsW * 0.4, torsoBottomY - 1);
+        ctx.lineTo(sideShortsW * 0.6, torsoBottomY - 1);
+        ctx.quadraticCurveTo(sideShortsW * 0.7, torsoBottomY + shortsH * 0.5, sideShortsW * 0.5, torsoBottomY + shortsH);
+        ctx.lineTo(-sideShortsW * 0.35, torsoBottomY + shortsH);
+        ctx.quadraticCurveTo(-sideShortsW * 0.5, torsoBottomY + shortsH * 0.5, -sideShortsW * 0.4, torsoBottomY - 1);
+        ctx.closePath();
+        ctx.fill();
+
+        // ===== Jersey (side view, narrower) =====
+        ctx.fillStyle = jerseyColor;
+        ctx.beginPath();
+        // back side (left edge)
+        ctx.moveTo(-sideTorsoW * 0.5, shoulderY + unit*0.05);
+        // top of shoulder, slight curve forward
+        ctx.quadraticCurveTo(-sideTorsoW * 0.3, shoulderY - unit*0.05, sideTorsoW * 0.5, shoulderY + unit*0.1);
+        // chest bulge slightly forward
+        ctx.quadraticCurveTo(sideTorsoW * 0.65, shoulderY + torsoH * 0.4, sideTorsoW * 0.5, torsoBottomY);
+        // hem bottom
+        ctx.lineTo(-sideTorsoW * 0.45, torsoBottomY);
+        // back of torso curve
+        ctx.quadraticCurveTo(-sideTorsoW * 0.55, shoulderY + torsoH * 0.5, -sideTorsoW * 0.5, shoulderY + unit*0.05);
+        ctx.closePath();
+        ctx.fill();
+
+        // ===== Front leg (closer, drawn over shorts) =====
+        ctx.fillStyle = skin;
+        const frontLegX = sideTorsoW * 0.2;
+        roundRect(ctx, frontLegX - legW/2, legStartY, legW, legH, legW * 0.4);
+        ctx.fill();
+        // Front leg sock (full team color, vibrant)
+        const frontSockTopY = legStartY + legH * 0.55;
+        ctx.fillStyle = jerseyColor;
+        ctx.fillRect(frontLegX - legW/2, frontSockTopY, legW, legH * 0.42);
+        ctx.fillStyle = '#1a1a1a';
+        ctx.fillRect(frontLegX - legW/2, frontSockTopY, legW, legH * 0.06);
+        // Front shoe (with toe pointing forward = right)
+        ctx.fillStyle = '#1a1a1a';
+        ctx.beginPath();
+        ctx.moveTo(frontLegX - legW * 0.6, legStartY + legH - unit*0.05);
+        ctx.lineTo(frontLegX + legW * 0.5, legStartY + legH - unit*0.1);
+        // Long toe extends forward
+        ctx.quadraticCurveTo(frontLegX + legW * 1.7, legStartY + legH - unit*0.05,
+                              frontLegX + legW * 1.9, legStartY + legH * 0.98);
+        ctx.lineTo(frontLegX + legW * 1.6, legStartY + legH * 1.02);
+        ctx.lineTo(frontLegX - legW * 0.6, legStartY + legH * 1.02);
+        ctx.closePath();
+        ctx.fill();
+        // Shoe stripe
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(frontLegX - legW * 0.3, legStartY + legH + unit*0.06);
+        ctx.quadraticCurveTo(frontLegX + legW * 0.6, legStartY + legH + unit*0.18,
+                              frontLegX + legW * 1.5, legStartY + legH * 0.99);
+        ctx.stroke();
+
+        // ===== Front arm (visible, slightly forward) =====
+        ctx.fillStyle = skin;
+        const frontArmX = sideTorsoW * 0.5;
+        // Arm shape with slight forward angle
+        ctx.beginPath();
+        ctx.moveTo(frontArmX - armW*0.4, shoulderY + armLen * 0.4);
+        ctx.lineTo(frontArmX + armW*0.4, shoulderY + armLen * 0.4);
+        ctx.quadraticCurveTo(frontArmX + armW*0.6, shoulderY + armLen * 0.7,
+                              frontArmX + armW*0.5, shoulderY + armLen);
+        ctx.lineTo(frontArmX - armW*0.4, shoulderY + armLen);
+        ctx.quadraticCurveTo(frontArmX - armW*0.5, shoulderY + armLen * 0.7,
+                              frontArmX - armW*0.4, shoulderY + armLen * 0.4);
+        ctx.closePath();
+        ctx.fill();
+
+        // Front sleeve (cap sleeve covering shoulder + upper arm)
+        ctx.fillStyle = jerseyColor;
+        ctx.beginPath();
+        ctx.moveTo(frontArmX - armW*0.5, shoulderY + unit*0.05);
+        ctx.quadraticCurveTo(frontArmX, shoulderY - unit*0.08,
+                              frontArmX + armW*0.55, shoulderY + unit*0.08);
+        ctx.lineTo(frontArmX + armW*0.55, shoulderY + armLen * 0.42);
+        ctx.lineTo(frontArmX - armW*0.5, shoulderY + armLen * 0.42);
+        ctx.closePath();
+        ctx.fill();
+
+        // ===== Number on jersey (side view) =====
+        // Reset all transforms and re-translate to player center to draw upright text.
+        ctx.save();
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);  // identity (with DPR)
+        ctx.translate(o.x, o.y);
+        ctx.fillStyle = numberColor;
+        const fontSize = Math.round(torsoH * 0.4);
+        ctx.font = `bold ${fontSize}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        // For both left and right, place number slightly forward of center
+        const numXOffset = (facing === 'left') ? -sideTorsoW * 0.05 : sideTorsoW * 0.05;
+        ctx.fillText(o.number, numXOffset, shoulderY + torsoH * 0.55);
+        ctx.restore();
+
+        // ===== Profile head (with nose) =====
+        // Head circle
+        ctx.fillStyle = skin;
+        ctx.beginPath();
+        ctx.arc(0, headY, headR, 0, Math.PI * 2);
+        ctx.fill();
+        // Nose - small triangle pointing forward (right)
+        ctx.fillStyle = skin;
+        ctx.beginPath();
+        ctx.moveTo(headR * 0.85, headY - headR * 0.05);
+        ctx.lineTo(headR * 1.15, headY + headR * 0.05);
+        ctx.lineTo(headR * 0.85, headY + headR * 0.18);
+        ctx.closePath();
+        ctx.fill();
+        // Nose outline
+        ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(headR * 0.85, headY - headR * 0.05);
+        ctx.lineTo(headR * 1.15, headY + headR * 0.05);
+        ctx.lineTo(headR * 0.85, headY + headR * 0.18);
+        ctx.stroke();
+
+        // No hair (per user request)
+
+        // Eye dot (small, on the visible cheek side)
+        ctx.fillStyle = '#1a1a1a';
+        ctx.beginPath();
+        ctx.arc(headR * 0.4, headY - headR * 0.05, headR * 0.1, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Mouth (small line on the side, near the cheek/jaw)
+        ctx.strokeStyle = '#1a1a1a';
+        ctx.lineWidth = 1.2;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(headR * 0.6, headY + headR * 0.4);
+        ctx.lineTo(headR * 0.85, headY + headR * 0.42);
+        ctx.stroke();
+      } else {
+        // ========== FRONT / BACK VIEW (existing logic) ==========
+
+      // ===== Drop shadow under feet =====
+      ctx.beginPath();
+      ctx.ellipse(0, torsoBottomY + shortsH + legH + 2, unit * 0.78, unit * 0.16, 0, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fill();
+
+      // ===== Legs (skin, below shorts) =====
+      ctx.fillStyle = skin;
+      const legStartY = torsoBottomY + shortsH;
+      drawLeg(ctx, -legW * 1.1, legStartY, legW, legH);
+      drawLeg(ctx, legW * 0.1, legStartY, legW, legH);
+
+      // ===== Socks (lower portion of legs) =====
+      const sockColor = jerseyColor;        // matching team color
+      const sockTrim = '#1a1a1a';
+      const sockTopY = legStartY + legH * 0.55;  // socks start at mid-calf
+      const sockBottomY = legStartY + legH;
+      const sockH = sockBottomY - sockTopY;
+
+      [-1, 1].forEach(side => {
+        const lx = (side === -1) ? -legW * 1.1 : legW * 0.1;
+        // Sock body
+        ctx.fillStyle = sockColor;
+        ctx.beginPath();
+        ctx.moveTo(lx, sockTopY);
+        ctx.lineTo(lx + legW * 0.9, sockTopY);
+        ctx.lineTo(lx + legW * 0.85, sockBottomY);
+        ctx.lineTo(lx + legW * 0.05, sockBottomY);
+        ctx.closePath();
+        ctx.fill();
+        // Top trim band (darker stripe at the top of the sock)
+        ctx.fillStyle = sockTrim;
+        ctx.fillRect(lx - 0.5, sockTopY, legW * 0.95, sockH * 0.15);
+      });
+
+      // ===== Spike shoes =====
+      const shoeColor = '#1a1a1a';
+      const shoeAccent = '#ffffff';
+      const shoeY = legStartY + legH - unit*0.05;
+      const shoeW = legW * 1.6;
+      const shoeH = unit * 0.32;
+
+      [-1, 1].forEach(side => {
+        const cx = side * (legW * 0.65);
+        // Shoe body — angled forward (toe slightly outward)
+        ctx.fillStyle = shoeColor;
+        ctx.beginPath();
+        ctx.moveTo(cx - shoeW * 0.35, shoeY);
+        ctx.lineTo(cx - legW * 0.4, shoeY);
+        ctx.quadraticCurveTo(cx - legW * 0.2, shoeY - shoeH*0.15, cx + legW * 0.4, shoeY);
+        ctx.lineTo(cx + shoeW * 0.55, shoeY + shoeH * 0.45);
+        ctx.quadraticCurveTo(cx + shoeW * 0.6, shoeY + shoeH, cx + shoeW * 0.4, shoeY + shoeH);
+        ctx.lineTo(cx - shoeW * 0.3, shoeY + shoeH);
+        ctx.quadraticCurveTo(cx - shoeW * 0.4, shoeY + shoeH, cx - shoeW * 0.4, shoeY + shoeH * 0.5);
+        ctx.closePath();
+        ctx.fill();
+
+        // White stripe accent (subtle, for visibility on dark green field)
+        ctx.strokeStyle = shoeAccent;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(cx - shoeW * 0.15, shoeY + shoeH * 0.35);
+        ctx.quadraticCurveTo(cx + shoeW * 0.15, shoeY + shoeH * 0.55, cx + shoeW * 0.45, shoeY + shoeH * 0.55);
+        ctx.stroke();
+      });
+
+      // ===== Shorts =====
+      ctx.fillStyle = shortsColor;
+      const shortsW = shoulderW * 0.78;
+      ctx.beginPath();
+      // top of shorts (waist)
+      ctx.moveTo(-shortsW/2, torsoBottomY - 1);
+      ctx.lineTo(shortsW/2, torsoBottomY - 1);
+      // right side curve down
+      ctx.quadraticCurveTo(shortsW/2 + unit*0.05, torsoBottomY + shortsH*0.4, shortsW/2 - unit*0.02, torsoBottomY + shortsH);
+      // right leg opening — small inward dip
+      ctx.lineTo(unit*0.05, torsoBottomY + shortsH);
+      // crotch dip
+      ctx.quadraticCurveTo(0, torsoBottomY + shortsH * 0.7, -unit*0.05, torsoBottomY + shortsH);
+      // left leg opening
+      ctx.lineTo(-shortsW/2 + unit*0.02, torsoBottomY + shortsH);
+      // left side curve up
+      ctx.quadraticCurveTo(-shortsW/2 - unit*0.05, torsoBottomY + shortsH*0.4, -shortsW/2, torsoBottomY - 1);
+      ctx.closePath();
+      ctx.fill();
+
+      // ===== Arms (skin, slim) =====
+      ctx.fillStyle = skin;
+      drawArm(ctx, -shoulderW/2 - armW*0.4, shoulderY + unit*0.05, armW, armLen, -1);
+      drawArm(ctx, shoulderW/2 - armW*0.6, shoulderY + unit*0.05, armW, armLen, 1);
+
+      // ===== Jersey (V-tapered, flat color, flat shoulders) =====
+      ctx.fillStyle = jerseyColor;
+      const waistW = shoulderW * 0.72;
+      const collarDip = unit * 0.18;
+      const flatShoulderY = shoulderY + unit*0.05;
+
+      ctx.beginPath();
+      // Left shoulder
+      ctx.moveTo(-shoulderW/2, flatShoulderY);
+      // Flat top to neck
+      ctx.lineTo(-unit*0.18, flatShoulderY);
+      // V-neck dip
+      ctx.quadraticCurveTo(0, flatShoulderY + collarDip, unit*0.18, flatShoulderY);
+      // Flat top to right shoulder
+      ctx.lineTo(shoulderW/2, flatShoulderY);
+      // Right side — taper to waist
+      ctx.quadraticCurveTo(shoulderW*0.5, flatShoulderY + torsoH*0.45, waistW/2, torsoBottomY);
+      // Hem
+      ctx.lineTo(-waistW/2, torsoBottomY);
+      // Left side back to shoulder
+      ctx.quadraticCurveTo(-shoulderW*0.5, flatShoulderY + torsoH*0.45, -shoulderW/2, flatShoulderY);
+      ctx.closePath();
+      ctx.fill();
+
+      // ===== Short sleeves — cover shoulder + upper arm =====
+      // Flat shoulder line (no rugby pads, no shoulder bulge).
+      const sleeveLen = armLen * 0.38;
+      const sleeveTopY = shoulderY + unit*0.05;
+      ctx.fillStyle = jerseyColor;
+
+      // Left sleeve — straight horizontal top, shoulder is flush with torso top
+      ctx.beginPath();
+      ctx.moveTo(-shoulderW/2 + unit*0.02, sleeveTopY);
+      // Outer top — flat horizontal
+      ctx.lineTo(-shoulderW/2 - armW*0.5, sleeveTopY);
+      // Outer side straight down to cuff
+      ctx.lineTo(-shoulderW/2 - armW*0.5, sleeveTopY + sleeveLen);
+      // Cuff bottom (slight inward)
+      ctx.lineTo(-shoulderW/2 + unit*0.05, sleeveTopY + sleeveLen + unit*0.03);
+      // Inner side back up
+      ctx.lineTo(-shoulderW/2 + unit*0.08, sleeveTopY + unit*0.1);
+      ctx.closePath();
+      ctx.fill();
+
+      // Right sleeve (mirrored)
+      ctx.beginPath();
+      ctx.moveTo(shoulderW/2 - unit*0.02, sleeveTopY);
+      ctx.lineTo(shoulderW/2 + armW*0.5, sleeveTopY);
+      ctx.lineTo(shoulderW/2 + armW*0.5, sleeveTopY + sleeveLen);
+      ctx.lineTo(shoulderW/2 - unit*0.05, sleeveTopY + sleeveLen + unit*0.03);
+      ctx.lineTo(shoulderW/2 - unit*0.08, sleeveTopY + unit*0.1);
+      ctx.closePath();
+      ctx.fill();
+
+      // Sleeve cuff hem (thin shadow line)
+      ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(-shoulderW/2 - armW*0.5, sleeveTopY + sleeveLen);
+      ctx.lineTo(-shoulderW/2 + unit*0.05, sleeveTopY + sleeveLen + unit*0.03);
+      ctx.moveTo(shoulderW/2 + armW*0.5, sleeveTopY + sleeveLen);
+      ctx.lineTo(shoulderW/2 - unit*0.05, sleeveTopY + sleeveLen + unit*0.03);
+      ctx.stroke();
+
+      // ===== Neck (small skin patch) =====
+      ctx.fillStyle = skin;
+      ctx.fillRect(-unit*0.15, shoulderY - neckH*0.3, unit*0.3, neckH);
+
+      // ===== Head =====
+      ctx.fillStyle = skin;
+      ctx.beginPath();
+      ctx.arc(0, headY, headR, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (facing === 'back') {
+        // Back of head — full coverage (no face details)
+        // Just leave skin-colored head; could add a small accent but keep clean.
+      } else {
+        // Front view — add face details (eyes and mouth)
+        // No hair for now per user request.
+
+        // Eyes — two small dark dots
+        ctx.fillStyle = '#1a1a1a';
+        const eyeY = headY - headR * 0.05;
+        const eyeOffsetX = headR * 0.32;
+        const eyeR = headR * 0.1;
+        ctx.beginPath();
+        ctx.arc(-eyeOffsetX, eyeY, eyeR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(eyeOffsetX, eyeY, eyeR, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Mouth — small subtle smile line
+        ctx.strokeStyle = '#1a1a1a';
+        ctx.lineWidth = 1.2;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(-headR * 0.18, headY + headR * 0.4);
+        ctx.quadraticCurveTo(0, headY + headR * 0.55,
+                              headR * 0.18, headY + headR * 0.4);
+        ctx.stroke();
+      }
+
+      // ===== Number on jersey (hide for back-facing — back numbers can be drawn here too if desired) =====
+      if (facing !== 'back') {
+        ctx.fillStyle = numberColor;
+        const fontSize = Math.round(torsoH * 0.5);
+        ctx.font = `bold ${fontSize}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(o.number, 0, shoulderY + torsoH * 0.58);
+      } else {
+        // Back number (looks good on the back of jersey)
+        ctx.fillStyle = numberColor;
+        const fontSize = Math.round(torsoH * 0.55);
+        ctx.font = `bold ${fontSize}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(o.number, 0, shoulderY + torsoH * 0.58);
+      }
+      } // end of front/back view else block
+    } else if (o.type === 'cone') {
+      ctx.beginPath();
+      ctx.ellipse(0, o.r * 0.9, o.r, o.r * 0.3, 0, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(-o.r * 0.7, o.r * 0.8);
+      ctx.lineTo(0, -o.r);
+      ctx.lineTo(o.r * 0.7, o.r * 0.8);
+      ctx.closePath();
+      const cgrad = ctx.createLinearGradient(-o.r, 0, o.r, 0);
+      cgrad.addColorStop(0, '#cc4400');
+      cgrad.addColorStop(0.5, '#ff7a2a');
+      cgrad.addColorStop(1, '#cc4400');
+      ctx.fillStyle = cgrad; ctx.fill();
+      ctx.fillStyle = 'white';
+      ctx.beginPath();
+      ctx.moveTo(-o.r * 0.45, o.r * 0.1);
+      ctx.lineTo(o.r * 0.45, o.r * 0.1);
+      ctx.lineTo(o.r * 0.55, o.r * 0.3);
+      ctx.lineTo(-o.r * 0.55, o.r * 0.3);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#333';
+      ctx.fillRect(-o.r, o.r * 0.8, o.r * 2, 3);
+    } else if (o.type === 'ball') {
+      // Soccer ball with classic pentagon pattern
+      const r = o.r;
+
+      // Drop shadow
+      ctx.beginPath();
+      ctx.arc(1, 2, r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.fill();
+
+      // White ball body
+      ctx.beginPath();
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.strokeStyle = '#1a1a1a';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      // Save state and clip to ball circle so all patterns stay inside
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(0, 0, r - 0.5, 0, Math.PI * 2);
+      ctx.clip();
+
+      ctx.fillStyle = '#1a1a1a';
+      ctx.strokeStyle = '#1a1a1a';
+      ctx.lineWidth = 1;
+
+      // Center pentagon (slightly above center for 3D feel)
+      const cy = -r * 0.05;
+      drawPentagon(ctx, 0, cy, r * 0.32, -Math.PI / 2);
+      ctx.fill();
+
+      // Surrounding 5 partial pentagons connected by lines
+      // We draw small filled "patches" at the ball's edges
+      const patchR = r * 0.22;
+      const ringR = r * 0.78;
+      for (let i = 0; i < 5; i++) {
+        const ang = -Math.PI / 2 + (Math.PI * 2 / 5) * i + Math.PI / 5;
+        const px = Math.cos(ang) * ringR;
+        const py = Math.sin(ang) * ringR;
+        // Edge patch (pentagon at the rim)
+        drawPentagon(ctx, px, py, patchR, ang + Math.PI);
+        ctx.fill();
+
+        // Connecting line from center pentagon vertex to edge patch
+        const innerAng = -Math.PI / 2 + (Math.PI * 2 / 5) * i;
+        const innerVertX = Math.cos(innerAng) * r * 0.32;
+        const innerVertY = cy + Math.sin(innerAng) * r * 0.32;
+        ctx.beginPath();
+        ctx.moveTo(innerVertX, innerVertY);
+        ctx.lineTo(Math.cos(innerAng) * r * 0.55, Math.sin(innerAng) * r * 0.55 + cy * 0.5);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+
+      // Subtle highlight (gloss on top-left)
+      const hl = ctx.createRadialGradient(-r * 0.4, -r * 0.4, 0, -r * 0.4, -r * 0.4, r * 0.5);
+      hl.addColorStop(0, 'rgba(255,255,255,0.6)');
+      hl.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.beginPath();
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.fillStyle = hl;
+      ctx.fill();
+    } else if (o.type === 'goal') {
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.fillRect(-o.r + 2, o.r * 0.4 + 2, o.r * 2, 4);
+      ctx.strokeStyle = 'white'; ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(-o.r, o.r * 0.4);
+      ctx.lineTo(-o.r, -o.r * 0.5);
+      ctx.lineTo(o.r, -o.r * 0.5);
+      ctx.lineTo(o.r, o.r * 0.4);
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1;
+      for (let i = 1; i < 5; i++) {
+        const x = -o.r + (o.r * 2 * i / 5);
+        ctx.beginPath();
+        ctx.moveTo(x, -o.r * 0.5); ctx.lineTo(x, o.r * 0.4);
+        ctx.stroke();
+      }
+      for (let j = 1; j < 3; j++) {
+        const y = -o.r * 0.5 + (o.r * 0.9 * j / 3);
+        ctx.beginPath();
+        ctx.moveTo(-o.r, y); ctx.lineTo(o.r, y);
+        ctx.stroke();
+      }
+    }
+
+    if (ui.selectedId === o.id) {
+      ctx.strokeStyle = '#ffdd00';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 3]);
+      ctx.beginPath();
+      const ringR = o.type.startsWith('player') ? o.r * 2.2 : o.r + 6;
+      ctx.arc(0, 0, ringR, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    if (ui.recording && ui.recordingTargetId === o.id) {
+      ctx.strokeStyle = '#ff3333';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      const ringR = o.type.startsWith('player') ? o.r * 2.4 : o.r + 10;
+      ctx.arc(0, 0, ringR, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function lighten(hex, amt) {
+    const c = hex.replace('#', '');
+    const r = Math.min(255, parseInt(c.slice(0,2),16) + amt*255);
+    const g = Math.min(255, parseInt(c.slice(2,4),16) + amt*255);
+    const b = Math.min(255, parseInt(c.slice(4,6),16) + amt*255);
+    return `rgb(${r|0},${g|0},${b|0})`;
+  }
+
+  function darken(hex, amt) {
+    const c = hex.replace('#', '');
+    const r = Math.max(0, parseInt(c.slice(0,2),16) - amt*255);
+    const g = Math.max(0, parseInt(c.slice(2,4),16) - amt*255);
+    const b = Math.max(0, parseInt(c.slice(4,6),16) - amt*255);
+    return `rgb(${r|0},${g|0},${b|0})`;
+  }
+
+  // Slim tapered leg (slightly narrower at ankle)
+  function drawLeg(ctx, x, y, w, h) {
+    const r = w * 0.35;
+    const ankleW = w * 0.78;
+    const ankleX = x + (w - ankleW) / 2;
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.quadraticCurveTo(x + w*0.5, y - 1, x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w * 0.96, y + r);
+    // taper to ankle
+    ctx.lineTo(ankleX + ankleW, y + h - r);
+    ctx.quadraticCurveTo(ankleX + ankleW, y + h, ankleX + ankleW - r, y + h);
+    ctx.lineTo(ankleX + r, y + h);
+    ctx.quadraticCurveTo(ankleX, y + h, ankleX, y + h - r);
+    ctx.lineTo(x + w * 0.04, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Slim arm — slightly bent outward at elbow
+  function drawArm(ctx, x, y, w, h, side /* -1 left, 1 right */) {
+    const r = w * 0.45;
+    const elbow = h * 0.5;
+    const bend = w * 0.3 * side;
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w + bend * 0.3, y + elbow);
+    ctx.lineTo(x + w + bend, y + h - r);
+    ctx.quadraticCurveTo(x + w + bend, y + h, x + w + bend - r, y + h);
+    ctx.lineTo(x + r + bend * 0.7, y + h);
+    ctx.quadraticCurveTo(x + bend * 0.7, y + h, x + bend * 0.7, y + h - r);
+    ctx.lineTo(x + bend * 0.15, y + elbow);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Pentagon for soccer ball pattern
+  function drawPentagon(ctx, cx, cy, radius, rotation) {
+    ctx.beginPath();
+    for (let i = 0; i < 5; i++) {
+      const ang = rotation + (Math.PI * 2 / 5) * i;
+      const x = cx + Math.cos(ang) * radius;
+      const y = cy + Math.sin(ang) * radius;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+  }
+
+  // Helper: rounded rectangle path
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
+  function drawArrow(ctx, a) {
+    ctx.save();
+    let color = '#ffdd00', width = 3, dash = [];
+    if (a.type === 'arrow-dribble') { color = '#ffdd00'; width = 3; dash = []; }
+    else if (a.type === 'arrow-pass') { color = '#4ade80'; width = 2.5; dash = [9, 6]; }
+    else if (a.type === 'arrow-shoot') { color = '#f87171'; width = 5; dash = []; }
+
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = width;
+    ctx.lineCap = 'round';
+    ctx.setLineDash(dash);
+    ctx.shadowColor = 'rgba(0,0,0,0.4)';
+    ctx.shadowBlur = 3;
+    ctx.shadowOffsetY = 1;
+
+    const ang = Math.atan2(a.y2 - a.y1, a.x2 - a.x1);
+    const headSize = width * 3.2;
+    const lineEndX = a.x2 - Math.cos(ang) * headSize * 0.6;
+    const lineEndY = a.y2 - Math.sin(ang) * headSize * 0.6;
+
+    ctx.beginPath();
+    ctx.moveTo(a.x1, a.y1);
+    ctx.lineTo(lineEndX, lineEndY);
+    ctx.stroke();
+
+    ctx.setLineDash([]);
+    ctx.shadowColor = 'transparent';
+
+    ctx.save();
+    ctx.translate(a.x2, a.y2);
+    ctx.rotate(ang);
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(-headSize, -headSize * 0.55);
+    ctx.lineTo(-headSize * 0.6, 0);
+    ctx.lineTo(-headSize, headSize * 0.55);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    // Order badge near start point (skip for preview drawing)
+    if (typeof a.order === 'number') {
+      const badgeX = a.x1 + Math.cos(ang) * 14;
+      const badgeY = a.y1 + Math.sin(ang) * 14 - 14;
+      // Cache badge position for hit testing
+      a._badgeX = badgeX;
+      a._badgeY = badgeY;
+      ctx.beginPath();
+      ctx.arc(badgeX, badgeY, 11, 0, Math.PI * 2);
+      ctx.fillStyle = '#000';
+      ctx.globalAlpha = 0.85;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.fillStyle = color;
+      ctx.font = 'bold 12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(a.order + 1), badgeX, badgeY + 0.5);
+    }
+
+    ctx.restore();
+  }
+
+  function drawPaths() {
+    pathCtx.clearRect(0, 0, W, H);
+
+    // Hide arrows and movement trails during playback for cleaner motion view
+    if (ui.playing) return;
+
+    // Pen drawings (under arrows)
+    (scene().drawings || []).forEach(d => drawPenStroke(pathCtx, d));
+    if (ui.penStroke) drawPenStroke(pathCtx, ui.penStroke);
+
+    scene().arrows.forEach(a => drawArrow(pathCtx, a));
+    if (ui.arrowDrawing && ui.arrowDrawing.x2 != null) {
+      drawArrow(pathCtx, ui.arrowDrawing);
+    }
+
+    scene().objects.forEach(o => {
+      if (!o.keyframes || o.keyframes.length < 2) return;
+      pathCtx.save();
+      pathCtx.strokeStyle = (o.type.startsWith('player')) ? o.color : '#ffdd00';
+      pathCtx.lineWidth = 2;
+      pathCtx.setLineDash([5, 4]);
+      pathCtx.globalAlpha = 0.55;
+      pathCtx.beginPath();
+      pathCtx.moveTo(o.keyframes[0].x, o.keyframes[0].y);
+      for (let i = 1; i < o.keyframes.length; i++) {
+        pathCtx.lineTo(o.keyframes[i].x, o.keyframes[i].y);
+      }
+      pathCtx.stroke();
+      pathCtx.setLineDash([]);
+      pathCtx.restore();
+    });
+  }
+
+  function drawPenStroke(ctx, d) {
+    if (!d.points || d.points.length === 0) return;
+    ctx.save();
+    ctx.strokeStyle = d.color || '#ffffff';
+    ctx.lineWidth = d.width || 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 2;
+    ctx.shadowOffsetY = 1;
+    ctx.beginPath();
+    ctx.moveTo(d.points[0].x, d.points[0].y);
+    for (let i = 1; i < d.points.length; i++) {
+      ctx.lineTo(d.points[i].x, d.points[i].y);
+    }
+    if (d.points.length === 1) {
+      // Single tap = small dot
+      ctx.arc(d.points[0].x, d.points[0].y, (d.width || 3) / 2, 0, Math.PI * 2);
+      ctx.fillStyle = d.color || '#ffffff';
+      ctx.fill();
+    } else {
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function redraw() {
+    iconCtx.clearRect(0, 0, W, H);
+    drawPaths();
+    scene().objects.forEach(o => drawObject(iconCtx, o));
+    updateInfo();
+  }
+
+  function updateInfo() {
+    document.getElementById('objCount').textContent =
+      `アイコン: ${scene().objects.length} / 矢印: ${scene().arrows.length}`;
+    document.getElementById('timeTotal').textContent = scene().duration.toFixed(1);
+    document.getElementById('timeNow').textContent = ui.playTime.toFixed(1);
+    const pct = scene().duration > 0 ? (ui.playTime / scene().duration) * 100 : 0;
+    document.getElementById('timelineFill').style.width = pct + '%';
+  }
+
+  function setTool(name) {
+    if (name === 'record') {
+      if (ui.recording) { cancelRecording(); return; }
+      if (scene().objects.length === 0) {
+        showHint('先にアイコンを配置してください');
+        return;
+      }
+      armRecording();
+      return;
+    }
+    if (name.startsWith('arrow-')) {
+      ui.tool = name;
+      ui.arrowDrawing = null;
+      showArrowBanner(true, name);
+    } else if (name === 'pen') {
+      ui.tool = name;
+      showArrowBanner(true, 'pen');
+    } else {
+      ui.tool = name;
+      showArrowBanner(false);
+    }
+    document.querySelectorAll('.tool').forEach(b => {
+      b.classList.toggle('active', b.dataset.tool === name);
+    });
+    if (ui.recording) cancelRecording();
+  }
+
+  document.querySelectorAll('.tool').forEach(b => {
+    b.addEventListener('click', () => setTool(b.dataset.tool));
+  });
+
+  function showArrowBanner(show, type) {
+    const el = document.getElementById('arrowBanner');
+    el.classList.toggle('show', show);
+    if (show) {
+      const txt = type === 'pen' ? 'ペン: 自由に描いてください（ダブルタップで個別削除）' :
+                  type === 'arrow-pass' ? 'パス矢印: 始点から終点へドラッグ（連続描画OK）' :
+                  type === 'arrow-shoot' ? 'シュート矢印: 始点から終点へドラッグ（連続描画OK）' :
+                  'ドリブル矢印: 始点から終点へドラッグ（連続描画OK）';
+      document.getElementById('arrowBannerText').textContent = txt;
+    }
+  }
+
+  function createObject(type, x, y) {
+    saveHistory();
+    const o = {
+      id: Date.now() + Math.random(),
+      type, x, y,
+      keyframes: [{t: 0, x, y}],
+    };
+    if (type === 'player-blue')   { o.color = '#2563eb'; o.number = ++project.counters.blue;   o.r = 14; o.facing = 'front'; }
+    else if (type === 'player-red')    { o.color = '#dc2626'; o.number = ++project.counters.red;    o.r = 14; o.facing = 'front'; }
+    else if (type === 'player-yellow') { o.color = '#fbbf24'; o.number = ++project.counters.yellow; o.r = 14; o.facing = 'front'; }
+    else if (type === 'cone')   { o.r = 14; }
+    else if (type === 'ball')   { o.r = 13; }
+    else if (type === 'goal')   { o.r = 28; }
+    scene().objects.push(o);
+    ui.selectedId = o.id;
+    redraw();
+  }
+
+  function createArrow(type, x1, y1, x2, y2) {
+    const dist = Math.hypot(x2 - x1, y2 - y1);
+    if (dist < 15) return;
+    saveHistory();
+
+    // Auto-match: find the nearest target object to the start point
+    const target = findNearestTarget(type, x1, y1);
+
+    // Determine animation duration based on arrow type and distance
+    let speed;
+    if (type === 'arrow-shoot') speed = 600;
+    else if (type === 'arrow-pass') speed = 400;
+    else speed = 180;
+
+    const moveDuration = Math.max(0.4, dist / speed);
+
+    // Default order = (max existing order) + 1, so it plays AFTER previous arrows
+    const maxOrder = scene().arrows.reduce((m, a) => Math.max(m, a.order), -1);
+    const order = maxOrder + 1;
+
+    scene().arrows.push({
+      id: Date.now() + Math.random(),
+      type, x1, y1, x2, y2,
+      order,
+      targetId: target ? target.id : null,
+      moveDuration,
+    });
+
+    rebuildAnimation();
+    redraw();
+  }
+
+  // Find which object should follow this arrow
+  // dribble -> nearest player
+  // pass / shoot -> nearest ball
+  function findNearestTarget(arrowType, x, y) {
+    const wantBall = (arrowType === 'arrow-pass' || arrowType === 'arrow-shoot');
+    let best = null;
+    let bestDist = Infinity;
+    scene().objects.forEach(o => {
+      const isPlayer = o.type.startsWith('player');
+      const isBall = (o.type === 'ball');
+      if (wantBall && !isBall) return;
+      if (!wantBall && !isPlayer) return;
+      // Use the object's INITIAL position (first keyframe) for matching
+      // so re-running rebuild stays consistent.
+      const ox = o.keyframes && o.keyframes[0] ? o.keyframes[0].x : o.x;
+      const oy = o.keyframes && o.keyframes[0] ? o.keyframes[0].y : o.y;
+      const d = Math.hypot(x - ox, y - oy);
+      if (d < bestDist) { bestDist = d; best = o; }
+    });
+    return best;
+  }
+
+  // Rebuild keyframes for every object based on current arrows.
+  // Arrows with the SAME `order` value play simultaneously.
+  // Each group's duration = max moveDuration in that group.
+  function rebuildAnimation() {
+    const arrows = [...scene().arrows].sort((a,b) => a.order - b.order);
+
+    // Reset all objects to keyframe[0] (their starting position)
+    scene().objects.forEach(o => {
+      const start = (o.keyframes && o.keyframes[0]) ? o.keyframes[0] : { x: o.x, y: o.y };
+      o.keyframes = [{ t: 0, x: start.x, y: start.y }];
+    });
+
+    // Group arrows by order
+    const groups = [];
+    let curGroup = null;
+    arrows.forEach(a => {
+      if (!curGroup || curGroup.order !== a.order) {
+        curGroup = { order: a.order, arrows: [] };
+        groups.push(curGroup);
+      }
+      curGroup.arrows.push(a);
+    });
+
+    let timeline = 0;
+    groups.forEach(group => {
+      // duration of the whole group = max of contained arrows
+      const groupDuration = Math.max(...group.arrows.map(a => a.moveDuration));
+
+      // Track which objects are moved in this group (so they don't double-move)
+      const movedInGroup = new Set();
+
+      group.arrows.forEach(a => {
+        const target = scene().objects.find(o => o.id === a.targetId);
+        if (!target) return;
+        if (movedInGroup.has(target.id)) return; // already moved by another arrow in this group
+        movedInGroup.add(target.id);
+
+        // Pad target's timeline up to current timeline
+        const lastKf = target.keyframes[target.keyframes.length - 1];
+        if (lastKf.t < timeline) {
+          target.keyframes.push({ t: timeline, x: lastKf.x, y: lastKf.y });
+        }
+
+        // Snap target to arrow start, then move to arrow end
+        target.keyframes.push({ t: timeline, x: a.x1, y: a.y1 });
+        target.keyframes.push({ t: timeline + a.moveDuration, x: a.x2, y: a.y2 });
+
+        // For dribble arrows, also move the nearest ball with the player
+        // Ball should be at the PLAYER'S FEET, not at center
+        if (a.type === 'arrow-dribble') {
+          const ball = findNearestBallAt(a.x1, a.y1, timeline);
+          if (ball && !movedInGroup.has(ball.id)) {
+            movedInGroup.add(ball.id);
+            // Foot offset: player center is roughly head/torso level;
+            // feet are about target.r * 1.5 below center.
+            // Add a small forward offset in the direction of motion.
+            const dx = a.x2 - a.x1;
+            const dy = a.y2 - a.y1;
+            const len = Math.hypot(dx, dy) || 1;
+            const dirX = dx / len;
+            const dirY = dy / len;
+            const footOffsetY = target.r * 1.5;
+            const forwardOffset = target.r * 0.3;
+
+            const ballStartX = a.x1 + dirX * forwardOffset;
+            const ballStartY = a.y1 + footOffsetY + dirY * forwardOffset * 0.3;
+            const ballEndX = a.x2 + dirX * forwardOffset;
+            const ballEndY = a.y2 + footOffsetY + dirY * forwardOffset * 0.3;
+
+            const ballLast = ball.keyframes[ball.keyframes.length - 1];
+            if (ballLast.t < timeline) {
+              ball.keyframes.push({ t: timeline, x: ballLast.x, y: ballLast.y });
+            }
+            ball.keyframes.push({ t: timeline, x: ballStartX, y: ballStartY });
+            ball.keyframes.push({ t: timeline + a.moveDuration, x: ballEndX, y: ballEndY });
+          }
+        }
+      });
+
+      timeline += groupDuration;
+    });
+
+    scene().duration = timeline;
+
+    // Reset visual positions to initial
+    scene().objects.forEach(o => {
+      if (o.keyframes && o.keyframes[0]) {
+        o.x = o.keyframes[0].x;
+        o.y = o.keyframes[0].y;
+      }
+    });
+  }
+
+  // Find ball that's near a point at a given time (uses last known position from keyframes)
+  function findNearestBallAt(x, y, t) {
+    let best = null;
+    let bestDist = Infinity;
+    scene().objects.forEach(o => {
+      if (o.type !== 'ball') return;
+      // Get position at time t
+      let bx = o.keyframes[0].x, by = o.keyframes[0].y;
+      for (let i = 0; i < o.keyframes.length; i++) {
+        if (o.keyframes[i].t <= t) { bx = o.keyframes[i].x; by = o.keyframes[i].y; }
+      }
+      const d = Math.hypot(x - bx, y - by);
+      if (d < bestDist) { bestDist = d; best = o; }
+    });
+    return (best && bestDist < 80) ? best : null;
+  }
+
+  function hitTest(x, y) {
+    for (let i = scene().objects.length - 1; i >= 0; i--) {
+      const o = scene().objects[i];
+      const dx = x - o.x, dy = y - o.y;
+      const hitR = o.type.startsWith('player') ? o.r * 2.2 : o.r + 6;
+      if (dx*dx + dy*dy <= hitR * hitR) return o;
+    }
+    return null;
+  }
+
+  function arrowHitTest(x, y) {
+    for (let i = scene().arrows.length - 1; i >= 0; i--) {
+      const a = scene().arrows[i];
+      const A = x - a.x1, B = y - a.y1;
+      const C = a.x2 - a.x1, D = a.y2 - a.y1;
+      const dot = A*C + B*D;
+      const lenSq = C*C + D*D;
+      let param = lenSq ? dot / lenSq : -1;
+      param = Math.max(0, Math.min(1, param));
+      const xx = a.x1 + param * C;
+      const yy = a.y1 + param * D;
+      if (Math.hypot(x - xx, y - yy) < 12) return a;
+    }
+    return null;
+  }
+
+  function badgeHitTest(x, y) {
+    for (let i = scene().arrows.length - 1; i >= 0; i--) {
+      const a = scene().arrows[i];
+      if (typeof a._badgeX !== 'number') continue;
+      const d = Math.hypot(x - a._badgeX, y - a._badgeY);
+      if (d < 14) return a;
+    }
+    return null;
+  }
+
+  function drawingHitTest(x, y) {
+    const drawings = scene().drawings || [];
+    for (let i = drawings.length - 1; i >= 0; i--) {
+      const d = drawings[i];
+      for (const p of d.points) {
+        if (Math.hypot(x - p.x, y - p.y) < 10) return d;
+      }
+    }
+    return null;
+  }
+
+  // ---------- Order picker ----------
+  let orderPickerArrowId = null;
+
+  function showOrderPicker(arrow, x, y) {
+    orderPickerArrowId = arrow.id;
+    const picker = document.getElementById('orderPicker');
+    const optsDiv = document.getElementById('orderPickerOptions');
+
+    // Always show the full range: 0 ... (max + 1)
+    const maxOrder = scene().arrows.reduce((m, a) => Math.max(m, a.order), 0);
+    const choices = [];
+    for (let o = 0; o <= maxOrder + 1; o++) choices.push(o);
+
+    optsDiv.innerHTML = '';
+    choices.forEach(o => {
+      const btn = document.createElement('button');
+      btn.textContent = String(o + 1);
+      const isCurrent = o === arrow.order;
+      btn.style.cssText = `
+        background: ${isCurrent ? '#ffdd00' : 'rgba(255,255,255,0.08)'};
+        color: ${isCurrent ? '#000' : '#f5f5f0'};
+        border: 1px solid ${isCurrent ? '#ffdd00' : 'transparent'};
+        width: 32px; height: 32px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 13px;
+      `;
+      const handlePick = (ev) => {
+        ev.stopPropagation();
+        ev.preventDefault();
+        const a = scene().arrows.find(x => x.id === orderPickerArrowId);
+        if (!a) return;
+        saveHistory();
+        a.order = o;
+        normalizeOrders();
+        rebuildAnimation();
+        hideOrderPicker();
+        redraw();
+      };
+      btn.addEventListener('click', handlePick);
+      btn.addEventListener('touchstart', handlePick, { passive: false });
+      optsDiv.appendChild(btn);
+    });
+
+    const wrapRect = fieldWrap.getBoundingClientRect();
+    picker.style.display = 'block';
+    const pw = picker.offsetWidth || 180;
+    const ph = picker.offsetHeight || 130;
+    let px = x + 14;
+    let py = y - ph / 2;
+    if (px + pw > wrapRect.width - 8) px = x - pw - 14;
+    if (px < 8) px = 8;
+    if (py < 8) py = 8;
+    if (py + ph > wrapRect.height - 8) py = wrapRect.height - ph - 8;
+    picker.style.left = px + 'px';
+    picker.style.top = py + 'px';
+  }
+
+  function hideOrderPicker() {
+    document.getElementById('orderPicker').style.display = 'none';
+    orderPickerArrowId = null;
+  }
+
+  function normalizeOrders() {
+    const uniqueOrders = [...new Set(scene().arrows.map(a => a.order))].sort((a,b) => a - b);
+    const map = new Map();
+    uniqueOrders.forEach((o, i) => map.set(o, i));
+    scene().arrows.forEach(a => { a.order = map.get(a.order); });
+  }
+
+  document.getElementById('orderPickerDelete').addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    if (!orderPickerArrowId) return;
+    const id = orderPickerArrowId;
+    hideOrderPicker();
+    deleteArrow(id);
+  });
+
+  // ---------- Facing picker (player body direction) ----------
+  let facingPickerPlayerId = null;
+  const facingPicker = document.getElementById('facingPicker');
+
+  function showFacingPicker(player, x, y) {
+    facingPickerPlayerId = player.id;
+    const wrapRect = fieldWrap.getBoundingClientRect();
+
+    // Highlight currently selected facing
+    document.querySelectorAll('.facing-btn').forEach(b => {
+      const isCur = b.dataset.facing === (player.facing || 'front');
+      b.style.background = isCur ? '#ffdd00' : 'rgba(255,255,255,0.08)';
+      b.style.color = isCur ? '#000' : '#f5f5f0';
+      b.style.borderColor = isCur ? '#ffdd00' : 'transparent';
+    });
+
+    facingPicker.style.display = 'block';
+    const pw = facingPicker.offsetWidth || 200;
+    const ph = facingPicker.offsetHeight || 90;
+    let px = x + 14;
+    let py = y - ph / 2;
+    if (px + pw > wrapRect.width - 8) px = x - pw - 14;
+    if (px < 8) px = 8;
+    if (py < 8) py = 8;
+    if (py + ph > wrapRect.height - 8) py = wrapRect.height - ph - 8;
+    facingPicker.style.left = px + 'px';
+    facingPicker.style.top = py + 'px';
+  }
+
+  function hideFacingPicker() {
+    facingPicker.style.display = 'none';
+    facingPickerPlayerId = null;
+  }
+
+  document.querySelectorAll('.facing-btn').forEach(b => {
+    const handler = (ev) => {
+      ev.stopPropagation();
+      ev.preventDefault();
+      if (!facingPickerPlayerId) return;
+      const p = scene().objects.find(o => o.id === facingPickerPlayerId);
+      if (!p) return;
+      saveHistory();
+      p.facing = b.dataset.facing;
+      hideFacingPicker();
+      redraw();
+    };
+    b.addEventListener('click', handler);
+    b.addEventListener('touchstart', handler, { passive: false });
+  });
+
+  document.getElementById('facingPickerDelete').addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    if (!facingPickerPlayerId) return;
+    const id = facingPickerPlayerId;
+    hideFacingPicker();
+    deleteObject(id);
+  });
+
+  // Block events from picker bubbling
+  ['mousedown', 'touchstart', 'click'].forEach(evtName => {
+    facingPicker.addEventListener(evtName, (ev) => ev.stopPropagation());
+  });
+
+  // Block pointer events from inside the picker bubbling to fieldWrap's pointer handlers.
+  // Without this, tapping a button also triggers a pointerDown on the canvas underneath.
+  ['mousedown', 'touchstart', 'click'].forEach(evtName => {
+    document.getElementById('orderPicker').addEventListener(evtName, (ev) => {
+      ev.stopPropagation();
+    });
+  });
+
+  function getPos(e) {
+    const rect = fieldWrap.getBoundingClientRect();
+    const t = (e.touches && e.touches[0]) || e;
+    return { x: t.clientX - rect.left, y: t.clientY - rect.top };
+  }
+
+  let lastTap = 0;
+
+  function pointerDown(e) {
+    e.preventDefault();
+    const { x, y } = getPos(e);
+    if (ui.playing) return;
+
+    if (ui.recording) {
+      const hit = hitTest(x, y);
+      if (hit) {
+        ui.recordingTargetId = hit.id;
+        ui.selectedId = hit.id;
+        hit.keyframes = [{t: 0, x: hit.x, y: hit.y}];
+        ui.dragging = { id: hit.id, dx: x - hit.x, dy: y - hit.y, recording: true };
+        ui.recordStartTime = performance.now();
+        ui.recordPath = [{t: 0, x: hit.x, y: hit.y}];
+        updateRecBanner('録画中... 指/マウスを離すと完了');
+        redraw();
+      } else {
+        showHint('動かしたいアイコンを直接ドラッグしてください');
+      }
+      return;
+    }
+
+    if (ui.tool.startsWith('arrow-')) {
+      ui.arrowDrawing = { type: ui.tool, x1: x, y1: y, x2: x, y2: y };
+      return;
+    }
+
+    if (ui.tool === 'pen') {
+      ui.penStroke = {
+        id: Date.now() + Math.random(),
+        color: '#ffffff',
+        width: 3,
+        points: [{ x, y }],
+      };
+      return;
+    }
+
+    if (ui.tool === 'select') {
+      // First: badge tap → order picker
+      const badge = badgeHitTest(x, y);
+      if (badge) {
+        showOrderPicker(badge, x, y);
+        return;
+      }
+
+      const hit = hitTest(x, y);
+      if (hit) {
+        ui.selectedId = hit.id;
+        ui.dragging = { id: hit.id, dx: x - hit.x, dy: y - hit.y };
+        const now = Date.now();
+        if (now - lastTap < 350 && hit.id === ui._lastTapId) {
+          // Double-tap on player → show facing/delete picker
+          // Double-tap on other objects (cone, ball, goal) → delete
+          if (hit.type.startsWith('player')) {
+            ui.dragging = null;
+            showFacingPicker(hit, x, y);
+          } else {
+            deleteObject(hit.id);
+            ui.dragging = null;
+          }
+        }
+        lastTap = now;
+        ui._lastTapId = hit.id;
+      } else {
+        const arr = arrowHitTest(x, y);
+        if (arr) {
+          showOrderPicker(arr, x, y);
+        } else {
+          // Check if a pen drawing was tapped — double-tap to delete
+          const drawing = drawingHitTest(x, y);
+          if (drawing) {
+            const now = Date.now();
+            if (now - lastTap < 350 && ui._lastTapId === drawing.id) {
+              deletePenDrawing(drawing.id);
+            } else {
+              showHint('ペン描画はダブルタップで削除できます');
+            }
+            lastTap = now;
+            ui._lastTapId = drawing.id;
+          } else {
+            ui.selectedId = null;
+            hideOrderPicker();
+          }
+        }
+      }
+      redraw();
+      return;
+    }
+
+    createObject(ui.tool, x, y);
+    setTimeout(() => setTool('select'), 50);
+  }
+
+  function pointerMove(e) {
+    const { x, y } = getPos(e);
+
+    if (ui.arrowDrawing) {
+      e.preventDefault();
+      ui.arrowDrawing.x2 = x;
+      ui.arrowDrawing.y2 = y;
+      drawPaths();
+      return;
+    }
+
+    if (ui.penStroke) {
+      e.preventDefault();
+      const last = ui.penStroke.points[ui.penStroke.points.length - 1];
+      // Throttle: only add points that are at least 2px from last
+      if (Math.hypot(x - last.x, y - last.y) >= 2) {
+        ui.penStroke.points.push({ x, y });
+        drawPaths();
+      }
+      return;
+    }
+
+    if (!ui.dragging) return;
+    e.preventDefault();
+    const o = scene().objects.find(obj => obj.id === ui.dragging.id);
+    if (!o) return;
+    o.x = clamp(x - ui.dragging.dx, 10, W - 10);
+    o.y = clamp(y - ui.dragging.dy, 10, H - 10);
+
+    if (ui.dragging.recording) {
+      const t = (performance.now() - ui.recordStartTime) / 1000;
+      ui.recordPath.push({t, x: o.x, y: o.y});
+    } else {
+      o.keyframes[0] = {t: 0, x: o.x, y: o.y};
+    }
+    redraw();
+  }
+
+  function pointerUp(e) {
+    if (ui.arrowDrawing) {
+      const a = ui.arrowDrawing;
+      createArrow(a.type, a.x1, a.y1, a.x2, a.y2);
+      ui.arrowDrawing = null;
+      drawPaths();
+      return;
+    }
+    if (ui.penStroke) {
+      // Save the stroke if it has any meaningful content
+      if (ui.penStroke.points.length > 0) {
+        saveHistory();
+        if (!scene().drawings) scene().drawings = [];
+        scene().drawings.push(ui.penStroke);
+      }
+      ui.penStroke = null;
+      drawPaths();
+      return;
+    }
+    if (ui.dragging && ui.dragging.recording) {
+      finishRecording();
+    } else if (ui.dragging && !ui.dragging.recording) {
+      if (scene().arrows.length > 0) {
+        rebuildAnimation();
+        redraw();
+      }
+    }
+    ui.dragging = null;
+  }
+
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+
+  fieldWrap.addEventListener('mousedown', pointerDown);
+  fieldWrap.addEventListener('mousemove', pointerMove);
+  window.addEventListener('mouseup', pointerUp);
+  fieldWrap.addEventListener('touchstart', pointerDown, { passive: false });
+  fieldWrap.addEventListener('touchmove',  pointerMove,  { passive: false });
+  window.addEventListener('touchend', pointerUp);
+
+  function armRecording() {
+    ui.recording = true;
+    ui.recordingTargetId = null;
+    ui.tool = 'select';
+    document.querySelectorAll('.tool').forEach(b => {
+      b.classList.toggle('active', b.dataset.tool === 'record');
+    });
+    updateRecBanner('動かしたいアイコンをドラッグしてください');
+    showRecBanner(true);
+    showArrowBanner(false);
+    redraw();
+  }
+  function cancelRecording() {
+    ui.recording = false;
+    ui.recordingTargetId = null;
+    ui.recordPath = [];
+    showRecBanner(false);
+    document.querySelectorAll('.tool').forEach(b => {
+      b.classList.toggle('active', b.dataset.tool === 'select');
+    });
+    redraw();
+  }
+  function finishRecording() {
+    const target = scene().objects.find(o => o.id === ui.recordingTargetId);
+    if (target && ui.recordPath.length > 1) {
+      const simplified = [];
+      for (let i = 0; i < ui.recordPath.length; i += 3) simplified.push(ui.recordPath[i]);
+      const last = ui.recordPath[ui.recordPath.length - 1];
+      if (simplified[simplified.length - 1] !== last) simplified.push(last);
+      target.keyframes = simplified;
+      scene().duration = Math.max(scene().duration, last.t);
+      showHint(`動きを記録しました（${last.t.toFixed(1)}秒）`);
+    } else {
+      showHint('動きが短すぎます');
+    }
+    ui.recordPath = [];
+    ui.recording = false;
+    ui.recordingTargetId = null;
+    showRecBanner(false);
+    document.querySelectorAll('.tool').forEach(b => {
+      b.classList.toggle('active', b.dataset.tool === 'select');
+    });
+    redraw();
+  }
+  function showRecBanner(show) {
+    document.getElementById('recBanner').classList.toggle('show', show);
+  }
+  function updateRecBanner(text) {
+    document.getElementById('recBannerText').textContent = text;
+  }
+  document.getElementById('recCancel').addEventListener('click', cancelRecording);
+  document.getElementById('arrowCancel').addEventListener('click', () => setTool('select'));
+
+  function applyTime(t, sc = scene()) {
+    sc.objects.forEach(o => {
+      if (!o.keyframes || o.keyframes.length === 0) return;
+      const kf = o.keyframes;
+      if (t <= kf[0].t) { o.x = kf[0].x; o.y = kf[0].y; return; }
+      if (t >= kf[kf.length-1].t) { o.x = kf[kf.length-1].x; o.y = kf[kf.length-1].y; return; }
+      for (let i = 0; i < kf.length - 1; i++) {
+        if (t >= kf[i].t && t <= kf[i+1].t) {
+          const r = (t - kf[i].t) / (kf[i+1].t - kf[i].t || 1);
+          o.x = kf[i].x + (kf[i+1].x - kf[i].x) * r;
+          o.y = kf[i].y + (kf[i+1].y - kf[i].y) * r;
+          break;
+        }
+      }
+    });
+  }
+
+  function play() {
+    if (scene().duration === 0 && !ui.playAll) {
+      showHint('まず動きを記録してください');
+      return;
+    }
+    ui.playing = true;
+    ui.playStart = performance.now() - (ui.playTime / ui.speed) * 1000;
+    document.getElementById('playIcon').innerHTML = '<rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/>';
+    // Clear arrows/trails immediately when playback starts
+    pathCtx.clearRect(0, 0, W, H);
+    requestAnimationFrame(playLoop);
+  }
+  function pause() {
+    ui.playing = false;
+    ui.playAll = false;
+    document.getElementById('playIcon').innerHTML = '<polygon points="6 4 20 12 6 20 6 4"/>';
+    // Redraw paths now that playback stopped (so arrows reappear)
+    drawPaths();
+  }
+  function playLoop(now) {
+    if (!ui.playing) return;
+    ui.playTime = ((now - ui.playStart) / 1000) * ui.speed;
+
+    if (ui.playTime >= scene().duration) {
+      ui.playTime = scene().duration;
+      if (ui.playAll && ui.playAllSceneIdx < project.scenes.length - 1) {
+        ui.playAllSceneIdx++;
+        switchScene(ui.playAllSceneIdx, true);
+        ui.playTime = 0;
+        ui.playStart = performance.now();
+        applyTime(0);
+        redraw();
+        if (ui.playing) requestAnimationFrame(playLoop);
+        return;
+      }
+      pause();
+    }
+    applyTime(ui.playTime);
+    redraw();
+    if (ui.playing) requestAnimationFrame(playLoop);
+  }
+
+  document.getElementById('playBtn').addEventListener('click', () => {
+    if (ui.playing) pause();
+    else {
+      ui.playAll = false;
+      if (ui.playTime >= scene().duration) ui.playTime = 0;
+      scene().objects.forEach(o => {
+        if (o.keyframes && o.keyframes[0]) { o.x = o.keyframes[0].x; o.y = o.keyframes[0].y; }
+      });
+      play();
+    }
+  });
+
+  document.getElementById('playAllBtn').addEventListener('click', () => {
+    pause();
+    ui.playAll = true;
+    ui.playAllSceneIdx = 0;
+    switchScene(0, true);
+    ui.playTime = 0;
+    scene().objects.forEach(o => {
+      if (o.keyframes && o.keyframes[0]) { o.x = o.keyframes[0].x; o.y = o.keyframes[0].y; }
+    });
+    play();
+  });
+
+  document.getElementById('timeline').addEventListener('click', (e) => {
+    if (scene().duration === 0) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const ratio = (e.clientX - rect.left) / rect.width;
+    ui.playTime = scene().duration * ratio;
+    applyTime(ui.playTime);
+    redraw();
+  });
+
+  document.querySelectorAll('.speed-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.speed-btn').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      ui.speed = parseFloat(b.dataset.speed);
+      if (ui.playing) {
+        ui.playStart = performance.now() - (ui.playTime / ui.speed) * 1000;
+      }
+    });
+  });
+
+  function renderScenes() {
+    const bar = document.getElementById('scenesBar');
+    bar.innerHTML = '';
+    project.scenes.forEach((s, i) => {
+      const tab = document.createElement('div');
+      tab.className = 'scene-tab' + (i === project.activeIdx ? ' active' : '');
+      tab.innerHTML = `<span class="scene-num">${i+1}</span><span>${escapeHtml(s.name)}</span>`;
+      tab.addEventListener('click', () => switchScene(i));
+      bar.appendChild(tab);
+    });
+    const addBtn = document.createElement('button');
+    addBtn.className = 'scene-add';
+    addBtn.textContent = '+';
+    addBtn.title = '新しいシーンを追加';
+    addBtn.addEventListener('click', addScene);
+    bar.appendChild(addBtn);
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+  }
+  function switchScene(idx, keepPlay = false) {
+    if (!keepPlay) pause();
+    project.activeIdx = idx;
+    ui.selectedId = null;
+    ui.playTime = 0;
+    if (!keepPlay) {
+      scene().objects.forEach(o => {
+        if (o.keyframes && o.keyframes[0]) { o.x = o.keyframes[0].x; o.y = o.keyframes[0].y; }
+      });
+    }
+    renderScenes();
+    redraw();
+  }
+  function addScene() {
+    pause();
+    saveHistory();
+    project.scenes.push({
+      name: `シーン ${project.scenes.length + 1}`,
+      objects: [],
+      arrows: [],
+      drawings: [],
+      duration: 0,
+    });
+    project.activeIdx = project.scenes.length - 1;
+    renderScenes();
+    redraw();
+  }
+  function duplicateScene() {
+    saveHistory();
+    const src = scene();
+    const copy = {
+      name: src.name + ' (コピー)',
+      duration: src.duration,
+      objects: JSON.parse(JSON.stringify(src.objects)).map(o => ({ ...o, id: Date.now() + Math.random() })),
+      arrows: JSON.parse(JSON.stringify(src.arrows)).map(a => ({ ...a, id: Date.now() + Math.random() })),
+      drawings: JSON.parse(JSON.stringify(src.drawings || [])).map(d => ({ ...d, id: Date.now() + Math.random() })),
+    };
+    project.scenes.splice(project.activeIdx + 1, 0, copy);
+    project.activeIdx++;
+    renderScenes();
+    redraw();
+  }
+  function deleteCurrentScene() {
+    if (project.scenes.length === 1) {
+      showHint('最後のシーンは削除できません');
+      return;
+    }
+    if (!confirm(`「${scene().name}」を削除しますか？`)) return;
+    saveHistory();
+    project.scenes.splice(project.activeIdx, 1);
+    if (project.activeIdx >= project.scenes.length) project.activeIdx = project.scenes.length - 1;
+    renderScenes();
+    redraw();
+  }
+  function clearCurrentScene() {
+    if (!confirm('このシーンの内容をすべてクリアしますか？')) return;
+    saveHistory();
+    scene().objects = [];
+    scene().arrows = [];
+    scene().drawings = [];
+    scene().duration = 0;
+    ui.selectedId = null;
+    redraw();
+  }
+
+  const modalBg = document.getElementById('modalBg');
+  const modalInput = document.getElementById('modalInput');
+  let modalCallback = null;
+  function openModal(title, defaultVal, cb) {
+    document.getElementById('modalTitle').textContent = title;
+    modalInput.value = defaultVal || '';
+    modalCallback = cb;
+    modalBg.classList.add('show');
+    setTimeout(() => modalInput.focus(), 50);
+  }
+  function closeModal() {
+    modalBg.classList.remove('show');
+    modalCallback = null;
+  }
+  document.getElementById('modalCancel').addEventListener('click', closeModal);
+  document.getElementById('modalOk').addEventListener('click', () => {
+    if (modalCallback) modalCallback(modalInput.value.trim());
+    closeModal();
+  });
+  modalInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      if (modalCallback) modalCallback(modalInput.value.trim());
+      closeModal();
+    } else if (e.key === 'Escape') closeModal();
+  });
+
+  function deleteObject(id) {
+    saveHistory();
+    scene().objects = scene().objects.filter(o => o.id !== id);
+    // Remove arrows that were targeting this object
+    scene().arrows = scene().arrows.filter(a => a.targetId !== id);
+    // Renumber arrows
+    scene().arrows.forEach((a, i) => a.order = i);
+    rebuildAnimation();
+    ui.selectedId = null;
+    redraw();
+  }
+  function deleteArrow(id) {
+    saveHistory();
+    scene().arrows = scene().arrows.filter(a => a.id !== id);
+    // Renumber
+    scene().arrows.forEach((a, i) => a.order = i);
+    rebuildAnimation();
+    redraw();
+  }
+
+  function deletePenDrawing(id) {
+    saveHistory();
+    scene().drawings = (scene().drawings || []).filter(d => d.id !== id);
+    redraw();
+  }
+
+  function saveHistory() {
+    ui.history.push({
+      scenes: JSON.parse(JSON.stringify(project.scenes)),
+      activeIdx: project.activeIdx,
+      counters: { ...project.counters },
+    });
+    if (ui.history.length > 30) ui.history.shift();
+  }
+  document.getElementById('undoBtn').addEventListener('click', () => {
+    if (ui.history.length === 0) { showHint('元に戻す履歴がありません'); return; }
+    const prev = ui.history.pop();
+    project.scenes = prev.scenes;
+    project.activeIdx = prev.activeIdx;
+    project.counters = prev.counters;
+    ui.selectedId = null;
+    renderScenes();
+    redraw();
+  });
+
+  const menu = document.getElementById('menu');
+  document.getElementById('menuBtn').addEventListener('click', e => {
+    e.stopPropagation();
+    menu.classList.toggle('show');
+  });
+  document.addEventListener('click', () => menu.classList.remove('show'));
+
+  document.querySelectorAll('.menu-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const a = item.dataset.action;
+      if (a === 'renameScene') {
+        openModal('シーン名を変更', scene().name, (val) => {
+          if (val) { scene().name = val; renderScenes(); }
+        });
+      } else if (a === 'duplicateScene') duplicateScene();
+      else if (a === 'deleteScene') deleteCurrentScene();
+      else if (a === 'clearScene') clearCurrentScene();
+      else if (a === 'save') {
+        const data = JSON.stringify(project, null, 2);
+        const blob = new Blob([data], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url; link.download = 'training.json'; link.click();
+        URL.revokeObjectURL(url);
+        showHint('保存しました');
+      } else if (a === 'load') {
+        const inp = document.createElement('input');
+        inp.type = 'file';
+        inp.accept = 'application/json';
+        inp.onchange = (e) => {
+          const f = e.target.files[0];
+          if (!f) return;
+          const r = new FileReader();
+          r.onload = () => {
+            try {
+              const d = JSON.parse(r.result);
+              if (d.scenes) {
+                project.scenes = d.scenes;
+                project.activeIdx = d.activeIdx || 0;
+                project.counters = d.counters || {blue:0,red:0,yellow:0};
+              } else if (d.objects) {
+                project.scenes = [{
+                  name: 'シーン 1',
+                  objects: d.objects,
+                  arrows: [],
+                  duration: d.duration || 0,
+                }];
+                project.activeIdx = 0;
+                project.counters = d.counters || {blue:0,red:0,yellow:0};
+              }
+              ui.playTime = 0;
+              renderScenes();
+              redraw();
+              showHint('読み込みました');
+            } catch { showHint('読み込みに失敗しました'); }
+          };
+          r.readAsText(f);
+        };
+        inp.click();
+      } else if (a === 'help') {
+        alert(
+          '【使い方】\n\n' +
+          '◆ 基本フロー\n①アイコンを配置 → ②矢印を引く → ③▶で再生\n矢印を引くだけで自動的にその通り動きます！\n\n' +
+          '◆ 矢印の種類\n🟡 ドリブル矢印（黄・実線）→ 近くの選手が動く（ボールも一緒に運ぶ）\n🟢 パス矢印（緑・破線）→ 近くのボールが飛ぶ\n🔴 シュート矢印（赤・太線）→ ボールが速く飛ぶ\n\n' +
+          '◆ 順番と同時動作\n矢印に①②③と番号が表示されます\nバッジをタップ → 同じ番号の矢印は「同時に」動きます\n\n' +
+          '◆ ペン（手描き）\nペンツールで自由に線を引いて作戦に印を付けられます\n\n' +
+          '◆ 選手の体の向き\n選手をダブルタップ → 前/後/左/右の向きを選択\n\n' +
+          '◆ 削除\n選手: ダブルタップ → 「この選手を削除」\nコーン/ボール/ゴール: ダブルタップで即削除\n矢印/ペン: ダブルタップで削除\n\n' +
+          '◆ 録画機能\nジグザグなど直線で表せない動きは録画ボタンで個別に記録\n\n' +
+          '◆ シーン\n上部の「+」で新シーン。フェーズごとに分けて全再生で連続再生\n\n' +
+          '◆ 速度\n0.5x / 1x / 2x で再生速度変更（PC）'
+        );
+      }
+    });
+  });
+
+  let hintTimer = null;
+  function showHint(msg, duration = 3000) {
+    const el = document.getElementById('hint');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(hintTimer);
+    hintTimer = setTimeout(() => el.classList.remove('show'), duration);
+  }
+
+  function init() {
+    resize();
+    renderScenes();
+    setTimeout(() => {
+      showHint('矢印を引くと自動で動きます。番号バッジをタップで「同時に動く」設定も可能', 5500);
+    }, 400);
+  }
+  init();
+
+})();
+</script>
+
+</body>
+</html>
