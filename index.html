@@ -1129,6 +1129,42 @@
         <button class="facing-btn" data-facing="back" style="width:36px;height:36px;border-radius:8px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:16px;">▲</button>
         <button class="facing-btn" data-facing="right" style="width:36px;height:36px;border-radius:8px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:16px;">▶</button>
       </div>
+      <div style="font-size: 10px; color: #a0a89c; padding: 10px 4px 4px; letter-spacing: 0.05em;">
+        背番号
+      </div>
+      <div style="display: flex; gap: 4px; align-items: center;">
+        <button id="facingPickerNumDown" style="
+          width: 32px; height: 32px;
+          border-radius: 6px;
+          border: 1px solid transparent;
+          background: rgba(255,255,255,0.08);
+          color: #f5f5f0;
+          cursor: pointer;
+          font-size: 16px;
+          font-weight: 700;
+        ">−</button>
+        <input id="facingPickerNumInput" type="number" min="1" max="99" style="
+          width: 60px; height: 32px;
+          border-radius: 6px;
+          border: 1px solid rgba(255,221,0,0.4);
+          background: rgba(255,255,255,0.06);
+          color: #ffdd00;
+          text-align: center;
+          font-size: 14px;
+          font-weight: 700;
+          outline: none;
+        ">
+        <button id="facingPickerNumUp" style="
+          width: 32px; height: 32px;
+          border-radius: 6px;
+          border: 1px solid transparent;
+          background: rgba(255,255,255,0.08);
+          color: #f5f5f0;
+          cursor: pointer;
+          font-size: 16px;
+          font-weight: 700;
+        ">＋</button>
+      </div>
       <button id="facingPickerDelete" style="
         width: 100%;
         margin-top: 8px;
@@ -2295,9 +2331,9 @@
       type, x, y,
       keyframes: [{t: 0, x, y}],
     };
-    if (type === 'player-blue')   { o.color = '#2563eb'; o.number = nextPlayerNumber('player-blue');   o.r = 14; o.facing = 'front'; }
-    else if (type === 'player-red')    { o.color = '#dc2626'; o.number = nextPlayerNumber('player-red');    o.r = 14; o.facing = 'front'; }
-    else if (type === 'player-yellow') { o.color = '#fbbf24'; o.number = nextPlayerNumber('player-yellow'); o.r = 14; o.facing = 'front'; }
+    if (type === 'player-blue')   { o.color = '#2563eb'; o.number = nextPlayerNumber('player-blue');   o.r = 17; o.facing = 'front'; }
+    else if (type === 'player-red')    { o.color = '#dc2626'; o.number = nextPlayerNumber('player-red');    o.r = 17; o.facing = 'front'; }
+    else if (type === 'player-yellow') { o.color = '#fbbf24'; o.number = nextPlayerNumber('player-yellow'); o.r = 17; o.facing = 'front'; }
     else if (type === 'cone')   { o.r = 14; o.color = ui.coneColor; }
     else if (type === 'ball')   { o.r = 10; }
     else if (type === 'goal')   { o.r = 28; o.facing = 'down'; o.size = 'medium'; }
@@ -2718,9 +2754,13 @@
       b.style.borderColor = isCur ? '#ffdd00' : 'transparent';
     });
 
+    // Initialize number input
+    const numInput = document.getElementById('facingPickerNumInput');
+    numInput.value = player.number;
+
     facingPicker.style.display = 'block';
     const pw = facingPicker.offsetWidth || 200;
-    const ph = facingPicker.offsetHeight || 90;
+    const ph = facingPicker.offsetHeight || 180;
     let px = x + 14;
     let py = y - ph / 2;
     if (px + pw > wrapRect.width - 8) px = x - pw - 14;
@@ -2758,6 +2798,42 @@
     const id = facingPickerPlayerId;
     hideFacingPicker();
     deleteObject(id);
+  });
+
+  // Number editor handlers
+  function setPlayerNumber(newNum) {
+    if (!facingPickerPlayerId) return;
+    const p = scene().objects.find(o => o.id === facingPickerPlayerId);
+    if (!p) return;
+    // Clamp to 1-99
+    newNum = Math.max(1, Math.min(99, Math.floor(newNum)));
+    if (p.number === newNum) return;
+    saveHistory();
+    p.number = newNum;
+    document.getElementById('facingPickerNumInput').value = newNum;
+    redraw();
+  }
+
+  document.getElementById('facingPickerNumDown').addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    const inp = document.getElementById('facingPickerNumInput');
+    setPlayerNumber(parseInt(inp.value, 10) - 1);
+  });
+  document.getElementById('facingPickerNumUp').addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    const inp = document.getElementById('facingPickerNumInput');
+    setPlayerNumber(parseInt(inp.value, 10) + 1);
+  });
+  document.getElementById('facingPickerNumInput').addEventListener('input', (ev) => {
+    ev.stopPropagation();
+    const v = parseInt(ev.target.value, 10);
+    if (!isNaN(v)) setPlayerNumber(v);
+  });
+  document.getElementById('facingPickerNumInput').addEventListener('blur', (ev) => {
+    // On blur, sanitize the input
+    const v = parseInt(ev.target.value, 10);
+    if (isNaN(v) || v < 1) ev.target.value = 1;
+    else if (v > 99) ev.target.value = 99;
   });
 
   // Block events from picker bubbling
@@ -2994,6 +3070,17 @@
       if (hit) {
         ui.selectedId = hit.id;
         ui.dragging = { id: hit.id, dx: x - hit.x, dy: y - hit.y };
+
+        // If dragging a player who has a ball at their feet,
+        // grab the ball along (so it follows the player).
+        if (hit.type.startsWith('player')) {
+          const ball = findBallAtFeet(hit);
+          if (ball) {
+            ui.dragging.attachedBallId = ball.id;
+            ui.dragging.ballOffset = { dx: ball.x - hit.x, dy: ball.y - hit.y };
+          }
+        }
+
         const now = Date.now();
         if (now - lastTap < 350 && hit.id === ui._lastTapId) {
           // Double-tap action depends on type
@@ -3091,6 +3178,16 @@
       }
     } else {
       o.keyframes[0] = {t: 0, x: o.x, y: o.y};
+
+      // If we're dragging a player with an attached ball, move the ball too.
+      if (ui.dragging.attachedBallId && ui.dragging.ballOffset) {
+        const ball = scene().objects.find(b => b.id === ui.dragging.attachedBallId);
+        if (ball) {
+          ball.x = clamp(o.x + ui.dragging.ballOffset.dx, 10, W - 10);
+          ball.y = clamp(o.y + ui.dragging.ballOffset.dy, 10, H - 10);
+          ball.keyframes[0] = { t: 0, x: ball.x, y: ball.y };
+        }
+      }
     }
     redraw();
   }
@@ -3117,12 +3214,45 @@
     if (ui.dragging && ui.dragging.recording) {
       finishRecording();
     } else if (ui.dragging && !ui.dragging.recording) {
+      // If we just dropped a ball near a player, snap it to the player's feet.
+      const draggedObj = scene().objects.find(o => o.id === ui.dragging.id);
+      if (draggedObj && draggedObj.type === 'ball') {
+        const nearestPlayer = findNearestPlayerForBallSnap(draggedObj);
+        if (nearestPlayer) {
+          // Place the ball just slightly in front of the player's feet,
+          // centered horizontally on the player anchor point.
+          const offsetY = nearestPlayer.r * 0.2; // slight offset in front
+          draggedObj.x = nearestPlayer.x;
+          draggedObj.y = nearestPlayer.y + offsetY;
+          draggedObj.keyframes = [{ t: 0, x: draggedObj.x, y: draggedObj.y }];
+          showHint('ボールを選手の足元にスナップしました', 1500);
+        }
+      }
       if (scene().arrows.length > 0) {
         rebuildAnimation();
+        redraw();
+      } else {
         redraw();
       }
     }
     ui.dragging = null;
+  }
+
+  function findNearestPlayerForBallSnap(ball) {
+    // Snap radius: how close a ball must be to a player to auto-attach.
+    // Reasonably generous so it feels "magnetic".
+    let bestPlayer = null;
+    let bestDist = Infinity;
+    const maxSnapDist = ball.r * 4 + 30;  // ~70px range
+    scene().objects.forEach(o => {
+      if (!o.type.startsWith('player')) return;
+      const d = Math.hypot(o.x - ball.x, o.y - ball.y);
+      if (d < maxSnapDist && d < bestDist) {
+        bestPlayer = o;
+        bestDist = d;
+      }
+    });
+    return bestPlayer;
   }
 
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
