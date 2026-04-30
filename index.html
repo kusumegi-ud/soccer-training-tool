@@ -1057,6 +1057,9 @@
   let grassW = 0, grassH = 0;
 
   function generateGrassTexture(w, h) {
+    // Guard against zero/negative size — would crash getImageData
+    if (w <= 0 || h <= 0) return null;
+
     const c = document.createElement('canvas');
     c.width = w;
     c.height = h;
@@ -1128,7 +1131,13 @@
       grassW = W;
       grassH = H;
     }
-    bgCtx.drawImage(grassCanvas, 0, 0);
+    if (grassCanvas) {
+      bgCtx.drawImage(grassCanvas, 0, 0);
+    } else {
+      // Fallback: solid green base
+      bgCtx.fillStyle = '#357c38';
+      bgCtx.fillRect(0, 0, W, H);
+    }
 
     // Skip lines if user disabled them
     if (!settings.showLines) return;
@@ -3058,8 +3067,8 @@
   }
 
   function init() {
-    applyStripesSetting();
-    resize();
+    resize();              // First: set up canvas dimensions
+    applyStripesSetting(); // Then: apply stripes setting (may regenerate grass)
     renderScenes();
     setTimeout(() => {
       showHint('矢印を引くと自動で動きます。番号バッジをタップで「同時に動く」設定も可能', 5500);
