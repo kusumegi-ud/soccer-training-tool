@@ -182,8 +182,12 @@
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     max-height: calc(100% - 24px);
+    width: 54px;
     overflow-y: auto;
+    overflow-x: hidden;
     scrollbar-width: none;
+    box-sizing: border-box;
+    touch-action: pan-y;
   }
   .toolbar::-webkit-scrollbar { display: none; }
 
@@ -2994,10 +2998,6 @@
   const toolbarEl = document.getElementById('toolbar');
   const toolbarHandle = document.getElementById('toolbarHandle');
   let toolbarDrag = null;
-
-  // Set touch-action: none on the whole toolbar to prevent
-  // mobile browsers from interpreting touches as scrolls.
-  toolbarEl.style.touchAction = 'none';
 
   // Restore saved position
   try {
