@@ -710,6 +710,20 @@
       <div style="font-size: 10px; color: #fde047; padding: 6px 0 2px; line-height: 1.5;">
         💡 選手の足元にボールがある状態で録画すると、選手とボールがセットで動きます（ドリブルの記録に便利）。
       </div>
+
+      <div style="height: 1px; background: rgba(255,221,0,0.15); margin: 8px 0 6px;"></div>
+      <div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fde047" stroke-width="2" style="flex-shrink: 0;">
+          <path d="M12 2 L15 5 L12 8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M3 12 a9 9 0 1 0 18 0" stroke-linecap="round"/>
+        </svg>
+        <div style="color: #f5f5f0; font-weight: 700; font-size: 12px;">体の向きを変える</div>
+      </div>
+      <div style="font-size: 10px; color: #c8d0c0; padding: 2px 0; line-height: 1.6;">
+        ① 選手を<b>長押し</b>（0.5秒）<br>
+        ② 黄色い円が表示されたら、そのまま指/マウスを動かす<br>
+        ③ 体が指の方向を向く。離すと確定
+      </div>
     </div>
   </div>
 
@@ -768,6 +782,34 @@
           flex-shrink: 0;
         ">
       </label>
+      <div style="padding: 8px 0; font-size: 13px;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+          <span style="color: #c8d0c0;">選手のサイズ（デフォルト）</span>
+          <span id="settingPlayerSizeValue" style="font-size: 11px; color: var(--accent); font-weight: 700;">17</span>
+        </div>
+        <input id="settingPlayerSizeSlider" type="range" min="8" max="30" step="1" value="17" style="
+          width: 100%;
+          accent-color: var(--accent);
+          cursor: pointer;
+        ">
+        <button id="settingApplySizeAll" type="button" style="
+          width: 100%;
+          margin-top: 8px;
+          background: rgba(255,221,0,0.15);
+          color: var(--accent);
+          border: 1px solid rgba(255,221,0,0.4);
+          padding: 8px 10px;
+          border-radius: 6px;
+          font-size: 12px;
+          cursor: pointer;
+          font-weight: 600;
+          position: relative;
+          z-index: 10;
+        ">既存の選手すべてに適用</button>
+        <div style="font-size: 10px; color: #a0a89c; padding: 4px 0 0; line-height: 1.4;">
+          スライダーは新規選手のデフォルト。既存選手にも反映するにはボタンを押す。
+        </div>
+      </div>
     </div>
   </div>
 
@@ -931,6 +973,29 @@
           </svg>
         </div>
         <span class="tool-label">選手（黄）</span>
+      </button>
+      <button class="tool" data-tool="coach">
+        <svg width="22" height="28" viewBox="0 0 22 28" fill="none">
+          <!-- shoes -->
+          <path d="M5.5 25.5 L9.5 25.5 L10 27 L6 27 Z" fill="#1a1a1a"/>
+          <path d="M12.5 25.5 L16.5 25.5 L16 27 L12 27 Z" fill="#1a1a1a"/>
+          <!-- pants -->
+          <path d="M7 17 L10.5 17 L10 25.5 L7 25.5 Z" fill="#3a3a3a"/>
+          <path d="M11.5 17 L15 17 L15 25.5 L12 25.5 Z" fill="#3a3a3a"/>
+          <!-- jacket -->
+          <path d="M5 9.5 L17 9.5 Q16.5 12 16.5 17 L5.5 17 Q5.5 12 5 9.5 Z" fill="#16a34a"/>
+          <!-- C letter -->
+          <text x="11" y="14.5" font-size="6" font-weight="700" text-anchor="middle" fill="#fff" font-family="sans-serif">C</text>
+          <!-- arms -->
+          <path d="M3 9.5 L4.8 9.5 L4 17 L2.5 17 Z" fill="#16a34a"/>
+          <path d="M17.2 9.5 L19 9.5 L19.5 17 L18 17 Z" fill="#16a34a"/>
+          <!-- head -->
+          <circle cx="11" cy="5" r="2.6" fill="#e8c5a0"/>
+          <!-- eyes -->
+          <circle cx="9.9" cy="4.7" r="0.35" fill="#1a1a1a"/>
+          <circle cx="12.1" cy="4.7" r="0.35" fill="#1a1a1a"/>
+        </svg>
+        <span class="tool-label">コーチ</span>
       </button>
       <div class="tool-divider"></div>
       <button class="tool" data-tool="cone">
@@ -1129,42 +1194,53 @@
         <button class="facing-btn" data-facing="back" style="width:36px;height:36px;border-radius:8px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:16px;">▲</button>
         <button class="facing-btn" data-facing="right" style="width:36px;height:36px;border-radius:8px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:16px;">▶</button>
       </div>
-      <div style="font-size: 10px; color: #a0a89c; padding: 10px 4px 4px; letter-spacing: 0.05em;">
-        背番号
+      <div id="facingPickerNumberSection">
+        <div style="font-size: 10px; color: #a0a89c; padding: 10px 4px 4px; letter-spacing: 0.05em;">
+          背番号
+        </div>
+        <div style="display: flex; gap: 4px; align-items: center;">
+          <button id="facingPickerNumDown" style="
+            width: 32px; height: 32px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            background: rgba(255,255,255,0.08);
+            color: #f5f5f0;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 700;
+          ">−</button>
+          <input id="facingPickerNumInput" type="number" min="1" max="99" style="
+            width: 60px; height: 32px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,221,0,0.4);
+            background: rgba(255,255,255,0.06);
+            color: #ffdd00;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 700;
+            outline: none;
+          ">
+          <button id="facingPickerNumUp" style="
+            width: 32px; height: 32px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            background: rgba(255,255,255,0.08);
+            color: #f5f5f0;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 700;
+          ">＋</button>
+        </div>
       </div>
-      <div style="display: flex; gap: 4px; align-items: center;">
-        <button id="facingPickerNumDown" style="
-          width: 32px; height: 32px;
-          border-radius: 6px;
-          border: 1px solid transparent;
-          background: rgba(255,255,255,0.08);
-          color: #f5f5f0;
-          cursor: pointer;
-          font-size: 16px;
-          font-weight: 700;
-        ">−</button>
-        <input id="facingPickerNumInput" type="number" min="1" max="99" style="
-          width: 60px; height: 32px;
-          border-radius: 6px;
-          border: 1px solid rgba(255,221,0,0.4);
-          background: rgba(255,255,255,0.06);
-          color: #ffdd00;
-          text-align: center;
-          font-size: 14px;
-          font-weight: 700;
-          outline: none;
-        ">
-        <button id="facingPickerNumUp" style="
-          width: 32px; height: 32px;
-          border-radius: 6px;
-          border: 1px solid transparent;
-          background: rgba(255,255,255,0.08);
-          color: #f5f5f0;
-          cursor: pointer;
-          font-size: 16px;
-          font-weight: 700;
-        ">＋</button>
+      <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 10px 4px 4px;">
+        <span style="font-size: 10px; color: #a0a89c; letter-spacing: 0.05em;">サイズ</span>
+        <span id="facingPickerSizeValue" style="font-size: 11px; color: var(--accent); font-weight: 700;">17</span>
       </div>
+      <input id="facingPickerSizeSlider" type="range" min="8" max="30" step="1" value="17" style="
+        width: 100%;
+        accent-color: var(--accent);
+        cursor: pointer;
+      ">
       <button id="facingPickerDelete" style="
         width: 100%;
         margin-top: 8px;
@@ -1260,6 +1336,42 @@
         font-weight: 600;
       ">このコーンを削除</button>
     </div>
+
+    <div id="ballPicker" style="
+      position: absolute;
+      background: rgba(15, 20, 15, 0.96);
+      border: 1px solid var(--ui-border);
+      border-radius: 12px;
+      padding: 8px;
+      z-index: 60;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: none;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      min-width: 180px;
+    ">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 2px 4px 4px;">
+        <span style="font-size: 10px; color: #a0a89c; letter-spacing: 0.05em;">サイズ</span>
+        <span id="ballPickerSizeValue" style="font-size: 11px; color: var(--accent); font-weight: 700;">12</span>
+      </div>
+      <input id="ballPickerSizeSlider" type="range" min="6" max="24" step="1" value="12" style="
+        width: 100%;
+        accent-color: var(--accent);
+        cursor: pointer;
+      ">
+      <button id="ballPickerDelete" style="
+        width: 100%;
+        margin-top: 8px;
+        background: rgba(220, 38, 38, 0.2);
+        color: #f87171;
+        border: 1px solid rgba(220, 38, 38, 0.4);
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        cursor: pointer;
+        font-weight: 600;
+      ">このボールを削除</button>
+    </div>
   </div>
 
   <div class="bottombar">
@@ -1305,6 +1417,57 @@
   const pathCtx = pathCanvas.getContext('2d');
   const iconCtx = iconCanvas.getContext('2d');
 
+  // ======================================================================
+  // Player image template (top-down humanoid in blue jersey).
+  // We color-swap the blue pixels to render red/yellow/green variants.
+  // ======================================================================
+  const PLAYER_TEMPLATE_SRC = "data:image/png;base64,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";
+  const playerTemplateImg = new Image();
+  let playerTemplateReady = false;
+  playerTemplateImg.onload = () => {
+    playerTemplateReady = true;
+    if (typeof redraw === 'function') redraw();
+  };
+  playerTemplateImg.src = PLAYER_TEMPLATE_SRC;
+
+  // Cache color-swapped variations (one off-screen canvas per jersey hex)
+  const playerColorCache = new Map();
+  function getColoredPlayer(jerseyHex) {
+    if (playerColorCache.has(jerseyHex)) return playerColorCache.get(jerseyHex);
+    if (!playerTemplateReady) return null;
+
+    const w = playerTemplateImg.width;
+    const h = playerTemplateImg.height;
+    const off = document.createElement('canvas');
+    off.width = w;
+    off.height = h;
+    const ctx = off.getContext('2d');
+    ctx.drawImage(playerTemplateImg, 0, 0);
+
+    const rT = parseInt(jerseyHex.slice(1, 3), 16);
+    const gT = parseInt(jerseyHex.slice(3, 5), 16);
+    const bT = parseInt(jerseyHex.slice(5, 7), 16);
+
+    const imgData = ctx.getImageData(0, 0, w, h);
+    const d = imgData.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const r = d[i], g = d[i+1], b = d[i+2], a = d[i+3];
+      if (a < 10) continue;
+      // Blue-pixel detection (jersey/shorts/socks all blue in template)
+      if (b > 100 && b > r * 1.4 && b > g * 1.4 && b - r > 50) {
+        // Preserve relative shading (0.65 to 1.0 of target color)
+        const shade = b / 220;
+        const shadeFactor = 0.65 + 0.35 * shade;
+        d[i] = Math.round(rT * shadeFactor);
+        d[i+1] = Math.round(gT * shadeFactor);
+        d[i+2] = Math.round(bT * shadeFactor);
+      }
+    }
+    ctx.putImageData(imgData, 0, 0);
+    playerColorCache.set(jerseyHex, off);
+    return off;
+  }
+
   const project = {
     scenes: [
       { name: 'シーン 1', objects: [], arrows: [], drawings: [], duration: 0 }
@@ -1337,8 +1500,9 @@
 
   // App-wide settings (saved to localStorage)
   const settings = {
-    lineMode: 'full',     // 'full' | 'half' | 'none'
+    lineMode: 'full',
     showStripes: true,
+    playerSize: 17,        // numeric radius (8-30)
   };
   // Migrate old setting if needed
   try {
@@ -1349,6 +1513,11 @@
       if ('showLines' in obj && !('lineMode' in obj)) {
         obj.lineMode = obj.showLines ? 'full' : 'none';
         delete obj.showLines;
+      }
+      // Backward compatibility: convert old string playerSize to numeric
+      if (typeof obj.playerSize === 'string') {
+        const m = { small: 14, medium: 17, large: 22 };
+        obj.playerSize = m[obj.playerSize] || 17;
       }
       Object.assign(settings, obj);
     }
@@ -1595,244 +1764,68 @@
     ctx.save();
     ctx.translate(o.x, o.y);
 
-    if (o.type.startsWith('player')) {
+    if (o.type.startsWith('player') || o.type === 'coach') {
       // ============================================================
-      // Simple flat-design player (3/4 angle, tall figure).
-      // - No floor ring, no shadow gradients.
-      // - Rectangular torso (no V-tapered jersey).
-      // - No facial features (eyes / mouth) — just hair on head.
+      // Image-based top-down player/coach rendering.
+      // Uses an off-screen color-swapped image template; the image is
+      // rotated by o.angle (radians) around the body center.
+      // The number/"C" badge is drawn upright on the chest area.
       // ============================================================
-      const facing = o.facing || 'front';
-      const isSide = (facing === 'left' || facing === 'right');
-      if (facing === 'left') ctx.scale(-1, 1);
-
-      const unit = o.r;
-      const skin = '#e8c5a0';
-      const hair = '#1a1410';
-      const shortsColor = '#ffffff';
-      const shoeColor = '#1a1a1a';
+      const isCoach = (o.type === 'coach');
       const jerseyColor = o.color;
-      const sockColor = jerseyColor;
-      const numberColor = (o.color === '#fbbf24') ? '#222' : '#fff';
+      const angle = (typeof o.angle === 'number') ? o.angle : 0;
 
-      // === Vertical layout (anchor at feet) — 70% scale of original ===
-      const feetY = 0;
-      const shoeH = unit * 0.18;
-      const shoeTopY = feetY - shoeH;
-      const sockH = unit * 0.4;
-      const sockTopY = shoeTopY - sockH;
-      const legH = unit * 0.5;
-      const legTopY = sockTopY - legH;
-      const shortsH = unit * 0.4;
-      const shortsTopY = legTopY - shortsH;
-      const torsoH = unit * 0.8;
-      const torsoTopY = shortsTopY - torsoH;
-      const neckH = unit * 0.06;
-      const headR = unit * 0.32;
-      const headCY = torsoTopY - neckH - headR;
+      // Display height is proportional to o.r (player size unit).
+      // o.r ranges roughly 8..30; we scale so the figure looks balanced.
+      const displayH = o.r * 5.5;
+      const tpl = getColoredPlayer(jerseyColor);
+      if (tpl) {
+        const aspect = tpl.width / tpl.height;
+        const dh = displayH;
+        const dw = dh * aspect;
 
-      // Widths
-      const shoulderW = unit * 1.4;
-      const torsoW = unit * 1.05;
-      const shortsW = unit * 1.0;
-      const legW = unit * 0.3;
-      const legGap = unit * 0.18;
-      const armW = unit * 0.26;
-
-      if (isSide) {
-        // ===================== SIDE VIEW =====================
-        const sideTorsoW = torsoW * 0.42;
-
-        // Back leg (further)
-        const backLegX = -sideTorsoW * 0.2;
-        // Back sock
-        ctx.fillStyle = sockColor;
-        ctx.fillRect(backLegX - legW * 0.45, sockTopY, legW * 0.9, sockH);
-        // Back skin (thigh)
-        ctx.fillStyle = skin;
-        ctx.fillRect(backLegX - legW * 0.45, legTopY, legW * 0.9, legH);
-        // Back shoe
-        ctx.fillStyle = shoeColor;
-        ctx.beginPath();
-        ctx.ellipse(backLegX + legW * 0.1, feetY - shoeH * 0.4, legW * 0.85, shoeH * 0.7, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Back arm
-        ctx.fillStyle = skin;
-        const backArmX = -sideTorsoW * 0.15;
-        ctx.fillRect(backArmX - armW/2, torsoTopY + torsoH * 0.3, armW * 0.85, torsoH * 0.85);
-        // Back sleeve
-        ctx.fillStyle = jerseyColor;
-        ctx.fillRect(backArmX - armW/2 - 1, torsoTopY + torsoH * 0.05, armW * 0.95, torsoH * 0.4);
-
-        // Shorts (rectangular for side view)
-        ctx.fillStyle = shortsColor;
-        ctx.fillRect(-sideTorsoW * 0.55, shortsTopY, sideTorsoW * 1.15, shortsH);
-
-        // Jersey body (rectangular, side view)
-        ctx.fillStyle = jerseyColor;
-        ctx.fillRect(-sideTorsoW * 0.5, torsoTopY, sideTorsoW, torsoH);
-
-        // Front leg
-        const frontLegX = sideTorsoW * 0.25;
-        // Front sock
-        ctx.fillStyle = sockColor;
-        ctx.fillRect(frontLegX - legW/2, sockTopY, legW, sockH);
-        // Front thigh
-        ctx.fillStyle = skin;
-        ctx.fillRect(frontLegX - legW/2, legTopY, legW, legH);
-        // Front shoe (toe forward)
-        ctx.fillStyle = shoeColor;
-        ctx.beginPath();
-        ctx.ellipse(frontLegX + legW * 0.5, feetY - shoeH * 0.4, legW * 1.1, shoeH * 0.7, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Front arm
-        ctx.fillStyle = skin;
-        const frontArmX = sideTorsoW * 0.6;
-        ctx.fillRect(frontArmX - armW/2, torsoTopY + torsoH * 0.3, armW, torsoH * 0.85);
-        // Front sleeve
-        ctx.fillStyle = jerseyColor;
-        ctx.fillRect(frontArmX - armW/2 - 1, torsoTopY + torsoH * 0.05, armW + 2, torsoH * 0.4);
-
-        // Number on jersey (side, smaller)
         ctx.save();
-        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-        ctx.translate(o.x, o.y);
-        ctx.fillStyle = numberColor;
-        ctx.font = `bold ${Math.round(torsoH * 0.42)}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        const numXOffset = (facing === 'left') ? -sideTorsoW * 0.05 : sideTorsoW * 0.05;
-        ctx.fillText(o.number, numXOffset, torsoTopY + torsoH * 0.55);
+        ctx.rotate(angle);
+        ctx.drawImage(tpl, -dw/2, -dh/2, dw, dh);
         ctx.restore();
 
-        // Head (skin)
-        ctx.fillStyle = skin;
-        ctx.beginPath();
-        ctx.arc(0, headCY, headR, 0, Math.PI * 2);
-        ctx.fill();
+        // Number / "C" badge — drawn upright after rotation reset.
+        // The chest is at y = -5% of dh from body center (slightly above center).
+        const chestText = isCoach ? 'C' : (o.number != null ? String(o.number) : '');
+        if (chestText) {
+          const lx = 0;
+          const ly = dh * -0.05;
+          const sin = Math.sin(angle), cos = Math.cos(angle);
+          // Convert local (lx, ly) to screen-relative position
+          const sx = cos * lx - sin * ly;
+          const sy = sin * lx + cos * ly;
 
-        // Hair (back + top + forehead bangs)
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(0, headCY, headR, 0, Math.PI * 2);
-        ctx.clip();
-        ctx.fillStyle = hair;
-        // Back of head (covers back-half + top)
-        ctx.fillRect(-headR * 1.1, headCY - headR * 1.1, headR * 1.4, headR * 1.5);
-        // Top hair coming forward
-        ctx.beginPath();
-        ctx.moveTo(headR * 0.3, headCY - headR);
-        ctx.quadraticCurveTo(headR * 0.7, headCY - headR * 0.6, headR * 0.4, headCY - headR * 0.2);
-        ctx.lineTo(-headR * 0.2, headCY - headR * 0.2);
-        ctx.lineTo(-headR * 0.2, headCY - headR * 1.1);
-        ctx.closePath();
-        ctx.fill();
-        // Forehead bangs (a small fringe falling forward from the top)
-        ctx.beginPath();
-        ctx.moveTo(headR * 0.2, headCY - headR * 0.7);
-        ctx.quadraticCurveTo(headR * 0.95, headCY - headR * 0.5,
-                              headR * 0.95, headCY - headR * 0.05);
-        ctx.quadraticCurveTo(headR * 0.85, headCY + headR * 0.05,
-                              headR * 0.7, headCY - headR * 0.1);
-        ctx.quadraticCurveTo(headR * 0.55, headCY - headR * 0.35,
-                              headR * 0.2, headCY - headR * 0.7);
-        ctx.closePath();
-        ctx.fill();
-        ctx.restore();
-      } else {
-        // ===================== FRONT / BACK VIEW =====================
-
-        // Arms (skin, hanging on each side)
-        ctx.fillStyle = skin;
-        // Left arm
-        ctx.fillRect(-shoulderW/2 + unit*0.02, torsoTopY + torsoH * 0.5, armW, torsoH * 0.55);
-        // Right arm
-        ctx.fillRect(shoulderW/2 - armW - unit*0.02, torsoTopY + torsoH * 0.5, armW, torsoH * 0.55);
-
-        // Sleeves (jersey color, short cap)
-        ctx.fillStyle = jerseyColor;
-        ctx.fillRect(-shoulderW/2, torsoTopY + unit*0.02, armW + unit*0.05, torsoH * 0.5);
-        ctx.fillRect(shoulderW/2 - armW - unit*0.05, torsoTopY + unit*0.02, armW + unit*0.05, torsoH * 0.5);
-
-        // Shorts (simple rectangle with V-cut at bottom for legs)
-        ctx.fillStyle = shortsColor;
-        ctx.beginPath();
-        ctx.moveTo(-shortsW/2, shortsTopY);
-        ctx.lineTo(shortsW/2, shortsTopY);
-        ctx.lineTo(shortsW/2, shortsTopY + shortsH);
-        ctx.lineTo(unit*0.06, shortsTopY + shortsH);
-        ctx.lineTo(0, shortsTopY + shortsH - unit*0.1);
-        ctx.lineTo(-unit*0.06, shortsTopY + shortsH);
-        ctx.lineTo(-shortsW/2, shortsTopY + shortsH);
-        ctx.closePath();
-        ctx.fill();
-
-        // Jersey (rectangular, no taper)
-        ctx.fillStyle = jerseyColor;
-        ctx.fillRect(-torsoW/2, torsoTopY, torsoW, torsoH);
-
-        // Legs (V-split, simple rectangles)
-        ctx.fillStyle = skin;
-        // Left leg
-        ctx.fillRect(-legGap/2 - legW, legTopY, legW, legH);
-        // Right leg
-        ctx.fillRect(legGap/2, legTopY, legW, legH);
-
-        // Socks
-        ctx.fillStyle = sockColor;
-        ctx.fillRect(-legGap/2 - legW, sockTopY, legW, sockH);
-        ctx.fillRect(legGap/2, sockTopY, legW, sockH);
-
-        // Shoes
-        ctx.fillStyle = shoeColor;
-        ctx.beginPath();
-        ctx.ellipse(-legGap/2 - legW * 0.5, feetY - shoeH * 0.4, legW * 0.7, shoeH * 0.75, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.ellipse(legGap/2 + legW * 0.5, feetY - shoeH * 0.4, legW * 0.7, shoeH * 0.75, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Head (skin)
-        ctx.fillStyle = skin;
-        ctx.beginPath();
-        ctx.arc(0, headCY, headR, 0, Math.PI * 2);
-        ctx.fill();
-
-        if (facing === 'back') {
-          // Back of head — full hair
-          ctx.fillStyle = hair;
+          const badgeR = dh * 0.10;
+          ctx.fillStyle = '#ffffff';
           ctx.beginPath();
-          ctx.arc(0, headCY, headR, 0, Math.PI * 2);
+          ctx.arc(sx, sy, badgeR, 0, Math.PI * 2);
           ctx.fill();
-        } else {
-          // Front view — hair covers top 65% of head
-          ctx.save();
-          ctx.beginPath();
-          ctx.arc(0, headCY, headR, 0, Math.PI * 2);
-          ctx.clip();
-          ctx.fillStyle = hair;
-          ctx.beginPath();
-          ctx.moveTo(-headR * 1.1, headCY - headR * 1.1);
-          ctx.lineTo(headR * 1.1, headCY - headR * 1.1);
-          ctx.lineTo(headR * 1.1, headCY - headR * 0.05);
-          ctx.quadraticCurveTo(headR * 0.6, headCY + headR * 0.05, headR * 0.3, headCY - headR * 0.15);
-          ctx.quadraticCurveTo(0, headCY - headR * 0.35, -headR * 0.3, headCY - headR * 0.15);
-          ctx.quadraticCurveTo(-headR * 0.6, headCY + headR * 0.05, -headR * 1.1, headCY - headR * 0.05);
-          ctx.closePath();
-          ctx.fill();
-          ctx.restore();
+          ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+
+          ctx.fillStyle = '#1a1a1a';
+          ctx.font = `bold ${Math.round(badgeR * 1.3)}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(chestText, sx, sy);
         }
-
-        // Number on jersey (rectangular center)
-        ctx.fillStyle = numberColor;
-        const fontSize = Math.round(torsoH * 0.5);
-        ctx.font = `bold ${fontSize}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(o.number, 0, torsoTopY + torsoH * 0.55);
+      } else {
+        // Fallback while image is loading: a simple jersey-colored disc
+        ctx.fillStyle = jerseyColor;
+        ctx.beginPath();
+        ctx.arc(0, 0, o.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#1a1a1a';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
       }
+
     } else if (o.type === 'cone') {
       const baseColor = o.color || '#ff7a2a';
       const darkColor = darken(baseColor, 0.25);
@@ -1867,71 +1860,68 @@
       ctx.fillStyle = '#333';
       ctx.fillRect(-o.r, o.r * 0.8, o.r * 2, 3);
     } else if (o.type === 'ball') {
-      // Soccer ball with classic pentagon pattern
+      // ============================================================
+      // Realistic 3D-shaded soccer ball:
+      //   - white sphere with subtle radial shading (3D depth)
+      //   - black hexagon panels arranged like a truncated icosahedron
+      //   - specular highlight (top-left gloss)
+      //   - drop shadow on the ground
+      // ============================================================
       const r = o.r;
 
-      // Drop shadow
+      // Drop shadow on the ground (offset slightly below ball)
       ctx.beginPath();
-      ctx.arc(1, 2, r, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.ellipse(1, r * 0.85, r * 0.85, r * 0.2, 0, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
       ctx.fill();
 
-      // White ball body
+      // White sphere body with subtle radial shading
+      const bodyGrad = ctx.createRadialGradient(
+        -r * 0.3, -r * 0.35, r * 0.05,
+         0, 0, r * 1.05
+      );
+      bodyGrad.addColorStop(0, '#ffffff');
+      bodyGrad.addColorStop(0.5, '#f5f5f0');
+      bodyGrad.addColorStop(0.85, '#cdcdc5');
+      bodyGrad.addColorStop(1, '#9c9c95');
       ctx.beginPath();
       ctx.arc(0, 0, r, 0, Math.PI * 2);
-      ctx.fillStyle = '#ffffff';
-      ctx.fill();
-      ctx.strokeStyle = '#1a1a1a';
-      ctx.lineWidth = 1.2;
-      ctx.stroke();
-
-      // Save state and clip to ball circle so all patterns stay inside
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(0, 0, r - 0.5, 0, Math.PI * 2);
-      ctx.clip();
-
-      ctx.fillStyle = '#1a1a1a';
-      ctx.strokeStyle = '#1a1a1a';
-      ctx.lineWidth = 1;
-
-      // Center pentagon (slightly above center for 3D feel)
-      const cy = -r * 0.05;
-      drawPentagon(ctx, 0, cy, r * 0.32, -Math.PI / 2);
+      ctx.fillStyle = bodyGrad;
       ctx.fill();
 
-      // Surrounding 5 partial pentagons connected by lines
-      // We draw small filled "patches" at the ball's edges
-      const patchR = r * 0.22;
-      const ringR = r * 0.78;
-      for (let i = 0; i < 5; i++) {
-        const ang = -Math.PI / 2 + (Math.PI * 2 / 5) * i + Math.PI / 5;
-        const px = Math.cos(ang) * ringR;
-        const py = Math.sin(ang) * ringR;
-        // Edge patch (pentagon at the rim)
-        drawPentagon(ctx, px, py, patchR, ang + Math.PI);
-        ctx.fill();
-
-        // Connecting line from center pentagon vertex to edge patch
-        const innerAng = -Math.PI / 2 + (Math.PI * 2 / 5) * i;
-        const innerVertX = Math.cos(innerAng) * r * 0.32;
-        const innerVertY = cy + Math.sin(innerAng) * r * 0.32;
-        ctx.beginPath();
-        ctx.moveTo(innerVertX, innerVertY);
-        ctx.lineTo(Math.cos(innerAng) * r * 0.55, Math.sin(innerAng) * r * 0.55 + cy * 0.5);
-        ctx.stroke();
-      }
-
-      ctx.restore();
-
-      // Subtle highlight (gloss on top-left)
-      const hl = ctx.createRadialGradient(-r * 0.4, -r * 0.4, 0, -r * 0.4, -r * 0.4, r * 0.5);
-      hl.addColorStop(0, 'rgba(255,255,255,0.6)');
+      // ----- Specular highlight (top-left gloss) -----
+      const hl = ctx.createRadialGradient(
+        -r * 0.45, -r * 0.5, 0,
+        -r * 0.45, -r * 0.5, r * 0.7
+      );
+      hl.addColorStop(0, 'rgba(255,255,255,0.65)');
+      hl.addColorStop(0.4, 'rgba(255,255,255,0.2)');
       hl.addColorStop(1, 'rgba(255,255,255,0)');
       ctx.beginPath();
       ctx.arc(0, 0, r, 0, Math.PI * 2);
       ctx.fillStyle = hl;
       ctx.fill();
+
+      // ----- Bottom-right shadow tint -----
+      const shTint = ctx.createRadialGradient(
+        r * 0.4, r * 0.5, 0,
+        r * 0.4, r * 0.5, r * 1.1
+      );
+      shTint.addColorStop(0, 'rgba(0,0,0,0)');
+      shTint.addColorStop(0.7, 'rgba(0,0,0,0)');
+      shTint.addColorStop(1, 'rgba(0,0,0,0.22)');
+      ctx.beginPath();
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.fillStyle = shTint;
+      ctx.fill();
+
+      // Outer outline (subtle)
+      ctx.beginPath();
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(50,50,50,0.4)';
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
+
     } else if (o.type === 'goal') {
       // Apply size scaling
       const sizeMap = { small: 0.7, medium: 1.0, large: 2.1 };
@@ -1978,24 +1968,42 @@
       ctx.strokeStyle = '#ffdd00';
       ctx.lineWidth = 2;
       ctx.setLineDash([4, 3]);
-      if (o.type.startsWith('player')) {
-        // Tall player: oval ring around the figure
+      if (o.type.startsWith('player') || o.type === 'coach') {
+        // Image-based humanoid: oval ring matching figure extent (rotated)
+        const ang = (typeof o.angle === 'number') ? o.angle : 0;
+        ctx.save();
+        ctx.rotate(ang);
         ctx.beginPath();
-        ctx.ellipse(0, -o.r * 1.4, o.r * 1.3, o.r * 1.9, 0, 0, Math.PI * 2);
+        // Figure extends ~ ±o.r*2 horizontally, ±o.r*2.75 vertically (h = o.r*5.5)
+        ctx.ellipse(0, 0, o.r * 2.0 + 4, o.r * 2.75 + 4, 0, 0, Math.PI * 2);
         ctx.stroke();
+        ctx.restore();
       } else {
         ctx.beginPath();
         ctx.arc(0, 0, o.r + 6, 0, Math.PI * 2);
         ctx.stroke();
       }
       ctx.setLineDash([]);
+
+      // Rotation mode visual feedback (only when actively rotating this object via long-press)
+      if ((o.type.startsWith('player') || o.type === 'coach') &&
+          ui.rotating && ui.rotating.id === o.id) {
+        const guideR = o.r * 3.2;
+        // Bright guide circle showing rotation mode is active
+        ctx.strokeStyle = 'rgba(255,221,0,0.55)';
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([5, 4]);
+        ctx.beginPath();
+        ctx.arc(0, 0, guideR, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
     }
     if (ui.recording && ui.recordingTargetId === o.id) {
       ctx.strokeStyle = '#ff3333';
       ctx.lineWidth = 3;
       ctx.beginPath();
-      const ringR = o.type.startsWith('player') ? o.r * 2.4 : o.r + 10;
-      ctx.arc(0, 0, ringR, 0, Math.PI * 2);
+      ctx.arc(0, 0, o.r * 2.9 + 6, 0, Math.PI * 2);
       ctx.stroke();
     }
     ctx.restore();
@@ -2331,11 +2339,15 @@
       type, x, y,
       keyframes: [{t: 0, x, y}],
     };
-    if (type === 'player-blue')   { o.color = '#2563eb'; o.number = nextPlayerNumber('player-blue');   o.r = 17; o.facing = 'front'; }
-    else if (type === 'player-red')    { o.color = '#dc2626'; o.number = nextPlayerNumber('player-red');    o.r = 17; o.facing = 'front'; }
-    else if (type === 'player-yellow') { o.color = '#fbbf24'; o.number = nextPlayerNumber('player-yellow'); o.r = 17; o.facing = 'front'; }
+    // Player base radius from the global setting (numeric, 8-30).
+    const baseR = settings.playerSize || 17;
+
+    if (type === 'player-blue')   { o.color = '#2563eb'; o.number = nextPlayerNumber('player-blue');   o.r = baseR; o.facing = 'front'; }
+    else if (type === 'player-red')    { o.color = '#dc2626'; o.number = nextPlayerNumber('player-red');    o.r = baseR; o.facing = 'front'; }
+    else if (type === 'player-yellow') { o.color = '#fbbf24'; o.number = nextPlayerNumber('player-yellow'); o.r = baseR; o.facing = 'front'; }
+    else if (type === 'coach')         { o.color = '#16a34a'; o.r = baseR; o.facing = 'front'; }
     else if (type === 'cone')   { o.r = 14; o.color = ui.coneColor; }
-    else if (type === 'ball')   { o.r = 10; }
+    else if (type === 'ball')   { o.r = 12; }
     else if (type === 'goal')   { o.r = 28; o.facing = 'down'; o.size = 'medium'; }
     scene().objects.push(o);
     ui.selectedId = o.id;
@@ -2379,16 +2391,14 @@
   // dribble / move -> nearest player
   // pass / shoot   -> nearest ball
   function findBallAtFeet(player) {
-    // Player's feet are below center by ~r * 1.5 in the new tall design.
-    // Look for a ball within a generous radius around the feet area.
-    const feetX = player.x;
-    const feetY = player.y; // anchor IS the feet now (with the tall isometric model)
+    // Image-based: anchor is body center, figure extends ~2.75r vertically.
+    // Look for a ball within the player's overall bounding extent.
     let bestBall = null;
     let bestDist = Infinity;
-    const maxDist = player.r * 2.5;
+    const maxDist = player.r * 3;
     scene().objects.forEach(o => {
       if (o.type !== 'ball') return;
-      const d = Math.hypot(o.x - feetX, o.y - feetY);
+      const d = Math.hypot(o.x - player.x, o.y - player.y);
       if (d < maxDist && d < bestDist) {
         bestBall = o;
         bestDist = d;
@@ -2526,17 +2536,42 @@
     return (best && bestDist < 80) ? best : null;
   }
 
+  function getRotationHandlePos(o) {
+    if (!(o.type.startsWith('player') || o.type === 'coach')) return null;
+    const ang = (typeof o.angle === 'number') ? o.angle : 0;
+    // Guide circle is centered on body center (o.x, o.y). Handle radius matches drawing.
+    const guideR = o.r * 3.2;
+    const hx = o.x + Math.sin(ang) * guideR;
+    const hy = o.y + Math.cos(ang) * guideR;
+    return { x: hx, y: hy };
+  }
+
+  function hitRotationHandle(x, y) {
+    if (!ui.selectedId) return null;
+    const o = scene().objects.find(obj => obj.id === ui.selectedId);
+    if (!o) return null;
+    const pos = getRotationHandlePos(o);
+    if (!pos) return null;
+    const d = Math.hypot(x - pos.x, y - pos.y);
+    return (d < 18) ? o : null;
+  }
+
   function hitTest(x, y) {
     for (let i = scene().objects.length - 1; i >= 0; i--) {
       const o = scene().objects[i];
       const dx = x - o.x;
       const dy = y - o.y;
-      if (o.type.startsWith('player')) {
-        // Player: tall figure with feet at o.y, body extending up by ~3*r (after 70% scale)
-        const halfW = o.r * 1.1;
-        const top = -o.r * 3.2;
-        const bottom = o.r * 0.4;
-        if (dx >= -halfW && dx <= halfW && dy >= top && dy <= bottom) {
+      if (o.type.startsWith('player') || o.type === 'coach') {
+        // Image-based humanoid: tall hit box accounting for rotation.
+        const ang = (typeof o.angle === 'number') ? o.angle : 0;
+        const cosA = Math.cos(-ang);
+        const sinA = Math.sin(-ang);
+        const lx = dx * cosA - dy * sinA;
+        const ly = dx * sinA + dy * cosA;
+        // Figure: width ~ 2.0*r, height ~ 2.75*r (display height = o.r * 5.5, aspect 0.73)
+        const halfW = o.r * 2.0;
+        const halfH = o.r * 2.75;
+        if (lx >= -halfW && lx <= halfW && ly >= -halfH && ly <= halfH) {
           return o;
         }
       } else if (o.type === 'goal') {
@@ -2746,17 +2781,40 @@
     facingPickerPlayerId = player.id;
     const wrapRect = fieldWrap.getBoundingClientRect();
 
-    // Highlight currently selected facing
+    // Highlight currently selected facing (matches angle within ~30° tolerance)
+    const angleMap = { front: 0, right: Math.PI / 2, back: Math.PI, left: -Math.PI / 2 };
+    const curAng = (typeof player.angle === 'number') ? player.angle : 0;
+    function angDiff(a, b) {
+      let d = a - b;
+      while (d > Math.PI) d -= 2 * Math.PI;
+      while (d < -Math.PI) d += 2 * Math.PI;
+      return Math.abs(d);
+    }
     document.querySelectorAll('.facing-btn').forEach(b => {
-      const isCur = b.dataset.facing === (player.facing || 'front');
+      const targetAng = angleMap[b.dataset.facing];
+      const isCur = angDiff(curAng, targetAng) < (Math.PI / 8);  // within 22.5°
       b.style.background = isCur ? '#ffdd00' : 'rgba(255,255,255,0.08)';
       b.style.color = isCur ? '#000' : '#f5f5f0';
       b.style.borderColor = isCur ? '#ffdd00' : 'transparent';
     });
 
-    // Initialize number input
-    const numInput = document.getElementById('facingPickerNumInput');
-    numInput.value = player.number;
+    // Initialize number input (hide for coach)
+    const numberSection = document.getElementById('facingPickerNumberSection');
+    const isCoach = (player.type === 'coach');
+    numberSection.style.display = isCoach ? 'none' : 'block';
+    if (!isCoach) {
+      const numInput = document.getElementById('facingPickerNumInput');
+      numInput.value = player.number;
+    }
+
+    // Initialize size slider
+    const sizeSlider = document.getElementById('facingPickerSizeSlider');
+    const sizeValue = document.getElementById('facingPickerSizeValue');
+    sizeSlider.value = player.r;
+    sizeValue.textContent = player.r;
+
+    // Update delete button text
+    document.getElementById('facingPickerDelete').textContent = isCoach ? 'このコーチを削除' : 'この選手を削除';
 
     facingPicker.style.display = 'block';
     const pw = facingPicker.offsetWidth || 200;
@@ -2784,7 +2842,10 @@
       const p = scene().objects.find(o => o.id === facingPickerPlayerId);
       if (!p) return;
       saveHistory();
-      p.facing = b.dataset.facing;
+      // Map facing direction to rotation angle (0 = down/front, +90° = right, +180° = up/back, -90° = left)
+      const angleMap = { front: 0, right: Math.PI / 2, back: Math.PI, left: -Math.PI / 2 };
+      p.angle = angleMap[b.dataset.facing] || 0;
+      delete p.facing;  // legacy
       hideFacingPicker();
       redraw();
     };
@@ -2798,6 +2859,32 @@
     const id = facingPickerPlayerId;
     hideFacingPicker();
     deleteObject(id);
+  });
+
+  // Individual player size slider
+  const facingSizeSlider = document.getElementById('facingPickerSizeSlider');
+  const facingSizeValue = document.getElementById('facingPickerSizeValue');
+  let facingSizeHistorySaved = false;
+  facingSizeSlider.addEventListener('input', (ev) => {
+    ev.stopPropagation();
+    if (!facingPickerPlayerId) return;
+    const p = scene().objects.find(o => o.id === facingPickerPlayerId);
+    if (!p) return;
+    if (!facingSizeHistorySaved) {
+      saveHistory();
+      facingSizeHistorySaved = true;
+    }
+    const v = parseInt(ev.target.value, 10);
+    p.r = v;
+    facingSizeValue.textContent = v;
+    redraw();
+  });
+  facingSizeSlider.addEventListener('change', () => {
+    facingSizeHistorySaved = false;
+  });
+  // Block events from bubbling
+  ['mousedown','touchstart','pointerdown','click','input','change'].forEach(evt => {
+    facingSizeSlider.addEventListener(evt, e => e.stopPropagation());
   });
 
   // Number editor handlers
@@ -2989,6 +3076,76 @@
     conePicker.addEventListener(evtName, (ev) => ev.stopPropagation());
   });
 
+  // ---------- Ball picker (size + delete) ----------
+  let ballPickerId = null;
+  const ballPicker = document.getElementById('ballPicker');
+
+  function showBallPicker(ball, x, y) {
+    ballPickerId = ball.id;
+    const wrapRect = fieldWrap.getBoundingClientRect();
+
+    const sizeSlider = document.getElementById('ballPickerSizeSlider');
+    const sizeValue = document.getElementById('ballPickerSizeValue');
+    sizeSlider.value = ball.r;
+    sizeValue.textContent = ball.r;
+
+    ballPicker.style.display = 'block';
+    const pw = ballPicker.offsetWidth || 200;
+    const ph = ballPicker.offsetHeight || 100;
+    let px = x + 14;
+    let py = y - ph / 2;
+    if (px + pw > wrapRect.width - 8) px = x - pw - 14;
+    if (px < 8) px = 8;
+    if (py < 8) py = 8;
+    if (py + ph > wrapRect.height - 8) py = wrapRect.height - ph - 8;
+    ballPicker.style.left = px + 'px';
+    ballPicker.style.top = py + 'px';
+  }
+
+  function hideBallPicker() {
+    ballPicker.style.display = 'none';
+    ballPickerId = null;
+  }
+
+  // Ball size slider
+  const _ballSizeSlider = document.getElementById('ballPickerSizeSlider');
+  const _ballSizeValue = document.getElementById('ballPickerSizeValue');
+  let _ballSizeHistorySaved = false;
+  _ballSizeSlider.addEventListener('input', (ev) => {
+    ev.stopPropagation();
+    if (!ballPickerId) return;
+    const b = scene().objects.find(o => o.id === ballPickerId);
+    if (!b) return;
+    if (!_ballSizeHistorySaved) {
+      saveHistory();
+      _ballSizeHistorySaved = true;
+    }
+    const v = parseInt(ev.target.value, 10);
+    b.r = v;
+    _ballSizeValue.textContent = v;
+    redraw();
+  });
+  _ballSizeSlider.addEventListener('change', () => {
+    _ballSizeHistorySaved = false;
+  });
+  ['mousedown','touchstart','pointerdown','click','input','change'].forEach(evt => {
+    _ballSizeSlider.addEventListener(evt, e => e.stopPropagation());
+  });
+
+  // Ball delete
+  document.getElementById('ballPickerDelete').addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    if (!ballPickerId) return;
+    const id = ballPickerId;
+    hideBallPicker();
+    deleteObject(id);
+  });
+
+  // Block events from ball picker bubbling
+  ['mousedown', 'touchstart', 'pointerdown', 'click'].forEach(evtName => {
+    ballPicker.addEventListener(evtName, (ev) => ev.stopPropagation());
+  });
+
   // Block pointer events from inside the picker bubbling to fieldWrap's pointer handlers.
   ['mousedown', 'touchstart', 'pointerdown', 'click'].forEach(evtName => {
     document.getElementById('orderPicker').addEventListener(evtName, (ev) => {
@@ -3007,6 +3164,14 @@
     e.preventDefault();
     const { x, y } = getPos(e);
     if (ui.playing) return;
+
+    // Close any open picker when tapping on the canvas
+    if (facingPicker.style.display !== 'none') hideFacingPicker();
+    if (typeof goalPicker !== 'undefined' && goalPicker.style.display !== 'none') hideGoalPicker();
+    if (typeof conePicker !== 'undefined' && conePicker.style.display !== 'none') hideConePicker();
+    if (typeof ballPicker !== 'undefined' && ballPicker.style.display !== 'none') hideBallPicker();
+    const orderPickerEl = document.getElementById('orderPicker');
+    if (orderPickerEl && orderPickerEl.style.display === 'block') orderPickerEl.style.display = 'none';
 
     if (ui.recording) {
       const hit = hitTest(x, y);
@@ -3059,7 +3224,7 @@
     }
 
     if (ui.tool === 'select') {
-      // First: badge tap → order picker
+      // Badge tap → order picker
       const badge = badgeHitTest(x, y);
       if (badge) {
         showOrderPicker(badge, x, y);
@@ -3069,7 +3234,7 @@
       const hit = hitTest(x, y);
       if (hit) {
         ui.selectedId = hit.id;
-        ui.dragging = { id: hit.id, dx: x - hit.x, dy: y - hit.y };
+        ui.dragging = { id: hit.id, dx: x - hit.x, dy: y - hit.y, startX: x, startY: y };
 
         // If dragging a player who has a ball at their feet,
         // grab the ball along (so it follows the player).
@@ -3081,10 +3246,33 @@
           }
         }
 
+        // Long-press → rotation mode (only for player/coach)
+        if (hit.type.startsWith('player') || hit.type === 'coach') {
+          if (ui._longPressTimer) clearTimeout(ui._longPressTimer);
+          ui._longPressTimer = setTimeout(() => {
+            // If we haven't moved much and we're still pressing, switch to rotation mode
+            if (ui.dragging && ui.dragging.id === hit.id && !ui.dragging.moved) {
+              // Record the current angle as the base; the start cursor position
+              // will be set on the first pointerMove event.
+              ui.rotating = {
+                id: hit.id,
+                baseAngle: (typeof hit.angle === 'number') ? hit.angle : 0,
+                startX: null,  // set on first move
+                startY: null
+              };
+              ui.dragging = null;  // cancel drag
+              if (navigator.vibrate) navigator.vibrate(40);
+              showHint('回転モード — 指を動かして向きを変える', 1500);
+              redraw();
+            }
+            ui._longPressTimer = null;
+          }, 500);
+        }
+
         const now = Date.now();
         if (now - lastTap < 350 && hit.id === ui._lastTapId) {
           // Double-tap action depends on type
-          if (hit.type.startsWith('player')) {
+          if (hit.type.startsWith('player') || hit.type === 'coach') {
             ui.dragging = null;
             showFacingPicker(hit, x, y);
           } else if (hit.type === 'goal') {
@@ -3093,6 +3281,9 @@
           } else if (hit.type === 'cone') {
             ui.dragging = null;
             showConePicker(hit, x, y);
+          } else if (hit.type === 'ball') {
+            ui.dragging = null;
+            showBallPicker(hit, x, y);
           } else {
             deleteObject(hit.id);
             ui.dragging = null;
@@ -3156,10 +3347,44 @@
       return;
     }
 
+    // Rotation mode: feet point toward the cursor position.
+    if (ui.rotating) {
+      e.preventDefault();
+      const o = scene().objects.find(obj => obj.id === ui.rotating.id);
+      if (!o) return;
+      const dx = x - o.x;
+      const dy = y - o.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 6) return;
+      // Map cursor direction to player facing.
+      // Image's default orientation has feet pointing in +y (down).
+      // ctx.rotate uses standard (counterclockwise positive) convention
+      // when combined with how we set up the transform here.
+      // Empirically -atan2(dx, dy) matches "feet point at cursor".
+      const ang = -Math.atan2(dx, dy);
+      o.angle = ang;
+      delete o.facing;
+      redraw();
+      return;
+    }
+
     if (!ui.dragging) return;
     e.preventDefault();
     const o = scene().objects.find(obj => obj.id === ui.dragging.id);
     if (!o) return;
+
+    // Cancel long-press rotation if user starts moving (more than ~5px from start)
+    if (ui.dragging.startX !== undefined) {
+      const moved = Math.hypot(x - ui.dragging.startX, y - ui.dragging.startY);
+      if (moved > 5) {
+        ui.dragging.moved = true;
+        if (ui._longPressTimer) {
+          clearTimeout(ui._longPressTimer);
+          ui._longPressTimer = null;
+        }
+      }
+    }
+
     o.x = clamp(x - ui.dragging.dx, 10, W - 10);
     o.y = clamp(y - ui.dragging.dy, 10, H - 10);
 
@@ -3193,11 +3418,23 @@
   }
 
   function pointerUp(e) {
+    // Always clear the long-press timer on release
+    if (ui._longPressTimer) {
+      clearTimeout(ui._longPressTimer);
+      ui._longPressTimer = null;
+    }
     if (ui.arrowDrawing) {
       const a = ui.arrowDrawing;
       createArrow(a.type, a.x1, a.y1, a.x2, a.y2);
       ui.arrowDrawing = null;
       drawPaths();
+      return;
+    }
+    if (ui.rotating) {
+      // Save once at the end of the rotation drag
+      saveHistory();
+      ui.rotating = null;
+      redraw();
       return;
     }
     if (ui.penStroke) {
@@ -3219,11 +3456,12 @@
       if (draggedObj && draggedObj.type === 'ball') {
         const nearestPlayer = findNearestPlayerForBallSnap(draggedObj);
         if (nearestPlayer) {
-          // Place the ball just slightly in front of the player's feet,
-          // centered horizontally on the player anchor point.
-          const offsetY = nearestPlayer.r * 0.2; // slight offset in front
-          draggedObj.x = nearestPlayer.x;
-          draggedObj.y = nearestPlayer.y + offsetY;
+          // Place the ball just in front of the player's feet based on facing angle.
+          // angle 0 = forward = +y. Boots are roughly at ly = +o.r*2.4 in object space.
+          const ang = (typeof nearestPlayer.angle === 'number') ? nearestPlayer.angle : 0;
+          const dist = nearestPlayer.r * 2.7 + draggedObj.r * 0.6;
+          draggedObj.x = nearestPlayer.x + Math.sin(ang) * dist;
+          draggedObj.y = nearestPlayer.y + Math.cos(ang) * dist;
           draggedObj.keyframes = [{ t: 0, x: draggedObj.x, y: draggedObj.y }];
           showHint('ボールを選手の足元にスナップしました', 1500);
         }
@@ -3791,9 +4029,11 @@
     settingsPanel.classList.remove('show');
     legendPanel.classList.remove('show');
   });
-  // Prevent panel clicks from closing
-  settingsPanel.addEventListener('click', e => e.stopPropagation());
-  legendPanel.addEventListener('click', e => e.stopPropagation());
+  // Prevent panel clicks from closing on all event types
+  ['mousedown','touchstart','pointerdown','click'].forEach(evtName => {
+    settingsPanel.addEventListener(evtName, e => e.stopPropagation());
+    legendPanel.addEventListener(evtName, e => e.stopPropagation());
+  });
 
   // Settings handlers
   const stripesToggle = document.getElementById('settingShowStripes');
@@ -3827,6 +4067,58 @@
     b.addEventListener('click', handler);
     b.addEventListener('touchstart', handler, { passive: false });
   });
+
+  // Player size slider (numeric)
+  const playerSizeSlider = document.getElementById('settingPlayerSizeSlider');
+  const playerSizeValue = document.getElementById('settingPlayerSizeValue');
+  playerSizeSlider.value = settings.playerSize;
+  playerSizeValue.textContent = settings.playerSize;
+  playerSizeSlider.addEventListener('input', (ev) => {
+    ev.stopPropagation();
+    const v = parseInt(ev.target.value, 10);
+    settings.playerSize = v;
+    playerSizeValue.textContent = v;
+    saveSettings();
+  });
+  // Don't let slider events bubble out of the panel
+  ['mousedown','touchstart','pointerdown','click','input','change'].forEach(evt => {
+    playerSizeSlider.addEventListener(evt, e => e.stopPropagation());
+  });
+
+  // Apply current default size to ALL existing players in all scenes
+  function applyPlayerSizeToAll(ev) {
+    if (ev) {
+      ev.stopPropagation();
+      ev.preventDefault();
+    }
+    let count = 0;
+    project.scenes.forEach(s => {
+      s.objects.forEach(o => {
+        if (o.type.startsWith('player')) count++;
+      });
+    });
+    if (count === 0) {
+      showHint('配置されている選手がいません');
+      return;
+    }
+    saveHistory();
+    const newR = settings.playerSize;
+    project.scenes.forEach(s => {
+      s.objects.forEach(o => {
+        if (o.type.startsWith('player')) o.r = newR;
+      });
+    });
+    redraw();
+    showHint(`${count}人の選手のサイズを${newR}に変更しました（取り消し可能）`);
+  }
+
+  const _applySizeBtn = document.getElementById('settingApplySizeAll');
+  if (_applySizeBtn) {
+    _applySizeBtn.addEventListener('click', applyPlayerSizeToAll);
+    _applySizeBtn.addEventListener('touchstart', applyPlayerSizeToAll, { passive: false });
+    _applySizeBtn.addEventListener('mousedown', (e) => e.stopPropagation());
+    _applySizeBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+  }
 
   document.querySelectorAll('.menu-item').forEach(item => {
     item.addEventListener('click', () => {
