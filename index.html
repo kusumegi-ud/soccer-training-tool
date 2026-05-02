@@ -2348,7 +2348,7 @@
     //   → pitch aspect ratio (W:H) = 68:105 ≈ 0.65
     // For half court: half-pitch is roughly 52.5m deep × 68m wide
     //   → pitch aspect ratio (W:H) = 68:52.5 ≈ 1.30
-    const margin = 20;
+    const margin = 8;
     const availW = W - margin * 2;
     const availH = H - margin * 2;
 
@@ -2377,12 +2377,12 @@
       }
     } else if (settings.lineMode === 'half') {
       if (isPortrait) {
-        // Portrait orientation: rotate the half-court so the goal line is at
-        // the TOP of the screen and the halfway line is at the BOTTOM.
-        // Screen X-axis represents the pitch's 68m WIDTH;
-        // screen Y-axis represents the half-court's 52.5m DEPTH.
-        // → pitchAspect = pW/pH = 68/52.5 ≈ 1.30 (wider-than-tall).
-        pitchAspect = 68 / 52.5;
+        // Portrait orientation: rotate the half-court 90° so the goal line
+        // is at the TOP of the screen and the halfway line is at the BOTTOM.
+        // The screen's X-axis represents the half-court's 52.5m DEPTH,
+        // and the Y-axis represents the pitch's 68m WIDTH.
+        // → pitchAspect = pW/pH = 52.5/68 ≈ 0.77 (taller-than-wide).
+        pitchAspect = 52.5 / 68;
         halfPortrait = true;
       } else {
         pitchAspect = 68 / 52.5;  // landscape (wider-than-tall)
@@ -2428,22 +2428,24 @@
     if (settings.lineMode === 'half') {
       if (halfPortrait) {
         // ===== HALF COURT (portrait/vertical) =====
-        // pitchAspect = 68/52.5 = 1.30 (wider-than-tall).
-        // Screen X-axis represents the pitch's 68m WIDTH;
-        // screen Y-axis represents the half-court's 52.5m DEPTH.
+        // pitchAspect = 52.5/68 = 0.77 (taller-than-wide).
+        // Screen X-axis represents the half-court's 52.5m DEPTH,
+        // screen Y-axis represents the pitch's 68m WIDTH.
         // Goal line at TOP of the screen, halfway line at BOTTOM.
+        // ⇒ Penalty area is drawn at the top: width = pW × 16.5/52.5 (depth),
+        //   height = pH × 40.32/68 (lateral width).
         bgCtx.strokeRect(pX, pY, pW, pH);
 
         // Center circle: half visible at the bottom edge (the halfway line).
-        // Radius 9.15m, scaled against pitch width pW = 68m axis.
-        const cr = pW * 0.135 * MARK_SCALE;
+        // Radius 9.15m, scaled against pitch width pH = 68m axis.
+        const cr = pH * 0.135 * MARK_SCALE;
         bgCtx.beginPath();
         bgCtx.arc(pCX, pY + pH, cr, Math.PI, 2 * Math.PI);
         bgCtx.stroke();
 
         if (isFutsal) {
           // (Futsal portrait half-court is handled by drawFutsalPitch above)
-          const par = pH * (16.5 / 52.5) * MARK_SCALE;
+          const par = pW * (16.5 / 52.5) * MARK_SCALE;
           bgCtx.beginPath();
           bgCtx.arc(pCX, pY, par, 0, Math.PI);
           bgCtx.stroke();
@@ -2452,15 +2454,19 @@
           bgCtx.arc(pCX, pY, gar, 0, Math.PI);
           bgCtx.stroke();
         } else {
-          // Penalty area: 40.32m wide × 16.5m deep
-          const pbW = pW * (40.32 / 68) * MARK_SCALE;
-          const pbH = pH * (16.5 / 52.5) * MARK_SCALE;
-          bgCtx.strokeRect(pCX - pbW/2, pY, pbW, pbH);
+          // Penalty area:
+          //   horizontal extent (along screen X = depth axis) = 16.5m → pW * 16.5/52.5
+          //   vertical extent (along screen Y = width axis)   = 40.32m → pH * 40.32/68
+          const pbDeep = pW * (16.5 / 52.5) * MARK_SCALE;
+          const pbWide = pH * (40.32 / 68) * MARK_SCALE;
+          bgCtx.strokeRect(pCX - pbWide/2, pY, pbWide, pbDeep);
 
-          // Goal area: 18.32m × 5.5m
-          const gaW = pW * (18.32 / 68) * MARK_SCALE;
-          const gaH = pH * (5.5 / 52.5) * MARK_SCALE;
-          bgCtx.strokeRect(pCX - gaW/2, pY, gaW, gaH);
+          // Goal area:
+          //   horizontal extent =  5.5m → pW * 5.5/52.5
+          //   vertical extent   = 18.32m → pH * 18.32/68
+          const gaDeep = pW * (5.5 / 52.5) * MARK_SCALE;
+          const gaWide = pH * (18.32 / 68) * MARK_SCALE;
+          bgCtx.strokeRect(pCX - gaWide/2, pY, gaWide, gaDeep);
         }
       } else {
         // ===== HALF COURT (landscape) =====
