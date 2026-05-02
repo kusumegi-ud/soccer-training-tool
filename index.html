@@ -2995,17 +2995,168 @@
     updateInfo();
   }
 
+  // Detect closed polygons (cycles) formed by player-connecting lines.
+  // Returns an array of cycles, each cycle is an ordered list of player ids
+  // forming a simple polygon (length >= 3, no repeated vertices).
+  // Uses a chordless-cycle approach: enumerate minimum-length cycles by walking
+  // the graph from each edge. Result is deduplicated (same cycle in any rotation
+  // or direction is treated as one).
+  function findPlayerLineCycles() {
+    const lines = scene().lines || [];
+    if (lines.length < 3) return [];
+
+    // Build adjacency map: vertex id -> Set of neighbor ids
+    const adj = new Map();
+    lines.forEach(line => {
+      if (!adj.has(line.fromId)) adj.set(line.fromId, new Set());
+      if (!adj.has(line.toId)) adj.set(line.toId, new Set());
+      adj.get(line.fromId).add(line.toId);
+      adj.get(line.toId).add(line.fromId);
+    });
+
+    // For each edge, find the shortest cycle containing it (via BFS in the
+    // graph minus that edge). If found, that's a chordless cycle candidate.
+    const cycles = [];
+    const seen = new Set();   // canonical key -> dedup
+    const canonicalKey = (path) => {
+      // Normalize: smallest id first, then choose direction giving smaller seq.
+      const ids = path.slice();
+      let minIdx = 0;
+      for (let i = 1; i < ids.length; i++) if (ids[i] < ids[minIdx]) minIdx = i;
+      const rotated = ids.slice(minIdx).concat(ids.slice(0, minIdx));
+      const reversed = [rotated[0]].concat(rotated.slice(1).reverse());
+      const a = rotated.join('|');
+      const b = reversed.join('|');
+      return (a < b) ? a : b;
+    };
+
+    lines.forEach(edge => {
+      const u = edge.fromId, v = edge.toId;
+      // BFS from v back to u, without using the direct edge u-v
+      const prev = new Map();
+      prev.set(v, null);
+      const queue = [v];
+      let found = null;
+      while (queue.length) {
+        const node = queue.shift();
+        if (node === u) { found = node; break; }
+        const neighbors = adj.get(node) || new Set();
+        for (const nb of neighbors) {
+          // Skip the direct edge between the two endpoints
+          if ((node === v && nb === u) || (node === u && nb === v)) continue;
+          if (prev.has(nb)) continue;
+          prev.set(nb, node);
+          queue.push(nb);
+        }
+      }
+      if (!found) return;
+      // Reconstruct the path v -> ... -> u, then prepend nothing (the cycle is u-v + path).
+      const path = [];
+      let cur = u;
+      while (cur != null) { path.push(cur); cur = prev.get(cur); }
+      // path is [u, ..., v] (length >= 3 needed; length 2 would mean direct u-v which we excluded)
+      if (path.length < 3) return;
+      const key = canonicalKey(path);
+      if (seen.has(key)) return;
+      seen.add(key);
+      cycles.push(path);
+    });
+
+    return cycles;
+  }
+
+  // Pick a fill color for a cycle based on the majority player jersey color.
+  // Returns null for non-player vertices or if no players found.
+  function cycleColor(cycle) {
+    const counts = new Map();
+    cycle.forEach(id => {
+      const o = scene().objects.find(obj => obj.id === id);
+      if (!o || !o.type) return;
+      if (!(o.type.startsWith('player') || o.type === 'coach')) return;
+      const c = o.color || '#3b82f6';
+      counts.set(c, (counts.get(c) || 0) + 1);
+    });
+    if (counts.size === 0) return null;
+    // Find max
+    let bestColor = null, bestCount = -1;
+    for (const [c, n] of counts) {
+      if (n > bestCount) { bestCount = n; bestColor = c; }
+    }
+    return bestColor;
+  }
+
+  // Add transparency to a hex color "#rrggbb" -> "rgba(r,g,b,alpha)".
+  // Falls back gracefully if format is unexpected.
+  function colorWithAlpha(hex, alpha) {
+    if (!hex || typeof hex !== 'string') return `rgba(59,130,246,${alpha})`;
+    const m = hex.match(/^#([0-9a-f]{6})$/i);
+    if (!m) return hex;
+    const r = parseInt(m[1].slice(0,2), 16);
+    const g = parseInt(m[1].slice(2,4), 16);
+    const b = parseInt(m[1].slice(4,6), 16);
+    return `rgba(${r},${g},${b},${alpha})`;
+  }
+
   function drawLines() {
     const lines = scene().lines || [];
     if (lines.length === 0) return;
+
+    // Detect closed polygons and assign a color per polygon.
+    // Each line that participates in any polygon takes on that polygon's color.
+    // (If a line is in multiple polygons, the first one's color wins — rare in practice.)
+    const cycles = findPlayerLineCycles();
+    const lineColor = new Map();   // line.id -> color
+    const polygons = [];           // [{ pts: [[x,y]...], color }]
+
+    cycles.forEach(cyc => {
+      const color = cycleColor(cyc);
+      if (!color) return;
+      // Resolve points
+      const pts = [];
+      let allPresent = true;
+      cyc.forEach(pid => {
+        const o = scene().objects.find(obj => obj.id === pid);
+        if (!o) { allPresent = false; return; }
+        pts.push([o.x, o.y]);
+      });
+      if (!allPresent) return;
+      polygons.push({ pts, color });
+      // Mark every line whose endpoints both appear in this cycle (consecutive
+      // pair) so we recolor it to match.
+      const idSet = new Set(cyc);
+      lines.forEach(line => {
+        if (lineColor.has(line.id)) return;
+        if (!idSet.has(line.fromId) || !idSet.has(line.toId)) return;
+        // Confirm the pair is actually adjacent in the cycle
+        const i = cyc.indexOf(line.fromId);
+        const j = cyc.indexOf(line.toId);
+        const adj = (Math.abs(i - j) === 1) || (Math.abs(i - j) === cyc.length - 1);
+        if (adj) lineColor.set(line.id, color);
+      });
+    });
+
     iconCtx.save();
+
+    // 1) Fill polygon interiors (semi-transparent)
+    polygons.forEach(poly => {
+      iconCtx.fillStyle = colorWithAlpha(poly.color, 0.28);
+      iconCtx.beginPath();
+      poly.pts.forEach(([x, y], i) => {
+        if (i === 0) iconCtx.moveTo(x, y);
+        else iconCtx.lineTo(x, y);
+      });
+      iconCtx.closePath();
+      iconCtx.fill();
+    });
+
+    // 2) Draw lines (use polygon color if part of a cycle, else default red)
     iconCtx.lineCap = 'round';
     lines.forEach(line => {
       const a = scene().objects.find(o => o.id === line.fromId);
       const b = scene().objects.find(o => o.id === line.toId);
       if (!a || !b) return;
       const isHovered = (line.id === ui.selectedLineId);
-      iconCtx.strokeStyle = '#dc2626';                 // red
+      iconCtx.strokeStyle = lineColor.get(line.id) || '#dc2626';
       iconCtx.lineWidth = isHovered ? 4 : 2.5;
       iconCtx.beginPath();
       iconCtx.moveTo(a.x, a.y);
