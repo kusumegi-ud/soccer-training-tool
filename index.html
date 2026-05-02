@@ -936,11 +936,11 @@
     </div>
     <div class="menu-item" data-action="save">
       <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2zM17 21v-8H7v8M7 3v5h8"/></svg>
-      JSON保存
+      メニューを保存
     </div>
     <div class="menu-item" data-action="load">
       <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5-5 5 5M12 5v12"/></svg>
-      JSON読み込み
+      メニューを読み込み
     </div>
     <div class="menu-item" data-action="resetToolbar">
       <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15.5-6.4L21 8M3 12l2.5 2.4M3 12h6"/><path d="M12 8v4l3 2"/></svg>
@@ -1958,6 +1958,17 @@
       box-shadow: 0 8px 24px rgba(0,0,0,0.5);
       min-width: 180px;
     ">
+      <div style="font-size: 10px; color: #a0a89c; padding: 2px 4px 6px; letter-spacing: 0.05em;">
+        ボールの色
+      </div>
+      <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px;">
+        <button class="ball-color-btn" data-color="#ffffff" style="width:32px;height:32px;border-radius:8px;border:2px solid transparent;background:#ffffff;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,0.15);"></button>
+        <button class="ball-color-btn" data-color="#ff7a2a" style="width:32px;height:32px;border-radius:8px;border:2px solid transparent;background:#ff7a2a;cursor:pointer;"></button>
+        <button class="ball-color-btn" data-color="#fbbf24" style="width:32px;height:32px;border-radius:8px;border:2px solid transparent;background:#fbbf24;cursor:pointer;"></button>
+        <button class="ball-color-btn" data-color="#dc2626" style="width:32px;height:32px;border-radius:8px;border:2px solid transparent;background:#dc2626;cursor:pointer;"></button>
+        <button class="ball-color-btn" data-color="#2563eb" style="width:32px;height:32px;border-radius:8px;border:2px solid transparent;background:#2563eb;cursor:pointer;"></button>
+        <button class="ball-color-btn" data-color="#22c55e" style="width:32px;height:32px;border-radius:8px;border:2px solid transparent;background:#22c55e;cursor:pointer;"></button>
+      </div>
       <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 2px 4px 4px;">
         <span style="font-size: 10px; color: #a0a89c; letter-spacing: 0.05em;">サイズ</span>
         <span id="ballPickerSizeValue" style="font-size: 11px; color: var(--accent); font-weight: 700;">12</span>
@@ -2612,12 +2623,33 @@
     } else if (o.type === 'ball') {
       // ============================================================
       // Realistic 3D-shaded soccer ball:
-      //   - white sphere with subtle radial shading (3D depth)
-      //   - black hexagon panels arranged like a truncated icosahedron
+      //   - white (or tinted) sphere with subtle radial shading (3D depth)
       //   - specular highlight (top-left gloss)
+      //   - bottom-right shadow tint
       //   - drop shadow on the ground
       // ============================================================
       const r = o.r;
+
+      // Resolve base color (default white). Build a darker shade for the
+      // edge of the radial gradient so the sphere always looks 3D.
+      const baseHex = (o.color && /^#[0-9a-f]{6}$/i.test(o.color)) ? o.color : '#ffffff';
+      const _hexToRgb = (hex) => {
+        const m = hex.match(/^#([0-9a-f]{6})$/i);
+        if (!m) return [255, 255, 255];
+        return [
+          parseInt(m[1].slice(0,2), 16),
+          parseInt(m[1].slice(2,4), 16),
+          parseInt(m[1].slice(4,6), 16),
+        ];
+      };
+      const _shade = ([rC, gC, bC], factor) => {
+        // factor in [0..1]: 1 = no change, 0 = black
+        return `rgb(${Math.round(rC*factor)}, ${Math.round(gC*factor)}, ${Math.round(bC*factor)})`;
+      };
+      const baseRgb = _hexToRgb(baseHex);
+      const colMid    = _shade(baseRgb, 0.92);
+      const colDark   = _shade(baseRgb, 0.78);
+      const colDarker = _shade(baseRgb, 0.60);
 
       // Drop shadow on the ground (offset slightly below ball)
       ctx.beginPath();
@@ -2625,15 +2657,15 @@
       ctx.fillStyle = 'rgba(0,0,0,0.3)';
       ctx.fill();
 
-      // White sphere body with subtle radial shading
+      // Sphere body with subtle radial shading (lit from upper-left)
       const bodyGrad = ctx.createRadialGradient(
         -r * 0.3, -r * 0.35, r * 0.05,
          0, 0, r * 1.05
       );
-      bodyGrad.addColorStop(0, '#ffffff');
-      bodyGrad.addColorStop(0.5, '#f5f5f0');
-      bodyGrad.addColorStop(0.85, '#cdcdc5');
-      bodyGrad.addColorStop(1, '#9c9c95');
+      bodyGrad.addColorStop(0,    baseHex);
+      bodyGrad.addColorStop(0.5,  colMid);
+      bodyGrad.addColorStop(0.85, colDark);
+      bodyGrad.addColorStop(1,    colDarker);
       ctx.beginPath();
       ctx.arc(0, 0, r, 0, Math.PI * 2);
       ctx.fillStyle = bodyGrad;
@@ -2986,8 +3018,15 @@
     scene().objects.forEach(o => { if (o.type === 'area') drawObject(iconCtx, o); });
     // Lines connecting two players: above areas, below players (so player icons cover endpoints)
     drawLines();
-    // Then draw players/balls/cones/goals/etc. (NOT text, NOT area)
-    scene().objects.forEach(o => { if (o.type !== 'area' && o.type !== 'text') drawObject(iconCtx, o); });
+    // Then draw cones/goals/players (NOT ball, NOT text, NOT area).
+    // Ball is drawn LAST among non-text objects so it always sits on top of
+    // players' feet — otherwise placing a player after a ball would hide it.
+    scene().objects.forEach(o => {
+      if (o.type === 'area' || o.type === 'text' || o.type === 'ball') return;
+      drawObject(iconCtx, o);
+    });
+    // Then draw balls — above players so the ball is always visible at feet
+    scene().objects.forEach(o => { if (o.type === 'ball') drawObject(iconCtx, o); });
     // Then draw text labels
     scene().objects.forEach(o => { if (o.type === 'text') drawObject(iconCtx, o); });
     // Finally draw the explanation drawing-lines on top, so they aren't hidden by icons
@@ -3645,7 +3684,7 @@
     else if (type === 'player-pink')   { o.color = '#ec4899'; o.number = nextPlayerNumber('player-pink');   o.r = baseR; o.facing = 'front'; }
     else if (type === 'coach')         { o.color = '#16a34a'; o.r = baseR; o.facing = 'front'; }
     else if (type === 'cone')   { o.r = 14; o.color = ui.coneColor; }
-    else if (type === 'ball')   { o.r = 12; }
+    else if (type === 'ball')   { o.r = 12; o.color = '#ffffff'; }
     else if (type === 'goal')   { o.r = 28; o.facing = 'down'; o.size = 'medium'; }
     else if (type === 'area-triangle' || type === 'area-rectangle' ||
              type === 'area-pentagon' || type === 'area-hexagon') {
@@ -3933,10 +3972,21 @@
         }
       }
     }
-    // 1. Players, balls, cones, goals, etc. (top of z-order = end of array)
+    // 0.5 PRIORITY: Balls always test first because they're drawn on top of
+    // everything else (so a ball at a player's feet stays clickable).
+    // Iterate balls in reverse insertion order so the most recently added
+    // ball wins among overlapping balls.
+    for (let i = scene().objects.length - 1; i >= 0; i--) {
+      const o = scene().objects[i];
+      if (o.type !== 'ball') continue;
+      const dx = x - o.x, dy = y - o.y;
+      if (dx*dx + dy*dy <= (o.r + 6) * (o.r + 6)) return o;
+    }
+    // 1. Players, cones, goals, etc. (top of z-order = end of array)
     for (let i = scene().objects.length - 1; i >= 0; i--) {
       const o = scene().objects[i];
       if (o.type === 'area') continue; // areas handled below
+      if (o.type === 'ball') continue;  // balls handled above
       const dx = x - o.x;
       const dy = y - o.y;
       if (o.type.startsWith('player') || o.type === 'coach') {
@@ -4908,6 +4958,9 @@
     sizeSlider.value = ball.r;
     sizeValue.textContent = ball.r;
 
+    // Highlight the currently-selected color
+    updateBallColorHighlight(ball.color || '#ffffff');
+
     ballPicker.style.display = 'block';
     const pw = ballPicker.offsetWidth || 200;
     const ph = ballPicker.offsetHeight || 100;
@@ -4925,6 +4978,31 @@
     ballPicker.style.display = 'none';
     ballPickerId = null;
   }
+
+  function updateBallColorHighlight(currentColor) {
+    document.querySelectorAll('.ball-color-btn').forEach(btn => {
+      const isSelected = (btn.dataset.color || '').toLowerCase() === (currentColor || '').toLowerCase();
+      btn.style.borderColor = isSelected ? '#ffdd00' : 'transparent';
+      btn.style.transform = isSelected ? 'scale(1.08)' : 'scale(1)';
+    });
+  }
+
+  // Ball color palette
+  document.querySelectorAll('.ball-color-btn').forEach(b => {
+    const handler = (ev) => {
+      ev.stopPropagation();
+      ev.preventDefault();
+      if (!ballPickerId) return;
+      const ball = scene().objects.find(o => o.id === ballPickerId);
+      if (!ball) return;
+      saveHistory();
+      ball.color = b.dataset.color;
+      updateBallColorHighlight(ball.color);
+      redraw();
+    };
+    b.addEventListener('click', handler);
+    b.addEventListener('touchstart', handler, { passive: false });
+  });
 
   // Ball size slider
   const _ballSizeSlider = document.getElementById('ballPickerSizeSlider');
@@ -6789,13 +6867,30 @@
       else if (a === 'deleteScene') deleteCurrentScene();
       else if (a === 'clearScene') clearCurrentScene();
       else if (a === 'save') {
-        const data = JSON.stringify(project, null, 2);
-        const blob = new Blob([data], {type: 'application/json'});
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url; link.download = 'training.json'; link.click();
-        URL.revokeObjectURL(url);
-        showHint('保存しました');
+        // Build a default filename like "練習メニュー_20260502_1430"
+        const now = new Date();
+        const pad = n => String(n).padStart(2, '0');
+        const stamp =
+          `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}` +
+          `_${pad(now.getHours())}${pad(now.getMinutes())}`;
+        const defaultName = `練習メニュー_${stamp}`;
+        openModal('保存するファイル名', defaultName, (name) => {
+          if (!name) return;     // empty/cancelled
+          // Strip any extension the user typed; we'll re-add .json
+          let cleanName = name.replace(/\.json$/i, '').trim();
+          if (!cleanName) cleanName = defaultName;
+          // Make the filename filesystem-safe by replacing common offending chars
+          cleanName = cleanName.replace(/[\\/:*?"<>|]/g, '_');
+          const data = JSON.stringify(project, null, 2);
+          const blob = new Blob([data], {type: 'application/json'});
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `${cleanName}.json`;
+          link.click();
+          URL.revokeObjectURL(url);
+          showHint(`保存しました: ${cleanName}.json`);
+        });
       } else if (a === 'load') {
         const inp = document.createElement('input');
         inp.type = 'file';
