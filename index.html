@@ -1046,6 +1046,38 @@
         <span class="tool-label">シュート矢印（太線）</span>
       </button>
       <div class="tool-divider"></div>
+      <button class="tool" data-tool="area-triangle">
+        <svg width="22" height="22" viewBox="0 0 22 22">
+          <polygon points="11,4 19,18 3,18" fill="rgba(239,159,39,0.35)" stroke="#ef9f27" stroke-width="2" stroke-linejoin="round"/>
+        </svg>
+        <span class="tool-label">三角エリア</span>
+      </button>
+      <button class="tool" data-tool="area-rectangle">
+        <svg width="22" height="22" viewBox="0 0 22 22">
+          <rect x="4" y="5" width="14" height="12" fill="rgba(55,138,221,0.35)" stroke="#378add" stroke-width="2"/>
+        </svg>
+        <span class="tool-label">四角エリア</span>
+      </button>
+      <button class="tool" data-tool="area-pentagon">
+        <svg width="22" height="22" viewBox="0 0 22 22">
+          <polygon points="11,3 19,9 16,18 6,18 3,9" fill="rgba(34,197,94,0.35)" stroke="#22c55e" stroke-width="2" stroke-linejoin="round"/>
+        </svg>
+        <span class="tool-label">五角エリア</span>
+      </button>
+      <button class="tool" data-tool="area-hexagon">
+        <svg width="22" height="22" viewBox="0 0 22 22">
+          <polygon points="11,3 18,7 18,15 11,19 4,15 4,7" fill="rgba(168,85,247,0.35)" stroke="#a855f7" stroke-width="2" stroke-linejoin="round"/>
+        </svg>
+        <span class="tool-label">六角エリア</span>
+      </button>
+      <div class="tool-divider"></div>
+      <button class="tool" data-tool="text">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 5h14M12 5v14"/>
+        </svg>
+        <span class="tool-label">テキスト</span>
+      </button>
+      <div class="tool-divider"></div>
       <button class="tool" data-tool="pen">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 19l7-7 3 3-7 7-3-3z"/>
@@ -1131,6 +1163,207 @@
       <button class="cone-color-pal-btn" data-color="#ec4899" style="width:24px;height:24px;border-radius:50%;border:2px solid transparent;background:#ec4899;cursor:pointer;padding:0;"></button>
       <button class="cone-color-pal-btn" data-color="#1a1a1a" style="width:24px;height:24px;border-radius:50%;border:2px solid transparent;background:#1a1a1a;cursor:pointer;padding:0;"></button>
       <button class="rec-cancel" id="coneCancel" style="margin-left: 4px;">完了</button>
+    </div>
+
+    <div id="areaPalette" style="
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 20, 15, 0.96);
+      border: 1px solid var(--ui-border);
+      border-radius: 14px;
+      padding: 10px 14px;
+      display: none;
+      gap: 8px;
+      align-items: center;
+      z-index: 90;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+      backdrop-filter: blur(10px);
+    ">
+      <span id="areaPaletteLabel" style="color:#f5f5f0;font-size:12px;margin-right:4px;">エリア配置: ピッチをタップ</span>
+      <button class="area-color-pal-btn" data-color="#dc2626" style="width:24px;height:24px;border-radius:50%;border:2px solid transparent;background:#dc2626;cursor:pointer;padding:0;"></button>
+      <button class="area-color-pal-btn" data-color="#2563eb" style="width:24px;height:24px;border-radius:50%;border:2px solid transparent;background:#2563eb;cursor:pointer;padding:0;"></button>
+      <button class="area-color-pal-btn" data-color="#22c55e" style="width:24px;height:24px;border-radius:50%;border:2px solid transparent;background:#22c55e;cursor:pointer;padding:0;"></button>
+      <button class="area-color-pal-btn" data-color="#fbbf24" style="width:24px;height:24px;border-radius:50%;border:2px solid transparent;background:#fbbf24;cursor:pointer;padding:0;"></button>
+      <button class="area-color-pal-btn" data-color="#ff7a2a" style="width:24px;height:24px;border-radius:50%;border:2px solid transparent;background:#ff7a2a;cursor:pointer;padding:0;"></button>
+      <button class="area-color-pal-btn" data-color="#a855f7" style="width:24px;height:24px;border-radius:50%;border:2px solid transparent;background:#a855f7;cursor:pointer;padding:0;"></button>
+      <button class="area-color-pal-btn" data-color="#ec4899" style="width:24px;height:24px;border-radius:50%;border:2px solid transparent;background:#ec4899;cursor:pointer;padding:0;"></button>
+      <button class="rec-cancel" id="areaCancel" style="margin-left: 4px;">完了</button>
+    </div>
+
+    <div id="areaPicker" style="
+      position: absolute;
+      background: rgba(15, 20, 15, 0.96);
+      border: 1px solid var(--ui-border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 100;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+      backdrop-filter: blur(10px);
+      min-width: 200px;
+    ">
+      <div style="color:#f5f5f0;font-size:11px;font-weight:600;letter-spacing:0.04em;">エリアの色</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="area-color-btn" data-color="#dc2626" style="width:30px;height:30px;border-radius:8px;border:2px solid transparent;background:#dc2626;cursor:pointer;"></button>
+        <button class="area-color-btn" data-color="#2563eb" style="width:30px;height:30px;border-radius:8px;border:2px solid transparent;background:#2563eb;cursor:pointer;"></button>
+        <button class="area-color-btn" data-color="#22c55e" style="width:30px;height:30px;border-radius:8px;border:2px solid transparent;background:#22c55e;cursor:pointer;"></button>
+        <button class="area-color-btn" data-color="#fbbf24" style="width:30px;height:30px;border-radius:8px;border:2px solid transparent;background:#fbbf24;cursor:pointer;"></button>
+        <button class="area-color-btn" data-color="#ff7a2a" style="width:30px;height:30px;border-radius:8px;border:2px solid transparent;background:#ff7a2a;cursor:pointer;"></button>
+        <button class="area-color-btn" data-color="#a855f7" style="width:30px;height:30px;border-radius:8px;border:2px solid transparent;background:#a855f7;cursor:pointer;"></button>
+        <button class="area-color-btn" data-color="#ec4899" style="width:30px;height:30px;border-radius:8px;border:2px solid transparent;background:#ec4899;cursor:pointer;"></button>
+      </div>
+      <button id="areaPickerDelete" style="
+        margin-top:4px;
+        padding:8px 12px;
+        background:rgba(220,38,38,0.85);
+        color:#fff;
+        border:none;
+        border-radius:8px;
+        font-size:12px;
+        font-weight:600;
+        cursor:pointer;
+      ">削除</button>
+    </div>
+
+    <!-- Text tool: simple banner shown while in text placement mode -->
+    <div id="textPalette" style="
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 20, 15, 0.96);
+      border: 1px solid var(--ui-border);
+      border-radius: 14px;
+      padding: 10px 14px;
+      display: none;
+      gap: 10px;
+      align-items: center;
+      z-index: 90;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+      backdrop-filter: blur(10px);
+    ">
+      <span style="color:#f5f5f0;font-size:12px;">テキスト配置中: ピッチをタップして入力</span>
+      <button class="rec-cancel" id="textCancel" style="margin-left: 4px;">完了</button>
+    </div>
+
+    <!-- Inline editor (contenteditable) for entering / editing text on the field -->
+    <div id="textEditBox" style="
+      position: absolute;
+      display: none;
+      z-index: 100;
+    ">
+      <div id="textEditor" contenteditable="true" spellcheck="false" style="
+        display: inline-block;
+        padding: 1px 4px;
+        margin: 0;
+        border: 1.5px dashed rgba(255, 221, 0, 0.7);
+        border-radius: 3px;
+        background: rgba(0, 0, 0, 0.35);
+        color: #fff;
+        font-weight: 600;
+        outline: none;
+        font-family: inherit;
+        line-height: 1.15;
+        min-width: 8px;
+        min-height: 1em;
+        white-space: pre;
+        text-shadow: 0 0 2px rgba(0,0,0,0.8);
+        cursor: text;
+        vertical-align: top;
+      "></div>
+      <div style="display:flex;gap:4px;margin-top:4px;">
+        <button id="textEditConfirm" style="
+          padding:4px 10px;
+          font-size:12px;
+          background:rgba(34,197,94,0.85);
+          color:#fff;
+          border:none;
+          border-radius:4px;
+          cursor:pointer;
+          font-weight:600;
+        ">確定</button>
+        <button id="textEditCancel" style="
+          padding:4px 10px;
+          font-size:12px;
+          background:rgba(120,120,120,0.6);
+          color:#fff;
+          border:none;
+          border-radius:4px;
+          cursor:pointer;
+        ">キャンセル</button>
+      </div>
+    </div>
+
+    <!-- Picker shown when double-tapping an existing text: edit content / color / size / delete -->
+    <div id="textPicker" style="
+      position: absolute;
+      background: rgba(15, 20, 15, 0.96);
+      border: 1px solid var(--ui-border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 100;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+      backdrop-filter: blur(10px);
+      min-width: 240px;
+    ">
+      <div style="color:#f5f5f0;font-size:11px;font-weight:600;letter-spacing:0.04em;">内容（改行OK）</div>
+      <textarea id="textPickerContent" rows="3" style="
+        width: 100%;
+        padding: 6px 8px;
+        border: 1px solid rgba(255,255,255,0.3);
+        border-radius: 6px;
+        background: rgba(255,255,255,0.05);
+        color: #fff;
+        font-size: 14px;
+        outline: none;
+        box-sizing: border-box;
+        resize: vertical;
+        font-family: inherit;
+        line-height: 1.3;
+      "></textarea>
+      <div style="color:#f5f5f0;font-size:11px;font-weight:600;">色</div>
+      <div style="display:flex;gap:6px;">
+        <button class="text-color-btn" data-color="#ffffff" style="width:30px;height:30px;border-radius:8px;border:2px solid transparent;background:#ffffff;cursor:pointer;"></button>
+        <button class="text-color-btn" data-color="#ffdd00" style="width:30px;height:30px;border-radius:8px;border:2px solid transparent;background:#ffdd00;cursor:pointer;"></button>
+        <button class="text-color-btn" data-color="#ff4444" style="width:30px;height:30px;border-radius:8px;border:2px solid transparent;background:#ff4444;cursor:pointer;"></button>
+        <button class="text-color-btn" data-color="#1a1a1a" style="width:30px;height:30px;border-radius:8px;border:2px solid transparent;background:#1a1a1a;cursor:pointer;"></button>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;">
+        <span style="color:#f5f5f0;font-size:11px;font-weight:600;">サイズ</span>
+        <span id="textPickerSizeValue" style="color:#ffdd00;font-size:11px;font-weight:700;">22</span>
+      </div>
+      <input id="textPickerSizeSlider" type="range" min="10" max="48" step="1" value="22" style="width:100%;cursor:pointer;accent-color:var(--accent);">
+      <div style="display:flex;gap:6px;margin-top:4px;">
+        <button id="textPickerDone" style="
+          flex:1;
+          padding:8px 12px;
+          background:rgba(34,197,94,0.85);
+          color:#fff;
+          border:none;
+          border-radius:8px;
+          font-size:12px;
+          font-weight:600;
+          cursor:pointer;
+        ">完了</button>
+        <button id="textPickerDelete" style="
+          flex:1;
+          padding:8px 12px;
+          background:rgba(220,38,38,0.85);
+          color:#fff;
+          border:none;
+          border-radius:8px;
+          font-size:12px;
+          font-weight:600;
+          cursor:pointer;
+        ">削除</button>
+      </div>
     </div>
 
     <div id="orderPicker" style="
@@ -1487,6 +1720,11 @@
     penStroke: null,
     penColor: '#ffffff',     // current pen color
     coneColor: '#ff7a2a',    // current cone color (for new cones)
+    areaColor: '#dc2626',    // current area color (for new areas)
+    areaDragging: null,      // { id, mode: 'move'|'vertex', vertexIdx, last }
+    textColor: '#ffffff',    // current text color (for new texts)
+    pendingTextPos: null,    // { x, y } where the next placed text will go
+    editingTextId: null,     // id of the text being edited inline (vs. picker)
     playing: false,
     playStart: 0,
     playTime: 0,
@@ -1503,6 +1741,7 @@
     lineMode: 'full',
     showStripes: true,
     playerSize: 17,        // numeric radius (8-30)
+    textSize: 22,          // default font size (px) for new texts (10-48)
   };
   // Migrate old setting if needed
   try {
@@ -1826,6 +2065,62 @@
         ctx.stroke();
       }
 
+    } else if (o.type === 'area') {
+      // Area shape: filled polygon with semi-transparent fill and stronger outline.
+      // Vertices are stored in ABSOLUTE coords; we already translated to (o.x, o.y),
+      // so we need to translate back to draw at world coords.
+      ctx.save();
+      ctx.translate(-o.x, -o.y);
+      const verts = o.vertices || [];
+      const isSelected = (ui.selectedId === o.id);
+      const col = o.color || '#dc2626';
+      // Fill
+      ctx.beginPath();
+      verts.forEach((v, i) => {
+        if (i === 0) ctx.moveTo(v.x, v.y);
+        else ctx.lineTo(v.x, v.y);
+      });
+      ctx.closePath();
+      ctx.fillStyle = hexToRgba(col, 0.32);
+      ctx.fill();
+      // Stroke
+      ctx.strokeStyle = hexToRgba(col, 0.9);
+      ctx.lineWidth = isSelected ? 3 : 2;
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+      // Vertex handles when selected
+      if (isSelected) {
+        verts.forEach(v => {
+          ctx.beginPath();
+          ctx.arc(v.x, v.y, 7, 0, Math.PI * 2);
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
+          ctx.lineWidth = 1.5;
+          ctx.strokeStyle = '#1a1a1a';
+          ctx.stroke();
+        });
+      }
+      ctx.restore();
+    } else if (o.type === 'text') {
+      // Multi-line text rendered with line breaks (\n)
+      const content = o.content || '';
+      const fontSize = o.size || 22;
+      const color = o.color || '#ffffff';
+      const lines = content.split('\n').filter(l => l.length > 0);
+      if (lines.length === 0) { ctx.restore(); return; }
+      const lineH = fontSize * 1.2;
+      const totalH = lineH * lines.length;
+      // Translate-anchored at o.x/o.y (already done above), so we draw relative to (0,0)
+      ctx.font = `600 ${fontSize}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = color;
+      // Vertically center the multi-line block around the anchor
+      const startY = -totalH / 2 + lineH / 2;
+      lines.forEach((line, i) => {
+        const ly = startY + i * lineH;
+        ctx.fillText(line, 0, ly);
+      });
     } else if (o.type === 'cone') {
       const baseColor = o.color || '#ff7a2a';
       const darkColor = darken(baseColor, 0.25);
@@ -2007,6 +2302,14 @@
       ctx.stroke();
     }
     ctx.restore();
+  }
+
+  function hexToRgba(hex, alpha) {
+    const c = hex.replace('#', '');
+    const r = parseInt(c.slice(0, 2), 16);
+    const g = parseInt(c.slice(2, 4), 16);
+    const b = parseInt(c.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
 
   function lighten(hex, amt) {
@@ -2224,7 +2527,12 @@
   function redraw() {
     iconCtx.clearRect(0, 0, W, H);
     drawPaths();
-    scene().objects.forEach(o => drawObject(iconCtx, o));
+    // Draw areas first (so they appear UNDER players, balls, cones, goals)
+    scene().objects.forEach(o => { if (o.type === 'area') drawObject(iconCtx, o); });
+    // Then draw players/balls/cones/goals/etc. (NOT text, NOT area)
+    scene().objects.forEach(o => { if (o.type !== 'area' && o.type !== 'text') drawObject(iconCtx, o); });
+    // Finally draw text on top, so labels are always readable
+    scene().objects.forEach(o => { if (o.type === 'text') drawObject(iconCtx, o); });
     updateInfo();
   }
 
@@ -2253,21 +2561,44 @@
       showArrowBanner(true, name);
       showPenPalette(false);
       showConePalette(false);
+      showAreaPalette(false);
+      showTextPalette(false);
     } else if (name === 'pen') {
       ui.tool = name;
       showArrowBanner(false);
       showPenPalette(true);
       showConePalette(false);
+      showAreaPalette(false);
+      showTextPalette(false);
     } else if (name === 'cone') {
       ui.tool = name;
       showArrowBanner(false);
       showPenPalette(false);
       showConePalette(true);
+      showAreaPalette(false);
+      showTextPalette(false);
+    } else if (name === 'area-triangle' || name === 'area-rectangle' ||
+               name === 'area-pentagon' || name === 'area-hexagon') {
+      ui.tool = name;
+      showArrowBanner(false);
+      showPenPalette(false);
+      showConePalette(false);
+      showAreaPalette(true, name);
+      showTextPalette(false);
+    } else if (name === 'text') {
+      ui.tool = name;
+      showArrowBanner(false);
+      showPenPalette(false);
+      showConePalette(false);
+      showAreaPalette(false);
+      showTextPalette(true);
     } else {
       ui.tool = name;
       showArrowBanner(false);
       showPenPalette(false);
       showConePalette(false);
+      showAreaPalette(false);
+      showTextPalette(false);
     }
     document.querySelectorAll('.tool').forEach(b => {
       b.classList.toggle('active', b.dataset.tool === name);
@@ -2319,6 +2650,37 @@
     });
   }
 
+  function showAreaPalette(show, toolName) {
+    const el = document.getElementById('areaPalette');
+    el.style.display = show ? 'flex' : 'none';
+    if (show) {
+      const label = document.getElementById('areaPaletteLabel');
+      if (label) {
+        const labels = {
+          'area-triangle':  '三角エリア配置: ピッチをタップ',
+          'area-rectangle': '四角エリア配置: ピッチをタップ',
+          'area-pentagon':  '五角エリア配置: ピッチをタップ',
+          'area-hexagon':   '六角エリア配置: ピッチをタップ',
+        };
+        label.textContent = labels[toolName] || 'エリア配置: ピッチをタップ';
+      }
+      updateAreaColorHighlight();
+    }
+  }
+
+  function updateAreaColorHighlight() {
+    document.querySelectorAll('.area-color-pal-btn').forEach(b => {
+      const isCur = b.dataset.color === ui.areaColor;
+      b.style.borderColor = isCur ? '#ffdd00' : 'transparent';
+      b.style.boxShadow = isCur ? '0 0 0 2px rgba(255, 221, 0, 0.4)' : 'none';
+    });
+  }
+
+  function showTextPalette(show) {
+    const el = document.getElementById('textPalette');
+    el.style.display = show ? 'flex' : 'none';
+  }
+
   function nextPlayerNumber(playerType) {
     // Find the smallest positive integer not currently used by this type in the current scene.
     const usedNumbers = new Set();
@@ -2349,6 +2711,55 @@
     else if (type === 'cone')   { o.r = 14; o.color = ui.coneColor; }
     else if (type === 'ball')   { o.r = 12; }
     else if (type === 'goal')   { o.r = 28; o.facing = 'down'; o.size = 'medium'; }
+    else if (type === 'area-triangle' || type === 'area-rectangle' ||
+             type === 'area-pentagon' || type === 'area-hexagon') {
+      // Area: store as type 'area' with shape and vertices in absolute coords.
+      // Per-vertex coords are absolute (not relative to o.x/o.y) for simpler hit testing.
+      o.type = 'area';
+      o.shape = type.replace('area-', ''); // 'triangle' | 'rectangle' | 'pentagon' | 'hexagon'
+      o.color = ui.areaColor;
+      o.r = 0; // not used for areas, but kept for compatibility
+      if (o.shape === 'triangle') {
+        const s = 70;
+        o.vertices = [
+          { x: x,         y: y - s * 0.6 },
+          { x: x - s * 0.7, y: y + s * 0.5 },
+          { x: x + s * 0.7, y: y + s * 0.5 }
+        ];
+      } else if (o.shape === 'rectangle') {
+        const s = 60;
+        o.vertices = [
+          { x: x - s, y: y - s },
+          { x: x + s, y: y - s },
+          { x: x + s, y: y + s },
+          { x: x - s, y: y + s }
+        ];
+      } else if (o.shape === 'pentagon') {
+        // Regular pentagon, top vertex pointing up
+        const r = 70;
+        o.vertices = [];
+        for (let i = 0; i < 5; i++) {
+          const ang = -Math.PI / 2 + i * (Math.PI * 2 / 5);
+          o.vertices.push({
+            x: x + Math.cos(ang) * r,
+            y: y + Math.sin(ang) * r
+          });
+        }
+      } else if (o.shape === 'hexagon') {
+        // Regular hexagon, flat-top orientation (looks more like a "field zone")
+        const r = 70;
+        o.vertices = [];
+        for (let i = 0; i < 6; i++) {
+          const ang = i * (Math.PI * 2 / 6);
+          o.vertices.push({
+            x: x + Math.cos(ang) * r,
+            y: y + Math.sin(ang) * r
+          });
+        }
+      }
+      // Areas don't animate, but keep keyframes empty/static for safety
+      o.keyframes = [{ t: 0, x: x, y: y }];
+    }
     scene().objects.push(o);
     ui.selectedId = o.id;
     redraw();
@@ -2433,7 +2844,9 @@
     const arrows = [...scene().arrows].sort((a,b) => a.order - b.order);
 
     // Reset all objects to keyframe[0] (their starting position)
+    // Areas and texts are static — skip them.
     scene().objects.forEach(o => {
+      if (o.type === 'area' || o.type === 'text') return;
       const start = (o.keyframes && o.keyframes[0]) ? o.keyframes[0] : { x: o.x, y: o.y };
       o.keyframes = [{ t: 0, x: start.x, y: start.y }];
     });
@@ -2557,8 +2970,25 @@
   }
 
   function hitTest(x, y) {
+    // 0. PRIORITY: vertex handles of currently-selected area (so they can be grabbed
+    //    even if they overlap with players or other objects).
+    if (ui.selectedId != null) {
+      const sel = scene().objects.find(o => o.id === ui.selectedId);
+      if (sel && sel.type === 'area' && sel.vertices) {
+        for (let i = 0; i < sel.vertices.length; i++) {
+          const v = sel.vertices[i];
+          const dx = x - v.x, dy = y - v.y;
+          if (dx * dx + dy * dy <= 20 * 20) {
+            // Return a synthetic marker indicating vertex hit
+            return { ...sel, _vertexHit: i };
+          }
+        }
+      }
+    }
+    // 1. Players, balls, cones, goals, etc. (top of z-order = end of array)
     for (let i = scene().objects.length - 1; i >= 0; i--) {
       const o = scene().objects[i];
+      if (o.type === 'area') continue; // areas handled below
       const dx = x - o.x;
       const dy = y - o.y;
       if (o.type.startsWith('player') || o.type === 'coach') {
@@ -2579,12 +3009,57 @@
         const scale = sizeMap[o.size || 'medium'];
         const hitR = o.r * scale + 6;
         if (dx*dx + dy*dy <= hitR * hitR) return o;
+      } else if (o.type === 'text') {
+        // Approximate text bbox using font size and character count.
+        // For wider tap target on small text, enforce a minimum half-extent.
+        const fs = o.size || 22;
+        const lines = (o.content || '').split('\n');
+        const maxLen = Math.max(1, ...lines.map(l => l.length));
+        const halfW = Math.max(maxLen * fs * 0.55, fs) + 6;
+        const halfH = (fs * 1.2 * lines.length) / 2 + 4;
+        if (dx >= -halfW && dx <= halfW && dy >= -halfH && dy <= halfH) return o;
       } else {
         const hitR = o.r + 6;
         if (dx*dx + dy*dy <= hitR * hitR) return o;
       }
     }
+    // 2. Areas (lowest priority, but interior is hittable for selection / move)
+    for (let i = scene().objects.length - 1; i >= 0; i--) {
+      const o = scene().objects[i];
+      if (o.type !== 'area') continue;
+      if (pointInPolygon(x, y, o.vertices)) return o;
+    }
     return null;
+  }
+
+  // Ray-casting point-in-polygon test for area hit testing.
+  function pointInPolygon(px, py, verts) {
+    if (!verts || verts.length < 3) return false;
+    let inside = false;
+    for (let i = 0, j = verts.length - 1; i < verts.length; j = i++) {
+      const xi = verts[i].x, yi = verts[i].y;
+      const xj = verts[j].x, yj = verts[j].y;
+      const intersect = ((yi > py) !== (yj > py)) &&
+                        (px < (xj - xi) * (py - yi) / (yj - yi) + xi);
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  }
+
+  // Recompute the area's logical center (centroid) so o.x/o.y stays in sync
+  // with the vertex positions. This matters for the translate(o.x, o.y)
+  // baseline used in drawObject (we draw vertices in absolute coords by
+  // first translating back).
+  function recomputeAreaCenter(o) {
+    if (!o.vertices || o.vertices.length === 0) return;
+    let sx = 0, sy = 0;
+    for (const v of o.vertices) { sx += v.x; sy += v.y; }
+    o.x = sx / o.vertices.length;
+    o.y = sy / o.vertices.length;
+    if (o.keyframes && o.keyframes[0]) {
+      o.keyframes[0].x = o.x;
+      o.keyframes[0].y = o.y;
+    }
   }
 
   function arrowHitTest(x, y) {
@@ -3047,6 +3522,223 @@
     conePickerId = null;
   }
 
+  function showAreaPicker(area, x, y) {
+    const areaPicker = document.getElementById('areaPicker');
+    areaPicker._targetId = area.id;
+    const wrapRect = fieldWrap.getBoundingClientRect();
+
+    // Highlight current color
+    document.querySelectorAll('.area-color-btn').forEach(b => {
+      const isCur = b.dataset.color === (area.color || '#dc2626');
+      b.style.borderColor = isCur ? '#ffdd00' : 'transparent';
+      b.style.boxShadow = isCur ? '0 0 0 2px rgba(255, 221, 0, 0.4)' : 'none';
+    });
+
+    areaPicker.style.display = 'flex';
+    const pw = areaPicker.offsetWidth || 220;
+    const ph = areaPicker.offsetHeight || 130;
+    let px = x + 14;
+    let py = y - ph / 2;
+    if (px + pw > wrapRect.width - 8) px = x - pw - 14;
+    if (px < 8) px = 8;
+    if (py < 8) py = 8;
+    if (py + ph > wrapRect.height - 8) py = wrapRect.height - ph - 8;
+    areaPicker.style.left = px + 'px';
+    areaPicker.style.top = py + 'px';
+  }
+
+  function hideAreaPicker() {
+    const areaPicker = document.getElementById('areaPicker');
+    areaPicker.style.display = 'none';
+    areaPicker._targetId = null;
+  }
+
+  // ============================================================
+  // Text editor (contenteditable) — used both for placement and
+  // for double-tap re-edit.
+  // ============================================================
+  function getTextEditorContent() {
+    const ed = document.getElementById('textEditor');
+    // innerText preserves line breaks correctly across browsers
+    return (ed.innerText || '').replace(/\u00A0/g, ' ').replace(/\s+$/, '');
+  }
+
+  function showTextEditor(canvasX, canvasY, opts) {
+    // opts: { mode: 'create'|'edit', existingText?, color?, size? }
+    opts = opts || {};
+    const editBox = document.getElementById('textEditBox');
+    const editor  = document.getElementById('textEditor');
+    const wrapRect = fieldWrap.getBoundingClientRect();
+
+    const color = opts.color || ui.textColor;
+    const size  = opts.size  || settings.textSize;
+    editor.style.color = color;
+    editor.style.fontSize = size + 'px';
+    editor.innerText = opts.existingText || '';
+
+    if (opts.mode === 'edit' && opts.editingId != null) {
+      ui.editingTextId = opts.editingId;
+      ui.pendingTextPos = null;
+    } else {
+      ui.editingTextId = null;
+      ui.pendingTextPos = { x: canvasX, y: canvasY };
+    }
+
+    // Initial position; re-center after the editor lays out (next frame)
+    editBox.style.left = (canvasX - 30) + 'px';
+    editBox.style.top  = (canvasY - size / 2 - 4) + 'px';
+    editBox.style.display = 'block';
+
+    setTimeout(() => {
+      editor.focus();
+      // Place caret at end (so re-editing doesn't put it at the start)
+      try {
+        const range = document.createRange();
+        range.selectNodeContents(editor);
+        range.collapse(false);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      } catch (_) {}
+      // Re-center now that we know the actual editor width
+      requestAnimationFrame(() => {
+        const w = editor.offsetWidth;
+        let left = canvasX - w / 2 - 4;
+        let top  = canvasY - size / 2 - 4;
+        const bw = editBox.offsetWidth;
+        const bh = editBox.offsetHeight;
+
+        // Avoid overlap with the toolbar (which lives inside fieldWrap and may be moved)
+        const toolbarEl = document.getElementById('toolbar');
+        if (toolbarEl) {
+          const tbRect = toolbarEl.getBoundingClientRect();
+          const wrapAbs = wrapRect; // already captured above
+          // Toolbar bbox in fieldWrap-local coords:
+          const tbLeft   = tbRect.left   - wrapAbs.left;
+          const tbRight  = tbRect.right  - wrapAbs.left;
+          const tbTop    = tbRect.top    - wrapAbs.top;
+          const tbBottom = tbRect.bottom - wrapAbs.top;
+          // Does the editBox horizontally overlap the toolbar's column AND vertically?
+          const horizontalOverlap = (left < tbRight + 8) && (left + bw > tbLeft - 8);
+          const verticalOverlap   = (top  < tbBottom)    && (top  + bh > tbTop);
+          if (horizontalOverlap && verticalOverlap) {
+            // Shift the editor to the right of the toolbar
+            left = tbRight + 8;
+          }
+        }
+
+        if (left < 8) left = 8;
+        if (top  < 8) top  = 8;
+        if (left + bw > wrapRect.width  - 8) left = Math.max(8, wrapRect.width  - bw - 8);
+        if (top  + bh > wrapRect.height - 8) top  = Math.max(8, wrapRect.height - bh - 8);
+        editBox.style.left = left + 'px';
+        editBox.style.top  = top  + 'px';
+      });
+    }, 10);
+  }
+
+  function hideTextEditor() {
+    const editBox = document.getElementById('textEditBox');
+    const editor  = document.getElementById('textEditor');
+    editBox.style.display = 'none';
+    // Reset position so a stale layout doesn't reappear elsewhere
+    editBox.style.left = '-9999px';
+    editBox.style.top  = '-9999px';
+    // Clear content so next open starts fresh
+    if (editor) {
+      editor.innerHTML = '';
+      editor.blur();
+    }
+    ui.pendingTextPos = null;
+    ui.editingTextId = null;
+  }
+
+  function commitTextEditor() {
+    const v = getTextEditorContent();
+    const wasCreating = (ui.editingTextId == null);
+    if (ui.editingTextId != null) {
+      // Editing existing text
+      const t = scene().objects.find(o => o.id === ui.editingTextId);
+      if (t) {
+        if (v) {
+          saveHistory();
+          t.content = v;
+          redraw();
+        } else {
+          // Empty content on edit → delete the text
+          deleteObject(ui.editingTextId);
+        }
+      }
+    } else if (ui.pendingTextPos && v) {
+      // Creating a new text
+      saveHistory();
+      const o = {
+        id: Date.now() + Math.random(),
+        type: 'text',
+        x: ui.pendingTextPos.x,
+        y: ui.pendingTextPos.y,
+        content: v,
+        color: ui.textColor,
+        size: settings.textSize,
+        r: 0,
+        keyframes: [{ t: 0, x: ui.pendingTextPos.x, y: ui.pendingTextPos.y }],
+      };
+      scene().objects.push(o);
+      ui.selectedId = o.id;
+      redraw();
+    }
+    hideTextEditor();
+    // After placing a NEW text, auto-return to select tool so user can move on.
+    // (For edit mode, stay in whatever tool was active.)
+    if (wasCreating && ui.tool === 'text') {
+      setTool('select');
+    }
+  }
+
+  function cancelTextEditor() {
+    hideTextEditor();
+  }
+
+  // ============================================================
+  // Text picker (double-tap on existing text → content/color/size/delete)
+  // ============================================================
+  function showTextPicker(t, x, y) {
+    const picker  = document.getElementById('textPicker');
+    const content = document.getElementById('textPickerContent');
+    const slider  = document.getElementById('textPickerSizeSlider');
+    const sizeVal = document.getElementById('textPickerSizeValue');
+    picker._targetId = t.id;
+    content.value = t.content || '';
+    slider.value = t.size || 22;
+    sizeVal.textContent = t.size || 22;
+
+    document.querySelectorAll('.text-color-btn').forEach(b => {
+      const isCur = b.dataset.color === t.color;
+      b.style.borderColor = isCur ? '#ffdd00' : 'transparent';
+      b.style.boxShadow   = isCur ? '0 0 0 2px rgba(255, 221, 0, 0.4)' : 'none';
+    });
+
+    const wrapRect = fieldWrap.getBoundingClientRect();
+    picker.style.display = 'flex';
+    const pw = picker.offsetWidth || 240;
+    const ph = picker.offsetHeight || 280;
+    let px = x + 14;
+    let py = y - ph / 2;
+    if (px + pw > wrapRect.width  - 8) px = x - pw - 14;
+    if (px < 8) px = 8;
+    if (py < 8) py = 8;
+    if (py + ph > wrapRect.height - 8) py = wrapRect.height - ph - 8;
+    picker.style.left = px + 'px';
+    picker.style.top  = py + 'px';
+    setTimeout(() => content.focus(), 10);
+  }
+
+  function hideTextPicker() {
+    const picker = document.getElementById('textPicker');
+    picker.style.display = 'none';
+    picker._targetId = null;
+  }
+
   document.querySelectorAll('.cone-color-btn').forEach(b => {
     const handler = (ev) => {
       ev.stopPropagation();
@@ -3170,6 +3862,17 @@
     if (typeof goalPicker !== 'undefined' && goalPicker.style.display !== 'none') hideGoalPicker();
     if (typeof conePicker !== 'undefined' && conePicker.style.display !== 'none') hideConePicker();
     if (typeof ballPicker !== 'undefined' && ballPicker.style.display !== 'none') hideBallPicker();
+    const _areaPickerEl = document.getElementById('areaPicker');
+    if (_areaPickerEl && _areaPickerEl.style.display !== 'none') hideAreaPicker();
+    const _textPickerEl = document.getElementById('textPicker');
+    if (_textPickerEl && _textPickerEl.style.display !== 'none') hideTextPicker();
+    // If the inline text editor is open, treat canvas tap as "commit and continue"
+    const _textEditBoxEl = document.getElementById('textEditBox');
+    if (_textEditBoxEl && _textEditBoxEl.style.display !== 'none') {
+      commitTextEditor();
+      // After commit, fall through (so a tap that committed text doesn't also place a new one)
+      return;
+    }
     const orderPickerEl = document.getElementById('orderPicker');
     if (orderPickerEl && orderPickerEl.style.display === 'block') orderPickerEl.style.display = 'none';
 
@@ -3223,6 +3926,17 @@
       return;
     }
 
+    if (ui.tool === 'text') {
+      // Tap → open inline editor at the tap position. After commit/cancel, stay in text mode.
+      // Use client coords for editor positioning so it appears at the cursor.
+      const rect = fieldWrap.getBoundingClientRect();
+      // Convert canvas (x,y) back to client px (since canvas is scaled by DPR but
+      // fieldWrap visual size matches canvas CSS size). x/y are already in CSS pixels
+      // relative to the canvas, so they equal the editor offset within fieldWrap.
+      showTextEditor(x, y, { mode: 'create' });
+      return;
+    }
+
     if (ui.tool === 'select') {
       // Badge tap → order picker
       const badge = badgeHitTest(x, y);
@@ -3233,6 +3947,48 @@
 
       const hit = hitTest(x, y);
       if (hit) {
+        // === Area-specific handling ===
+        if (hit.type === 'area') {
+          ui.selectedId = hit.id;
+
+          // Vertex handle hit → start vertex drag
+          if (typeof hit._vertexHit === 'number') {
+            saveHistory();
+            ui.areaDragging = {
+              id: hit.id,
+              mode: 'vertex',
+              vertexIdx: hit._vertexHit,
+            };
+            redraw();
+            return;
+          }
+
+          // Interior hit → check for double-tap, otherwise start move drag
+          const now = Date.now();
+          if (now - lastTap < 350 && hit.id === ui._lastTapId) {
+            // Double-tap on area → show area picker (color / delete)
+            showAreaPicker(hit, x, y);
+            ui.areaDragging = null;
+            lastTap = 0;
+            ui._lastTapId = null;
+            redraw();
+            return;
+          }
+          lastTap = now;
+          ui._lastTapId = hit.id;
+
+          // Start interior move drag (record last pointer position for delta)
+          saveHistory();
+          ui.areaDragging = {
+            id: hit.id,
+            mode: 'move',
+            last: { x, y },
+            moved: false,
+          };
+          redraw();
+          return;
+        }
+
         ui.selectedId = hit.id;
         ui.dragging = { id: hit.id, dx: x - hit.x, dy: y - hit.y, startX: x, startY: y };
 
@@ -3284,6 +4040,9 @@
           } else if (hit.type === 'ball') {
             ui.dragging = null;
             showBallPicker(hit, x, y);
+          } else if (hit.type === 'text') {
+            ui.dragging = null;
+            showTextPicker(hit, x, y);
           } else {
             deleteObject(hit.id);
             ui.dragging = null;
@@ -3318,9 +4077,14 @@
     }
 
     createObject(ui.tool, x, y);
-    // For cone tool, stay in cone mode for continuous placement.
+    // For cone and area tools, stay in placement mode for continuous placement.
     // For other tools (player, ball, goal), auto-return to select.
-    if (ui.tool !== 'cone') {
+    // (text tool uses its own flow above and never reaches this point.)
+    if (ui.tool !== 'cone' &&
+        ui.tool !== 'area-triangle' &&
+        ui.tool !== 'area-rectangle' &&
+        ui.tool !== 'area-pentagon' &&
+        ui.tool !== 'area-hexagon') {
       setTimeout(() => setTool('select'), 50);
     }
   }
@@ -3344,6 +4108,31 @@
         ui.penStroke.points.push({ x, y });
         drawPaths();
       }
+      return;
+    }
+
+    // Area drag (vertex move or interior translate)
+    if (ui.areaDragging) {
+      e.preventDefault();
+      const o = scene().objects.find(obj => obj.id === ui.areaDragging.id);
+      if (!o || o.type !== 'area') { ui.areaDragging = null; return; }
+      if (ui.areaDragging.mode === 'vertex') {
+        // Move just the dragged vertex
+        const v = o.vertices[ui.areaDragging.vertexIdx];
+        v.x = clamp(x, 4, W - 4);
+        v.y = clamp(y, 4, H - 4);
+        // Keep o.x/o.y as the centroid of vertices for hit testing & translate consistency
+        recomputeAreaCenter(o);
+      } else if (ui.areaDragging.mode === 'move') {
+        // Translate all vertices by delta
+        const dx = x - ui.areaDragging.last.x;
+        const dy = y - ui.areaDragging.last.y;
+        if (Math.abs(dx) + Math.abs(dy) > 1) ui.areaDragging.moved = true;
+        o.vertices.forEach(v => { v.x += dx; v.y += dy; });
+        recomputeAreaCenter(o);
+        ui.areaDragging.last = { x, y };
+      }
+      redraw();
       return;
     }
 
@@ -3434,6 +4223,12 @@
       // Save once at the end of the rotation drag
       saveHistory();
       ui.rotating = null;
+      redraw();
+      return;
+    }
+    // Area drag end (vertex or interior). saveHistory was already called on drag start.
+    if (ui.areaDragging) {
+      ui.areaDragging = null;
       redraw();
       return;
     }
@@ -3703,8 +4498,200 @@
     document.getElementById('conePalette').addEventListener(evtName, (ev) => ev.stopPropagation());
   });
 
+  // Area color palette (top-of-screen, while in area placement mode)
+  document.querySelectorAll('.area-color-pal-btn').forEach(b => {
+    const handler = (ev) => {
+      ev.stopPropagation();
+      ev.preventDefault();
+      ui.areaColor = b.dataset.color;
+      updateAreaColorHighlight();
+    };
+    b.addEventListener('click', handler);
+    b.addEventListener('touchstart', handler, { passive: false });
+  });
+  document.getElementById('areaCancel').addEventListener('click', () => setTool('select'));
+
+  // Block events from area palette bubbling
+  ['mousedown', 'touchstart', 'pointerdown', 'click'].forEach(evtName => {
+    document.getElementById('areaPalette').addEventListener(evtName, (ev) => ev.stopPropagation());
+  });
+
+  // Area picker (per-area color change & delete) — buttons
+  document.querySelectorAll('.area-color-btn').forEach(b => {
+    const handler = (ev) => {
+      ev.stopPropagation();
+      ev.preventDefault();
+      const areaPicker = document.getElementById('areaPicker');
+      const id = areaPicker._targetId;
+      if (id == null) return;
+      const o = scene().objects.find(x => x.id === id);
+      if (o && o.type === 'area') {
+        saveHistory();
+        o.color = b.dataset.color;
+        ui.areaColor = b.dataset.color;
+        redraw();
+      }
+    };
+    b.addEventListener('click', handler);
+    b.addEventListener('touchstart', handler, { passive: false });
+  });
+  document.getElementById('areaPickerDelete').addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    const areaPicker = document.getElementById('areaPicker');
+    const id = areaPicker._targetId;
+    hideAreaPicker();
+    if (id != null) deleteObject(id);
+  });
+
+  // Block events from area picker bubbling
+  ['mousedown', 'touchstart', 'pointerdown', 'click'].forEach(evtName => {
+    document.getElementById('areaPicker').addEventListener(evtName, (ev) => ev.stopPropagation());
+  });
+
+  // ============================================================
+  // Text tool: top banner (just a "完了" button to exit placement mode)
+  // ============================================================
+  document.getElementById('textCancel').addEventListener('click', () => setTool('select'));
+  ['mousedown', 'touchstart', 'pointerdown', 'click'].forEach(evtName => {
+    document.getElementById('textPalette').addEventListener(evtName, (ev) => ev.stopPropagation());
+  });
+
+  // ============================================================
+  // Text editor (inline) — confirm / cancel / Esc / Ctrl+Enter / blur
+  // ============================================================
+  (function() {
+    const editor = document.getElementById('textEditor');
+    const editBox = document.getElementById('textEditBox');
+    const btnConfirm = document.getElementById('textEditConfirm');
+    const btnCancel  = document.getElementById('textEditCancel');
+
+    editor.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        cancelTextEditor();
+      } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        commitTextEditor();
+      }
+      // Plain Enter inserts a newline (default contenteditable behavior)
+    });
+    // Strip rich-text on paste — keep plain text only
+    editor.addEventListener('paste', (e) => {
+      e.preventDefault();
+      const text = (e.clipboardData || window.clipboardData).getData('text');
+      document.execCommand('insertText', false, text);
+    });
+
+    [btnConfirm, btnCancel].forEach(btn => {
+      // Prevent the button from stealing focus before click fires
+      btn.addEventListener('mousedown', (e) => e.preventDefault());
+      btn.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+    });
+    btnConfirm.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      commitTextEditor();
+    });
+    btnCancel.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      cancelTextEditor();
+    });
+
+    // Block events on the edit box from bubbling (so canvas pointerdown doesn't fire)
+    ['mousedown','touchstart','pointerdown','click'].forEach(evt => {
+      editBox.addEventListener(evt, (e) => e.stopPropagation());
+    });
+  })();
+
+  // ============================================================
+  // Text picker (double-tap to edit content/color/size/delete)
+  // ============================================================
+  (function() {
+    const picker  = document.getElementById('textPicker');
+    const content = document.getElementById('textPickerContent');
+    const slider  = document.getElementById('textPickerSizeSlider');
+    const sizeVal = document.getElementById('textPickerSizeValue');
+    const btnDone   = document.getElementById('textPickerDone');
+    const btnDelete = document.getElementById('textPickerDelete');
+
+    content.addEventListener('input', () => {
+      const id = picker._targetId;
+      const t = scene().objects.find(o => o.id === id);
+      if (t) { t.content = content.value; redraw(); }
+    });
+    content.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        hideTextPicker();
+      }
+      // Plain Enter inserts a newline (textarea default)
+    });
+
+    slider.addEventListener('input', () => {
+      const id = picker._targetId;
+      const t = scene().objects.find(o => o.id === id);
+      if (t) {
+        const v = parseInt(slider.value, 10) || 22;
+        t.size = v;
+        sizeVal.textContent = v;
+        redraw();
+      }
+    });
+
+    document.querySelectorAll('.text-color-btn').forEach(b => {
+      const handler = (ev) => {
+        ev.stopPropagation();
+        ev.preventDefault();
+        const id = picker._targetId;
+        const t = scene().objects.find(o => o.id === id);
+        if (t) {
+          saveHistory();
+          t.color = b.dataset.color;
+          ui.textColor = b.dataset.color;
+          document.querySelectorAll('.text-color-btn').forEach(el => {
+            const isCur = el.dataset.color === b.dataset.color;
+            el.style.borderColor = isCur ? '#ffdd00' : 'transparent';
+            el.style.boxShadow   = isCur ? '0 0 0 2px rgba(255, 221, 0, 0.4)' : 'none';
+          });
+          redraw();
+        }
+      };
+      b.addEventListener('click', handler);
+      b.addEventListener('touchstart', handler, { passive: false });
+    });
+
+    btnDone.addEventListener('click', (e) => {
+      e.stopPropagation();
+      // Trim trailing whitespace and save
+      const id = picker._targetId;
+      const t = scene().objects.find(o => o.id === id);
+      if (t) {
+        t.content = (t.content || '').replace(/\s+$/, '');
+        if (!t.content) {
+          deleteObject(id);
+        } else {
+          saveHistory();
+          redraw();
+        }
+      }
+      hideTextPicker();
+    });
+    btnDelete.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = picker._targetId;
+      hideTextPicker();
+      if (id != null) deleteObject(id);
+    });
+
+    ['mousedown','touchstart','pointerdown','click'].forEach(evt => {
+      picker.addEventListener(evt, (e) => e.stopPropagation());
+    });
+  })();
+
   function applyTime(t, sc = scene()) {
     sc.objects.forEach(o => {
+      if (o.type === 'area' || o.type === 'text') return; // areas and texts are static
       if (!o.keyframes || o.keyframes.length === 0) return;
       const kf = o.keyframes;
       if (t <= kf[0].t) { o.x = kf[0].x; o.y = kf[0].y; return; }
