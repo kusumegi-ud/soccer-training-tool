@@ -268,6 +268,44 @@
     flex-shrink: 0;
   }
 
+  /* Flyout submenu (right of toolbar) for grouped tools */
+  .tool-flyout {
+    position: absolute;
+    display: none;
+    flex-direction: row;
+    gap: 4px;
+    background: rgba(15, 20, 15, 0.96);
+    border: 1px solid var(--ui-border);
+    border-radius: 12px;
+    padding: 6px;
+    z-index: 50;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    align-items: center;
+  }
+  .tool-flyout.show {
+    display: flex;
+  }
+  /* Hide tool buttons that are members of a group (only their group button is visible) */
+  .tool[data-grouped="true"] {
+    display: none;
+  }
+  /* Tiny indicator triangle on group buttons */
+  .tool[data-group-btn="true"]::after {
+    content: '';
+    position: absolute;
+    right: 2px;
+    bottom: 2px;
+    width: 0; height: 0;
+    border-left: 4px solid transparent;
+    border-bottom: 4px solid var(--accent);
+    pointer-events: none;
+  }
+  .tool[data-group-btn="true"] {
+    position: relative;
+  }
+
   .icon-player {
     width: 22px; height: 26px;
     position: relative;
@@ -872,7 +910,25 @@
         <span class="tool-label">選択 / 移動</span>
       </button>
       <div class="tool-divider"></div>
-      <button class="tool" data-tool="player-blue">
+      <button class="tool" data-tool="select-group-players" data-group-btn="true" id="groupPlayersBtn" title="選手・コマ">
+        <div class="icon-player">
+          <svg viewBox="0 0 22 28" fill="none">
+            <path d="M7.2 21 L9.3 21 L9.3 23 L7.3 23 Z" fill="#e8c5a0"/>
+            <path d="M12.7 21 L14.8 21 L14.7 23 L12.7 23 Z" fill="#e8c5a0"/>
+            <path d="M7.3 23 L9.3 23 L9.3 25.5 L7.5 25.5 Z" fill="#2563eb"/>
+            <path d="M12.7 23 L14.7 23 L14.5 25.5 L12.7 25.5 Z" fill="#2563eb"/>
+            <path d="M5.5 25.5 L9.5 25.5 L10 27 L6 27 Z" fill="#1a1a1a"/>
+            <path d="M12.5 25.5 L16.5 25.5 L16 27 L12 27 Z" fill="#1a1a1a"/>
+            <path d="M5.5 17 L16.5 17 L15.5 21 L11.5 21 L11 19.8 L10.5 21 L6.5 21 Z" fill="#1a1a1a"/>
+            <path d="M3 9.5 L4.8 9.5 L4 17 L2.5 17 Z" fill="#e8c5a0"/>
+            <path d="M17.2 9.5 L19 9.5 L19.5 17 L18 17 Z" fill="#e8c5a0"/>
+            <path d="M5 9.5 L17 9.5 Q16.5 12 16.5 17 L5.5 17 Q5.5 12 5 9.5 Z" fill="#2563eb"/>
+            <circle cx="11" cy="5" r="2.6" fill="#e8c5a0"/>
+          </svg>
+        </div>
+        <span class="tool-label">選手</span>
+      </button>
+      <button class="tool" data-tool="player-blue" data-grouped="true">
         <div class="icon-player">
           <svg viewBox="0 0 22 28" fill="none">
             <!-- legs (skin) -->
@@ -912,7 +968,7 @@
         </div>
         <span class="tool-label">チームA（青）</span>
       </button>
-      <button class="tool" data-tool="player-red">
+      <button class="tool" data-tool="player-red" data-grouped="true">
         <div class="icon-player">
           <svg viewBox="0 0 22 28" fill="none">
             <!-- legs (skin upper, sock lower) -->
@@ -945,7 +1001,7 @@
         </div>
         <span class="tool-label">チームB（赤）</span>
       </button>
-      <button class="tool" data-tool="coach">
+      <button class="tool" data-tool="coach" data-grouped="true">
         <svg width="22" height="28" viewBox="0 0 22 28" fill="none">
           <!-- shoes -->
           <path d="M5.5 25.5 L9.5 25.5 L10 27 L6 27 Z" fill="#1a1a1a"/>
@@ -969,11 +1025,19 @@
         <span class="tool-label">コーチ</span>
       </button>
       <div class="tool-divider"></div>
-      <button class="tool" data-tool="cone">
+      <button class="tool" data-tool="select-group-objects" data-group-btn="true" id="groupObjectsBtn" title="オブジェクト">
+        <svg width="22" height="22" viewBox="0 0 22 22">
+          <!-- Soccer ball icon -->
+          <circle cx="11" cy="11" r="8" fill="#fff" stroke="#1a1a1a" stroke-width="1.2"/>
+          <polygon points="11,7 14,9 13,12.5 9,12.5 8,9" fill="#1a1a1a"/>
+        </svg>
+        <span class="tool-label">物</span>
+      </button>
+      <button class="tool" data-tool="cone" data-grouped="true">
         <div class="icon-cone"></div>
         <span class="tool-label">コーン</span>
       </button>
-      <button class="tool" data-tool="ball">
+      <button class="tool" data-tool="ball" data-grouped="true">
         <svg width="22" height="22" viewBox="0 0 22 22">
           <circle cx="11" cy="11" r="9.5" fill="#fff" stroke="#1a1a1a" stroke-width="1"/>
           <!-- center pentagon -->
@@ -987,55 +1051,83 @@
         </svg>
         <span class="tool-label">ボール</span>
       </button>
-      <button class="tool" data-tool="goal">
+      <button class="tool" data-tool="goal" data-grouped="true">
         <div class="icon-goal"></div>
         <span class="tool-label">ゴール</span>
       </button>
       <div class="tool-divider"></div>
-      <button class="tool" data-tool="arrow-move">
+      <button class="tool" data-tool="select-group-arrows" data-group-btn="true" id="groupArrowsBtn" title="動き">
+        <svg width="22" height="22" viewBox="0 0 22 22">
+          <!-- Player silhouette (head + body) on the left -->
+          <circle cx="6" cy="6" r="2.2" fill="#f5f5f0"/>
+          <path d="M 3.8 9 L 8.2 9 L 7.8 14 L 4.2 14 Z" fill="#f5f5f0"/>
+          <!-- Legs -->
+          <line x1="5" y1="14" x2="4.5" y2="18" stroke="#f5f5f0" stroke-width="1.2" stroke-linecap="round"/>
+          <line x1="7" y1="14" x2="7.5" y2="18" stroke="#f5f5f0" stroke-width="1.2" stroke-linecap="round"/>
+          <!-- Motion arrow extending to the right -->
+          <line x1="11" y1="11" x2="18" y2="11" stroke="#ffdd00" stroke-width="2.2" stroke-linecap="round"/>
+          <polygon points="20,11 15,8 15.7,11 15,14" fill="#ffdd00"/>
+        </svg>
+        <span class="tool-label">動き</span>
+      </button>
+      <button class="tool" data-tool="arrow-move" data-grouped="true">
         <div class="arrow-preview">
           <svg viewBox="0 0 24 14"><line x1="2" y1="7" x2="18" y2="7" stroke="#ffffff" stroke-width="2" stroke-dasharray="2,2" stroke-linecap="round"/><polygon points="18,7 13,4 14,7 13,10" fill="#ffffff"/></svg>
         </div>
         <span class="tool-label">移動矢印（選手のみ）</span>
       </button>
-      <button class="tool" data-tool="arrow-dribble">
+      <button class="tool" data-tool="arrow-dribble" data-grouped="true">
         <div class="arrow-preview">
           <svg viewBox="0 0 24 14"><line x1="2" y1="7" x2="18" y2="7" stroke="#ffdd00" stroke-width="2.5" stroke-linecap="round"/><polygon points="18,7 13,4 14,7 13,10" fill="#ffdd00"/></svg>
         </div>
         <span class="tool-label">ドリブル矢印（実線）</span>
       </button>
-      <button class="tool" data-tool="arrow-pass">
+      <button class="tool" data-tool="arrow-pass" data-grouped="true">
         <div class="arrow-preview">
           <svg viewBox="0 0 24 14"><line x1="2" y1="7" x2="18" y2="7" stroke="#4ade80" stroke-width="2" stroke-dasharray="3,2" stroke-linecap="round"/><polygon points="18,7 13,4 14,7 13,10" fill="#4ade80"/></svg>
         </div>
         <span class="tool-label">パス矢印（破線）</span>
       </button>
-      <button class="tool" data-tool="arrow-shoot">
+      <button class="tool" data-tool="arrow-shoot" data-grouped="true">
         <div class="arrow-preview">
           <svg viewBox="0 0 24 14"><line x1="2" y1="7" x2="17" y2="7" stroke="#f87171" stroke-width="3.5" stroke-linecap="round"/><polygon points="18,7 12,3 13,7 12,11" fill="#f87171"/></svg>
         </div>
         <span class="tool-label">シュート矢印（太線）</span>
       </button>
       <div class="tool-divider"></div>
-      <button class="tool" data-tool="area-triangle">
+      <button class="tool" data-tool="select-group-tactics" data-group-btn="true" id="groupTacticsBtn" title="戦術表現">
+        <svg width="22" height="22" viewBox="0 0 22 22">
+          <polygon points="11,4 19,18 3,18" fill="rgba(239,159,39,0.35)" stroke="#ef9f27" stroke-width="2" stroke-linejoin="round"/>
+        </svg>
+        <span class="tool-label">戦術</span>
+      </button>
+      <button class="tool" data-tool="line" data-grouped="true">
+        <svg width="22" height="22" viewBox="0 0 22 22">
+          <circle cx="4" cy="11" r="2.5" fill="#dc2626"/>
+          <circle cx="18" cy="11" r="2.5" fill="#dc2626"/>
+          <line x1="4" y1="11" x2="18" y2="11" stroke="#dc2626" stroke-width="2"/>
+        </svg>
+        <span class="tool-label">選手間ライン</span>
+      </button>
+      <button class="tool" data-tool="area-triangle" data-grouped="true">
         <svg width="22" height="22" viewBox="0 0 22 22">
           <polygon points="11,4 19,18 3,18" fill="rgba(239,159,39,0.35)" stroke="#ef9f27" stroke-width="2" stroke-linejoin="round"/>
         </svg>
         <span class="tool-label">三角エリア</span>
       </button>
-      <button class="tool" data-tool="area-rectangle">
+      <button class="tool" data-tool="area-rectangle" data-grouped="true">
         <svg width="22" height="22" viewBox="0 0 22 22">
           <rect x="4" y="5" width="14" height="12" fill="rgba(55,138,221,0.35)" stroke="#378add" stroke-width="2"/>
         </svg>
         <span class="tool-label">四角エリア</span>
       </button>
-      <button class="tool" data-tool="area-pentagon">
+      <button class="tool" data-tool="area-pentagon" data-grouped="true">
         <svg width="22" height="22" viewBox="0 0 22 22">
           <polygon points="11,3 19,9 16,18 6,18 3,9" fill="rgba(34,197,94,0.35)" stroke="#22c55e" stroke-width="2" stroke-linejoin="round"/>
         </svg>
         <span class="tool-label">五角エリア</span>
       </button>
-      <button class="tool" data-tool="area-hexagon">
+      <button class="tool" data-tool="area-hexagon" data-grouped="true">
         <svg width="22" height="22" viewBox="0 0 22 22">
           <polygon points="11,3 18,7 18,15 11,19 4,15 4,7" fill="rgba(168,85,247,0.35)" stroke="#a855f7" stroke-width="2" stroke-linejoin="round"/>
         </svg>
@@ -1048,7 +1140,6 @@
         </svg>
         <span class="tool-label">テキスト</span>
       </button>
-      <div class="tool-divider"></div>
       <button class="tool" data-tool="pen">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 19l7-7 3 3-7 7-3-3z"/>
@@ -1065,6 +1156,156 @@
           <circle cx="12" cy="12" r="4" fill="#dc2626" stroke="none"/>
         </svg>
         <span class="tool-label">動きを記録</span>
+      </button>
+    </div>
+
+    <!-- Group flyout menus (positioned next to toolbar group buttons) -->
+    <div class="tool-flyout" id="flyoutPlayers" data-group="players">
+      <button class="tool" data-tool="player-blue">
+        <div class="icon-player">
+          <svg viewBox="0 0 22 28" fill="none">
+            <path d="M7.2 21 L9.3 21 L9.3 23 L7.3 23 Z" fill="#e8c5a0"/>
+            <path d="M12.7 21 L14.8 21 L14.7 23 L12.7 23 Z" fill="#e8c5a0"/>
+            <path d="M7.3 23 L9.3 23 L9.3 25.5 L7.5 25.5 Z" fill="#2563eb"/>
+            <path d="M12.7 23 L14.7 23 L14.5 25.5 L12.7 25.5 Z" fill="#2563eb"/>
+            <path d="M5.5 25.5 L9.5 25.5 L10 27 L6 27 Z" fill="#1a1a1a"/>
+            <path d="M12.5 25.5 L16.5 25.5 L16 27 L12 27 Z" fill="#1a1a1a"/>
+            <path d="M5.5 17 L16.5 17 L15.5 21 L11.5 21 L11 19.8 L10.5 21 L6.5 21 Z" fill="#1a1a1a"/>
+            <path d="M3 9.5 L4.8 9.5 L4 17 L2.5 17 Z" fill="#e8c5a0"/>
+            <path d="M17.2 9.5 L19 9.5 L19.5 17 L18 17 Z" fill="#e8c5a0"/>
+            <path d="M5 9.5 L17 9.5 Q16.5 12 16.5 17 L5.5 17 Q5.5 12 5 9.5 Z" fill="#2563eb"/>
+            <circle cx="11" cy="5" r="2.6" fill="#e8c5a0"/>
+          </svg>
+        </div>
+        <span class="tool-label">チームA</span>
+      </button>
+      <button class="tool" data-tool="player-red">
+        <div class="icon-player">
+          <svg viewBox="0 0 22 28" fill="none">
+            <path d="M7.2 21 L9.3 21 L9.3 23 L7.3 23 Z" fill="#e8c5a0"/>
+            <path d="M12.7 21 L14.8 21 L14.7 23 L12.7 23 Z" fill="#e8c5a0"/>
+            <path d="M7.3 23 L9.3 23 L9.3 25.5 L7.5 25.5 Z" fill="#dc2626"/>
+            <path d="M12.7 23 L14.7 23 L14.5 25.5 L12.7 25.5 Z" fill="#dc2626"/>
+            <path d="M5.5 25.5 L9.5 25.5 L10 27 L6 27 Z" fill="#1a1a1a"/>
+            <path d="M12.5 25.5 L16.5 25.5 L16 27 L12 27 Z" fill="#1a1a1a"/>
+            <path d="M5.5 17 L16.5 17 L15.5 21 L11.5 21 L11 19.8 L10.5 21 L6.5 21 Z" fill="#1a1a1a"/>
+            <path d="M3 9.5 L4.8 9.5 L4 17 L2.5 17 Z" fill="#e8c5a0"/>
+            <path d="M17.2 9.5 L19 9.5 L19.5 17 L18 17 Z" fill="#e8c5a0"/>
+            <path d="M5 9.5 L17 9.5 Q16.5 12 16.5 17 L5.5 17 Q5.5 12 5 9.5 Z" fill="#dc2626"/>
+            <circle cx="11" cy="5" r="2.6" fill="#e8c5a0"/>
+          </svg>
+        </div>
+        <span class="tool-label">チームB</span>
+      </button>
+      <button class="tool" data-tool="coach">
+        <svg width="22" height="28" viewBox="0 0 22 28" fill="none">
+          <path d="M5.5 25.5 L9.5 25.5 L10 27 L6 27 Z" fill="#1a1a1a"/>
+          <path d="M12.5 25.5 L16.5 25.5 L16 27 L12 27 Z" fill="#1a1a1a"/>
+          <path d="M7 17 L9.5 17 L9.5 25.5 L7.3 25.5 Z" fill="#1a1a1a"/>
+          <path d="M12.5 17 L15 17 L14.7 25.5 L12.5 25.5 Z" fill="#1a1a1a"/>
+          <path d="M3 9.5 L4.8 9.5 L4 17 L2.5 17 Z" fill="#e8c5a0"/>
+          <path d="M17.2 9.5 L19 9.5 L19.5 17 L18 17 Z" fill="#e8c5a0"/>
+          <path d="M5 9.5 L17 9.5 Q16.5 12 16.5 17 L5.5 17 Q5.5 12 5 9.5 Z" fill="#16a34a"/>
+          <circle cx="11" cy="5" r="2.6" fill="#e8c5a0"/>
+          <text x="11" y="13.5" text-anchor="middle" font-size="5" fill="#fff" font-weight="900">C</text>
+        </svg>
+        <span class="tool-label">コーチ</span>
+      </button>
+    </div>
+
+    <div class="tool-flyout" id="flyoutObjects" data-group="objects">
+      <button class="tool" data-tool="cone">
+        <svg width="22" height="22" viewBox="0 0 22 22"><polygon points="11,3 17,18 5,18" fill="#ff7a2a" stroke="#cc5a0e" stroke-width="1"/><line x1="6.5" y1="14" x2="15.5" y2="14" stroke="#fff" stroke-width="1.4"/></svg>
+        <span class="tool-label">コーン</span>
+      </button>
+      <button class="tool" data-tool="ball">
+        <svg width="22" height="22" viewBox="0 0 22 22">
+          <circle cx="11" cy="11" r="8" fill="#fff" stroke="#1a1a1a" stroke-width="1"/>
+          <polygon points="11,7 14,9 13,12.5 9,12.5 8,9" fill="#1a1a1a"/>
+        </svg>
+        <span class="tool-label">ボール</span>
+      </button>
+      <button class="tool" data-tool="goal">
+        <svg width="22" height="22" viewBox="0 0 22 22"><rect x="3" y="7" width="16" height="9" fill="none" stroke="#fff" stroke-width="2"/><line x1="3" y1="11.5" x2="19" y2="11.5" stroke="#fff" stroke-width="0.6"/></svg>
+        <span class="tool-label">ゴール</span>
+      </button>
+    </div>
+
+    <div class="tool-flyout" id="flyoutArrows" data-group="arrows">
+      <button class="tool" data-tool="arrow-move">
+        <div class="arrow-preview">
+          <svg viewBox="0 0 24 14"><line x1="2" y1="7" x2="17" y2="7" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/><polygon points="18,7 12,3 13,7 12,11" fill="#ffffff"/></svg>
+        </div>
+        <span class="tool-label">移動</span>
+      </button>
+      <button class="tool" data-tool="arrow-dribble">
+        <div class="arrow-preview">
+          <svg viewBox="0 0 24 14"><line x1="2" y1="7" x2="17" y2="7" stroke="#ffdd00" stroke-width="2" stroke-linecap="round"/><polygon points="18,7 12,3 13,7 12,11" fill="#ffdd00"/></svg>
+        </div>
+        <span class="tool-label">ドリブル</span>
+      </button>
+      <button class="tool" data-tool="arrow-pass">
+        <div class="arrow-preview">
+          <svg viewBox="0 0 24 14"><line x1="2" y1="7" x2="17" y2="7" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 2"/><polygon points="18,7 12,3 13,7 12,11" fill="#4ade80"/></svg>
+        </div>
+        <span class="tool-label">パス</span>
+      </button>
+      <button class="tool" data-tool="arrow-shoot">
+        <div class="arrow-preview">
+          <svg viewBox="0 0 24 14"><line x1="2" y1="7" x2="17" y2="7" stroke="#f87171" stroke-width="3.5" stroke-linecap="round"/><polygon points="18,7 12,3 13,7 12,11" fill="#f87171"/></svg>
+        </div>
+        <span class="tool-label">シュート</span>
+      </button>
+    </div>
+
+    <div class="tool-flyout" id="flyoutTactics" data-group="tactics">
+      <button class="tool" data-tool="line">
+        <svg width="22" height="22" viewBox="0 0 22 22">
+          <circle cx="4" cy="11" r="2.5" fill="#dc2626"/>
+          <circle cx="18" cy="11" r="2.5" fill="#dc2626"/>
+          <line x1="4" y1="11" x2="18" y2="11" stroke="#dc2626" stroke-width="2"/>
+        </svg>
+        <span class="tool-label">ライン</span>
+      </button>
+      <button class="tool" data-tool="area-triangle">
+        <svg width="22" height="22" viewBox="0 0 22 22"><polygon points="11,4 19,18 3,18" fill="rgba(239,159,39,0.35)" stroke="#ef9f27" stroke-width="2" stroke-linejoin="round"/></svg>
+        <span class="tool-label">三角</span>
+      </button>
+      <button class="tool" data-tool="area-rectangle">
+        <svg width="22" height="22" viewBox="0 0 22 22"><rect x="4" y="5" width="14" height="12" fill="rgba(55,138,221,0.35)" stroke="#378add" stroke-width="2"/></svg>
+        <span class="tool-label">四角</span>
+      </button>
+      <button class="tool" data-tool="area-pentagon">
+        <svg width="22" height="22" viewBox="0 0 22 22"><polygon points="11,3 19,9 16,18 6,18 3,9" fill="rgba(34,197,94,0.35)" stroke="#22c55e" stroke-width="2" stroke-linejoin="round"/></svg>
+        <span class="tool-label">五角</span>
+      </button>
+      <button class="tool" data-tool="area-hexagon">
+        <svg width="22" height="22" viewBox="0 0 22 22"><polygon points="11,3 18,7 18,15 11,19 4,15 4,7" fill="rgba(168,85,247,0.35)" stroke="#a855f7" stroke-width="2" stroke-linejoin="round"/></svg>
+        <span class="tool-label">六角</span>
+      </button>
+      <button class="tool" data-tool="dline-straight">
+        <svg width="22" height="22" viewBox="0 0 22 22">
+          <line x1="3" y1="11" x2="17" y2="11" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/>
+          <polygon points="19,11 14,8 14.7,11 14,14" fill="#fbbf24"/>
+          <circle cx="3" cy="11" r="2.2" fill="#fff" stroke="#fbbf24" stroke-width="0.8"/>
+        </svg>
+        <span class="tool-label">説明線</span>
+      </button>
+      <button class="tool" data-tool="dline-curve">
+        <svg width="22" height="22" viewBox="0 0 22 22">
+          <path d="M 3 16 Q 11 2 17 13" stroke="#fbbf24" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <polygon points="19,15 14,10 14.5,13 13,15.5" fill="#fbbf24" transform="rotate(20 16 13)"/>
+          <circle cx="3" cy="16" r="2.2" fill="#fff" stroke="#fbbf24" stroke-width="0.8"/>
+        </svg>
+        <span class="tool-label">説明曲線</span>
+      </button>
+      <button class="tool" data-tool="dline-zigzag">
+        <svg width="22" height="22" viewBox="0 0 22 22">
+          <polyline points="3,11 6,7 9,15 12,7 15,15 17,11" stroke="#fbbf24" stroke-width="1.8" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+          <polygon points="19,11 14,8 14.7,11 14,14" fill="#fbbf24"/>
+          <circle cx="3" cy="11" r="2.2" fill="#fff" stroke="#fbbf24" stroke-width="0.8"/>
+        </svg>
+        <span class="tool-label">説明波線</span>
       </button>
     </div>
 
@@ -1219,6 +1460,88 @@
     ">
       <span style="color:#f5f5f0;font-size:12px;">テキスト配置中: ピッチをタップして入力</span>
       <button class="rec-cancel" id="textCancel" style="margin-left: 4px;">完了</button>
+    </div>
+
+    <!-- Line tool: banner shown while connecting two players with a line -->
+    <div id="linePalette" style="
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 20, 15, 0.96);
+      border: 1px solid var(--ui-border);
+      border-radius: 14px;
+      padding: 10px 14px;
+      display: none;
+      gap: 10px;
+      align-items: center;
+      z-index: 90;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+      backdrop-filter: blur(10px);
+    ">
+      <span id="linePaletteText" style="color:#f5f5f0;font-size:12px;">ライン: 1人目の選手をタップ</span>
+      <button class="rec-cancel" id="lineCancel" style="margin-left: 4px;">完了</button>
+    </div>
+
+    <!-- Drawing-line tool palette (color picker, similar to pen) -->
+    <div id="dlinePalette" style="
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--ui-bg);
+      border: 1px solid var(--ui-border);
+      padding: 6px 10px;
+      border-radius: 24px;
+      z-index: 26;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    ">
+      <span id="dlinePaletteLabel" style="font-size: 11px; color: var(--accent); font-weight: 600; padding: 0 4px;">直線</span>
+      <button class="dline-color-btn" data-color="#ffffff" style="width:24px;height:24px;border-radius:50%;border:2px solid transparent;background:#ffffff;cursor:pointer;padding:0;"></button>
+      <button class="dline-color-btn" data-color="#fbbf24" style="width:24px;height:24px;border-radius:50%;border:2px solid transparent;background:#fbbf24;cursor:pointer;padding:0;"></button>
+      <button class="dline-color-btn" data-color="#dc2626" style="width:24px;height:24px;border-radius:50%;border:2px solid transparent;background:#dc2626;cursor:pointer;padding:0;"></button>
+      <button class="dline-color-btn" data-color="#22c55e" style="width:24px;height:24px;border-radius:50%;border:2px solid transparent;background:#22c55e;cursor:pointer;padding:0;"></button>
+      <button class="rec-cancel" id="dlineCancel" style="margin-left: 4px;">完了</button>
+    </div>
+
+    <!-- Drawing-line picker shown on double-tap of an existing line -->
+    <div id="dlinePicker" style="
+      position: absolute;
+      background: rgba(15, 20, 15, 0.96);
+      border: 1px solid var(--ui-border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 100;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+      backdrop-filter: blur(10px);
+      min-width: 200px;
+    ">
+      <div style="color:#f5f5f0;font-size:11px;font-weight:600;letter-spacing:0.04em;">色</div>
+      <div style="display:flex;gap:6px;">
+        <button class="dline-picker-color-btn" data-color="#ffffff" style="width:30px;height:30px;border-radius:50%;border:2px solid transparent;background:#ffffff;cursor:pointer;padding:0;"></button>
+        <button class="dline-picker-color-btn" data-color="#fbbf24" style="width:30px;height:30px;border-radius:50%;border:2px solid transparent;background:#fbbf24;cursor:pointer;padding:0;"></button>
+        <button class="dline-picker-color-btn" data-color="#dc2626" style="width:30px;height:30px;border-radius:50%;border:2px solid transparent;background:#dc2626;cursor:pointer;padding:0;"></button>
+        <button class="dline-picker-color-btn" data-color="#22c55e" style="width:30px;height:30px;border-radius:50%;border:2px solid transparent;background:#22c55e;cursor:pointer;padding:0;"></button>
+      </div>
+      <button id="dlinePickerDelete" style="
+        width: 100%;
+        background: rgba(220, 38, 38, 0.2);
+        color: #f87171;
+        border: 1px solid rgba(220, 38, 38, 0.4);
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        cursor: pointer;
+        font-weight: 600;
+      ">この線を削除</button>
     </div>
 
     <!-- Inline editor (contenteditable) for entering / editing text on the field -->
@@ -1688,7 +2011,7 @@
 
   const project = {
     scenes: [
-      { name: 'シーン 1', objects: [], arrows: [], drawings: [], duration: 0 }
+      { name: 'シーン 1', objects: [], arrows: [], drawings: [], lines: [], drawingLines: [], duration: 0 }
     ],
     activeIdx: 0,
     counters: { blue: 0, red: 0, yellow: 0 },
@@ -1710,6 +2033,12 @@
     textColor: '#ffffff',    // current text color (for new texts)
     pendingTextPos: null,    // { x, y } where the next placed text will go
     editingTextId: null,     // id of the text being edited inline (vs. picker)
+    linePendingId: null,     // when in 'line' tool, the first selected player id (waiting for second)
+    dlineColor: '#fbbf24',   // current drawing-line color (for new lines)
+    dlineDrawing: null,      // active drag for placing a new drawing line
+    dlineDragHandle: null,   // { id, handle: 'start'|'end'|'mid', startX, startY }
+    dlineMoving: null,       // { id, lastX, lastY } — dragging the whole line to move it
+    selectedDlineId: null,   // id of currently selected drawing line (shows handles)
     playing: false,
     playStart: 0,
     playTime: 0,
@@ -2514,11 +2843,174 @@
     drawPaths();
     // Draw areas first (so they appear UNDER players, balls, cones, goals)
     scene().objects.forEach(o => { if (o.type === 'area') drawObject(iconCtx, o); });
+    // Lines connecting two players: above areas, below players (so player icons cover endpoints)
+    drawLines();
     // Then draw players/balls/cones/goals/etc. (NOT text, NOT area)
     scene().objects.forEach(o => { if (o.type !== 'area' && o.type !== 'text') drawObject(iconCtx, o); });
-    // Finally draw text on top, so labels are always readable
+    // Then draw text labels
     scene().objects.forEach(o => { if (o.type === 'text') drawObject(iconCtx, o); });
+    // Finally draw the explanation drawing-lines on top, so they aren't hidden by icons
+    drawDrawingLines();
     updateInfo();
+  }
+
+  function drawLines() {
+    const lines = scene().lines || [];
+    if (lines.length === 0) return;
+    iconCtx.save();
+    iconCtx.lineCap = 'round';
+    lines.forEach(line => {
+      const a = scene().objects.find(o => o.id === line.fromId);
+      const b = scene().objects.find(o => o.id === line.toId);
+      if (!a || !b) return;
+      const isHovered = (line.id === ui.selectedLineId);
+      iconCtx.strokeStyle = '#dc2626';                 // red
+      iconCtx.lineWidth = isHovered ? 4 : 2.5;
+      iconCtx.beginPath();
+      iconCtx.moveTo(a.x, a.y);
+      iconCtx.lineTo(b.x, b.y);
+      iconCtx.stroke();
+    });
+    iconCtx.restore();
+  }
+
+  // Draw an arrow head at (tx, ty), pointing in direction (dx, dy).
+  // dx,dy need not be normalized. Color matches stroke.
+  function drawArrowHead(ctx, tx, ty, dx, dy, color, size) {
+    const len = Math.hypot(dx, dy) || 1;
+    const ux = dx / len, uy = dy / len;
+    const ah = size || 10;
+    const aw = (size || 10) * 0.6;
+    // Two perpendicular unit vectors
+    const px = -uy, py = ux;
+    const baseX = tx - ux * ah;
+    const baseY = ty - uy * ah;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(tx, ty);
+    ctx.lineTo(baseX + px * aw, baseY + py * aw);
+    ctx.lineTo(baseX - px * aw, baseY - py * aw);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Generate a polyline of points for a 'metal-rod oscillation' zigzag from (x1,y1) to (x2,y2).
+  // amplitude: peak height (absolute pixel offset perpendicular to the main axis)
+  function zigzagPath(x1, y1, x2, y2, amplitude) {
+    const dx = x2 - x1, dy = y2 - y1;
+    const len = Math.hypot(dx, dy);
+    if (len < 1) return [{x: x1, y: y1}, {x: x2, y: y2}];
+    // ~6 oscillations regardless of length, but with a min step size so short
+    // lines still look reasonable
+    const steps = Math.max(4, Math.min(12, Math.round(len / 30)));
+    const ux = dx / len, uy = dy / len;
+    const px = -uy, py = ux; // perpendicular
+    const pts = [{x: x1, y: y1}];
+    for (let i = 1; i < steps; i++) {
+      const t = i / steps;
+      // Alternating sign perpendicular offset; first peak at i=1
+      const sign = (i % 2 === 1) ? 1 : -1;
+      const cx = x1 + dx * t + px * amplitude * sign;
+      const cy = y1 + dy * t + py * amplitude * sign;
+      pts.push({x: cx, y: cy});
+    }
+    pts.push({x: x2, y: y2});
+    return pts;
+  }
+
+  function drawDrawingLines() {
+    const list = scene().drawingLines || [];
+    iconCtx.save();
+    iconCtx.lineCap = 'round';
+    iconCtx.lineJoin = 'round';
+    list.forEach(d => drawSingleDrawingLine(d, false));
+
+    // Preview the line currently being placed (drag in progress)
+    if (ui.dlineDrawing) {
+      drawSingleDrawingLine(ui.dlineDrawing, true);
+    }
+    iconCtx.restore();
+  }
+
+  function drawSingleDrawingLine(d, isPreview) {
+    const color = d.color || '#fbbf24';
+    const lw = 2.5;
+    iconCtx.strokeStyle = color;
+    iconCtx.lineWidth = lw;
+    if (isPreview) {
+      iconCtx.setLineDash([6, 4]);
+    } else {
+      iconCtx.setLineDash([]);
+    }
+    let endDx, endDy;
+    if (d.type === 'straight') {
+      iconCtx.beginPath();
+      iconCtx.moveTo(d.x1, d.y1);
+      iconCtx.lineTo(d.x2, d.y2);
+      iconCtx.stroke();
+      endDx = d.x2 - d.x1;
+      endDy = d.y2 - d.y1;
+    } else if (d.type === 'curve') {
+      iconCtx.beginPath();
+      iconCtx.moveTo(d.x1, d.y1);
+      iconCtx.quadraticCurveTo(d.cx, d.cy, d.x2, d.y2);
+      iconCtx.stroke();
+      // Tangent at the end of a quadratic Bezier (t=1) is 2*(P2 - P1)
+      endDx = 2 * (d.x2 - d.cx);
+      endDy = 2 * (d.y2 - d.cy);
+    } else if (d.type === 'zigzag') {
+      const amp = (typeof d.amplitude === 'number') ? d.amplitude : 12;
+      const pts = zigzagPath(d.x1, d.y1, d.x2, d.y2, amp);
+      iconCtx.beginPath();
+      iconCtx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < pts.length; i++) iconCtx.lineTo(pts[i].x, pts[i].y);
+      iconCtx.stroke();
+      const last = pts[pts.length - 1];
+      const prev = pts[pts.length - 2];
+      endDx = last.x - prev.x;
+      endDy = last.y - prev.y;
+    }
+    // Always draw arrowhead at end
+    iconCtx.setLineDash([]);
+    drawArrowHead(iconCtx, d.x2, d.y2, endDx, endDy, color, 11);
+
+    // Editing handles when this drawing line is selected
+    if (!isPreview && ui.selectedDlineId === d.id) {
+      drawDlineHandles(d);
+    }
+  }
+
+  function drawDlineHandles(d) {
+    iconCtx.save();
+    iconCtx.fillStyle = 'rgba(255,221,0,0.95)';
+    iconCtx.strokeStyle = '#1a1a1a';
+    iconCtx.lineWidth = 1.5;
+    const drawHandle = (x, y, isMid) => {
+      iconCtx.beginPath();
+      if (isMid) {
+        iconCtx.arc(x, y, 6, 0, Math.PI * 2);
+      } else {
+        iconCtx.rect(x - 6, y - 6, 12, 12);
+      }
+      iconCtx.fill();
+      iconCtx.stroke();
+    };
+    drawHandle(d.x1, d.y1, false);
+    drawHandle(d.x2, d.y2, false);
+    if (d.type === 'curve') {
+      // Curve control point
+      drawHandle(d.cx, d.cy, true);
+    } else if (d.type === 'zigzag') {
+      // Midpoint handle for amplitude (offset perpendicular by current amplitude)
+      const amp = (typeof d.amplitude === 'number') ? d.amplitude : 12;
+      const dx = d.x2 - d.x1, dy = d.y2 - d.y1;
+      const len = Math.hypot(dx, dy) || 1;
+      const px = -dy / len, py = dx / len;
+      const mx = (d.x1 + d.x2) / 2 + px * amp;
+      const my = (d.y1 + d.y2) / 2 + py * amp;
+      drawHandle(mx, my, true);
+    }
+    iconCtx.restore();
   }
 
   function updateInfo() {
@@ -2548,6 +3040,8 @@
       showConePalette(false);
       showAreaPalette(false);
       showTextPalette(false);
+      showLinePalette(false);
+      showDlinePalette(false);
     } else if (name === 'pen') {
       ui.tool = name;
       showArrowBanner(false);
@@ -2555,6 +3049,8 @@
       showConePalette(false);
       showAreaPalette(false);
       showTextPalette(false);
+      showLinePalette(false);
+      showDlinePalette(false);
     } else if (name === 'cone') {
       ui.tool = name;
       showArrowBanner(false);
@@ -2562,6 +3058,8 @@
       showConePalette(true);
       showAreaPalette(false);
       showTextPalette(false);
+      showLinePalette(false);
+      showDlinePalette(false);
     } else if (name === 'area-triangle' || name === 'area-rectangle' ||
                name === 'area-pentagon' || name === 'area-hexagon') {
       ui.tool = name;
@@ -2570,6 +3068,8 @@
       showConePalette(false);
       showAreaPalette(true, name);
       showTextPalette(false);
+      showLinePalette(false);
+      showDlinePalette(false);
     } else if (name === 'text') {
       ui.tool = name;
       showArrowBanner(false);
@@ -2577,22 +3077,124 @@
       showConePalette(false);
       showAreaPalette(false);
       showTextPalette(true);
-    } else {
+      showLinePalette(false);
+      showDlinePalette(false);
+    } else if (name === 'line') {
       ui.tool = name;
+      ui.linePendingId = null;  // reset any pending first selection
       showArrowBanner(false);
       showPenPalette(false);
       showConePalette(false);
       showAreaPalette(false);
       showTextPalette(false);
+      showLinePalette(true);
+      showDlinePalette(false);
+      updateLinePaletteText();
+    } else if (name === 'dline-straight' || name === 'dline-curve' || name === 'dline-zigzag') {
+      ui.tool = name;
+      ui.dlineDrawing = null;
+      showArrowBanner(false);
+      showPenPalette(false);
+      showConePalette(false);
+      showAreaPalette(false);
+      showTextPalette(false);
+      showLinePalette(false);
+      showDlinePalette(true, name);
+    } else {
+      ui.tool = name;
+      ui.linePendingId = null;
+      showArrowBanner(false);
+      showPenPalette(false);
+      showConePalette(false);
+      showAreaPalette(false);
+      showTextPalette(false);
+      showLinePalette(false);
+      showDlinePalette(false);
     }
     document.querySelectorAll('.tool').forEach(b => {
       b.classList.toggle('active', b.dataset.tool === name);
+    });
+    // For grouped tools, also highlight the parent group button
+    const TOOL_TO_GROUP = {
+      'player-blue': 'players', 'player-red': 'players', 'coach': 'players',
+      'cone': 'objects', 'ball': 'objects', 'goal': 'objects',
+      'arrow-move': 'arrows', 'arrow-dribble': 'arrows', 'arrow-pass': 'arrows', 'arrow-shoot': 'arrows',
+      'line': 'tactics', 'area-triangle': 'tactics', 'area-rectangle': 'tactics',
+      'area-pentagon': 'tactics', 'area-hexagon': 'tactics',
+      'dline-straight': 'tactics', 'dline-curve': 'tactics', 'dline-zigzag': 'tactics',
+    };
+    const groupName = TOOL_TO_GROUP[name];
+    document.querySelectorAll('.tool[data-group-btn="true"]').forEach(b => {
+      const gname = b.dataset.tool.replace('select-group-', '');
+      b.classList.toggle('active', groupName === gname);
     });
     if (ui.recording) cancelRecording();
   }
 
   document.querySelectorAll('.tool').forEach(b => {
-    b.addEventListener('click', () => setTool(b.dataset.tool));
+    b.addEventListener('click', (ev) => {
+      // Group buttons open a flyout submenu instead of switching tool
+      if (b.dataset.groupBtn === 'true') {
+        ev.stopPropagation();
+        const groupName = b.dataset.tool.replace('select-group-', '');
+        toggleFlyout(groupName, b);
+        return;
+      }
+      // Normal tool: close any open flyout, then switch tool
+      hideAllFlyouts();
+      setTool(b.dataset.tool);
+    });
+  });
+
+  // ============================================================
+  // Group flyout submenu (right of toolbar)
+  // ============================================================
+  function hideAllFlyouts() {
+    document.querySelectorAll('.tool-flyout').forEach(f => f.classList.remove('show'));
+  }
+  function toggleFlyout(groupName, anchorBtn) {
+    const flyout = document.getElementById('flyout' + groupName.charAt(0).toUpperCase() + groupName.slice(1));
+    if (!flyout) return;
+    const isOpen = flyout.classList.contains('show');
+    hideAllFlyouts();
+    if (isOpen) return;  // tapping the same group button toggles it closed
+    // Position flyout to the right of the anchor button, vertically centered on it
+    const wrapRect = fieldWrap.getBoundingClientRect();
+    const btnRect = anchorBtn.getBoundingClientRect();
+    flyout.classList.add('show');
+    // We need to know the flyout's height to vertically center; force a layout read
+    const fh = flyout.offsetHeight;
+    const fw = flyout.offsetWidth;
+    let left = (btnRect.right - wrapRect.left) + 8;
+    let top  = (btnRect.top + btnRect.height / 2 - wrapRect.top) - fh / 2;
+    // Clamp inside the field wrapper
+    if (top < 8) top = 8;
+    if (top + fh > wrapRect.height - 8) top = Math.max(8, wrapRect.height - fh - 8);
+    if (left + fw > wrapRect.width - 8) left = Math.max(8, btnRect.left - wrapRect.left - fw - 8);
+    flyout.style.left = left + 'px';
+    flyout.style.top  = top  + 'px';
+  }
+  // Wire flyout's tool buttons to switch tool then close the flyout
+  document.querySelectorAll('.tool-flyout .tool').forEach(b => {
+    b.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      const tool = b.dataset.tool;
+      hideAllFlyouts();
+      setTool(tool);
+    });
+  });
+  // Click outside any flyout closes them
+  document.addEventListener('click', (ev) => {
+    // Don't close if click was inside a flyout or on a group button
+    if (ev.target.closest('.tool-flyout')) return;
+    if (ev.target.closest('.tool[data-group-btn="true"]')) return;
+    hideAllFlyouts();
+  });
+  // Block flyout clicks from reaching the canvas
+  document.querySelectorAll('.tool-flyout').forEach(f => {
+    ['mousedown', 'touchstart', 'pointerdown'].forEach(evt => {
+      f.addEventListener(evt, (ev) => ev.stopPropagation());
+    });
   });
 
   function showArrowBanner(show, type) {
@@ -2664,6 +3266,42 @@
   function showTextPalette(show) {
     const el = document.getElementById('textPalette');
     el.style.display = show ? 'flex' : 'none';
+  }
+
+  function showLinePalette(show) {
+    const el = document.getElementById('linePalette');
+    el.style.display = show ? 'flex' : 'none';
+  }
+  function updateLinePaletteText() {
+    const t = document.getElementById('linePaletteText');
+    if (!t) return;
+    if (ui.linePendingId == null) {
+      t.textContent = 'ライン: 1人目の選手をタップ';
+    } else {
+      t.textContent = 'ライン: 2人目の選手をタップして結ぶ';
+    }
+  }
+
+  function showDlinePalette(show, toolName) {
+    const el = document.getElementById('dlinePalette');
+    el.style.display = show ? 'flex' : 'none';
+    if (show) {
+      const label = document.getElementById('dlinePaletteLabel');
+      const labels = {
+        'dline-straight': '説明線',
+        'dline-curve': '説明曲線',
+        'dline-zigzag': '説明波線',
+      };
+      if (label) label.textContent = (labels[toolName] || '線') + '（先端=矢印）';
+      updateDlineColorHighlight();
+    }
+  }
+  function updateDlineColorHighlight() {
+    document.querySelectorAll('.dline-color-btn').forEach(b => {
+      const isCur = b.dataset.color === ui.dlineColor;
+      b.style.borderColor = isCur ? '#ffdd00' : 'transparent';
+      b.style.boxShadow = isCur ? '0 0 0 2px rgba(255, 221, 0, 0.4)' : 'none';
+    });
   }
 
   function nextPlayerNumber(playerType) {
@@ -3063,6 +3701,93 @@
       const xx = a.x1 + param * C;
       const yy = a.y1 + param * D;
       if (Math.hypot(x - xx, y - yy) < 12) return a;
+    }
+    return null;
+  }
+
+  // Hit test for player-connecting lines. Endpoints are looked up by id from
+  // scene().objects so they always reflect the current player positions.
+  function lineHitTest(x, y) {
+    const lines = scene().lines || [];
+    for (let i = lines.length - 1; i >= 0; i--) {
+      const line = lines[i];
+      const a = scene().objects.find(o => o.id === line.fromId);
+      const b = scene().objects.find(o => o.id === line.toId);
+      if (!a || !b) continue;
+      const A = x - a.x, B = y - a.y;
+      const C = b.x - a.x, D = b.y - a.y;
+      const dot = A*C + B*D;
+      const lenSq = C*C + D*D;
+      let param = lenSq ? dot / lenSq : -1;
+      param = Math.max(0, Math.min(1, param));
+      const xx = a.x + param * C;
+      const yy = a.y + param * D;
+      if (Math.hypot(x - xx, y - yy) < 10) return line;
+    }
+    return null;
+  }
+
+  // Hit test for drawing-lines (straight, curve, zigzag).
+  // For curve, samples the bezier; for zigzag, walks the polyline.
+  function dlineHitTest(x, y) {
+    const list = scene().drawingLines || [];
+    for (let i = list.length - 1; i >= 0; i--) {
+      const d = list[i];
+      if (d.type === 'straight') {
+        if (segDist(x, y, d.x1, d.y1, d.x2, d.y2) < 10) return d;
+      } else if (d.type === 'curve') {
+        // Sample 24 segments along the quadratic bezier
+        let prevX = d.x1, prevY = d.y1;
+        for (let s = 1; s <= 24; s++) {
+          const t = s / 24;
+          const it = 1 - t;
+          const px = it * it * d.x1 + 2 * it * t * d.cx + t * t * d.x2;
+          const py = it * it * d.y1 + 2 * it * t * d.cy + t * t * d.y2;
+          if (segDist(x, y, prevX, prevY, px, py) < 10) return d;
+          prevX = px; prevY = py;
+        }
+      } else if (d.type === 'zigzag') {
+        const amp = (typeof d.amplitude === 'number') ? d.amplitude : 12;
+        const pts = zigzagPath(d.x1, d.y1, d.x2, d.y2, amp);
+        for (let s = 1; s < pts.length; s++) {
+          if (segDist(x, y, pts[s-1].x, pts[s-1].y, pts[s].x, pts[s].y) < 10) return d;
+        }
+      }
+    }
+    return null;
+  }
+
+  // Distance from point (x,y) to segment (x1,y1)-(x2,y2)
+  function segDist(x, y, x1, y1, x2, y2) {
+    const A = x - x1, B = y - y1;
+    const C = x2 - x1, D = y2 - y1;
+    const dot = A*C + B*D;
+    const lenSq = C*C + D*D;
+    let param = lenSq ? dot / lenSq : -1;
+    param = Math.max(0, Math.min(1, param));
+    const xx = x1 + param * C;
+    const yy = y1 + param * D;
+    return Math.hypot(x - xx, y - yy);
+  }
+
+  // Hit test for handles of the currently selected drawing line.
+  // Returns { id, handle: 'start'|'end'|'mid' } or null.
+  function dlineHandleHit(x, y) {
+    if (ui.selectedDlineId == null) return null;
+    const d = (scene().drawingLines || []).find(o => o.id === ui.selectedDlineId);
+    if (!d) return null;
+    const within = (px, py) => Math.hypot(x - px, y - py) < 12;
+    if (within(d.x1, d.y1)) return { id: d.id, handle: 'start' };
+    if (within(d.x2, d.y2)) return { id: d.id, handle: 'end' };
+    if (d.type === 'curve' && within(d.cx, d.cy)) return { id: d.id, handle: 'mid' };
+    if (d.type === 'zigzag') {
+      const amp = (typeof d.amplitude === 'number') ? d.amplitude : 12;
+      const dx = d.x2 - d.x1, dy = d.y2 - d.y1;
+      const len = Math.hypot(dx, dy) || 1;
+      const px = -dy / len, py = dx / len;
+      const mx = (d.x1 + d.x2) / 2 + px * amp;
+      const my = (d.y1 + d.y2) / 2 + py * amp;
+      if (within(mx, my)) return { id: d.id, handle: 'mid' };
     }
     return null;
   }
@@ -3789,6 +4514,37 @@
     picker._targetId = null;
   }
 
+  // ============================================================
+  // Drawing-line picker (double-tap an existing line → color/delete)
+  // ============================================================
+  function showDlinePicker(d, x, y) {
+    const picker = document.getElementById('dlinePicker');
+    picker._targetId = d.id;
+    // Highlight current color
+    document.querySelectorAll('.dline-picker-color-btn').forEach(b => {
+      const isCur = b.dataset.color === d.color;
+      b.style.borderColor = isCur ? '#ffdd00' : 'transparent';
+      b.style.boxShadow   = isCur ? '0 0 0 2px rgba(255, 221, 0, 0.4)' : 'none';
+    });
+    const wrapRect = fieldWrap.getBoundingClientRect();
+    picker.style.display = 'flex';
+    const pw = picker.offsetWidth || 200;
+    const ph = picker.offsetHeight || 130;
+    let px = x + 14;
+    let py = y - ph / 2;
+    if (px + pw > wrapRect.width  - 8) px = x - pw - 14;
+    if (px < 8) px = 8;
+    if (py < 8) py = 8;
+    if (py + ph > wrapRect.height - 8) py = wrapRect.height - ph - 8;
+    picker.style.left = px + 'px';
+    picker.style.top  = py + 'px';
+  }
+  function hideDlinePicker() {
+    const picker = document.getElementById('dlinePicker');
+    picker.style.display = 'none';
+    picker._targetId = null;
+  }
+
   document.querySelectorAll('.cone-color-btn').forEach(b => {
     const handler = (ev) => {
       ev.stopPropagation();
@@ -3916,6 +4672,8 @@
     if (_areaPickerEl && _areaPickerEl.style.display !== 'none') hideAreaPicker();
     const _textPickerEl = document.getElementById('textPicker');
     if (_textPickerEl && _textPickerEl.style.display !== 'none') hideTextPicker();
+    const _dlinePickerEl = document.getElementById('dlinePicker');
+    if (_dlinePickerEl && _dlinePickerEl.style.display !== 'none') hideDlinePicker();
     // If the inline text editor is open, treat canvas tap as "commit and continue"
     const _textEditBoxEl = document.getElementById('textEditBox');
     if (_textEditBoxEl && _textEditBoxEl.style.display !== 'none') {
@@ -3984,6 +4742,70 @@
       // fieldWrap visual size matches canvas CSS size). x/y are already in CSS pixels
       // relative to the canvas, so they equal the editor offset within fieldWrap.
       showTextEditor(x, y, { mode: 'create' });
+      return;
+    }
+
+    if (ui.tool === 'dline-straight' || ui.tool === 'dline-curve' || ui.tool === 'dline-zigzag') {
+      // Drag to define a new drawing line. Initial preview shows during drag.
+      const t = ui.tool.replace('dline-', '');
+      ui.dlineDrawing = {
+        type: t,
+        x1: x, y1: y, x2: x, y2: y,
+        cx: x, cy: y,            // for curves; updated to bow midpoint on first move
+        amplitude: 12,           // for zigzag
+        color: ui.dlineColor,
+      };
+      return;
+    }
+
+    if (ui.tool === 'line') {
+      // Line tool: tap player A → tap player B → connect with a line.
+      const hit = hitTest(x, y);
+      // Only players (and coach) can be line endpoints
+      const isPlayerLike = hit && (hit.type.startsWith('player') || hit.type === 'coach');
+      if (!isPlayerLike) {
+        // Tap on empty area or non-player: cancel any pending first selection
+        if (ui.linePendingId != null) {
+          ui.linePendingId = null;
+          updateLinePaletteText();
+          showHint('1人目の選択を取り消しました', 1500);
+        }
+        return;
+      }
+      if (ui.linePendingId == null) {
+        // First selection
+        ui.linePendingId = hit.id;
+        ui.selectedId = hit.id;  // visual feedback
+        updateLinePaletteText();
+        redraw();
+        return;
+      }
+      // Second selection — create a line if it's a different player
+      if (hit.id === ui.linePendingId) {
+        showHint('別の選手をタップしてください', 1500);
+        return;
+      }
+      // Avoid duplicate lines (same pair of players, regardless of order)
+      const existing = (scene().lines || []).find(l =>
+        (l.fromId === ui.linePendingId && l.toId === hit.id) ||
+        (l.fromId === hit.id && l.toId === ui.linePendingId)
+      );
+      if (existing) {
+        showHint('この2人はすでに線で結ばれています', 1500);
+        ui.linePendingId = null;
+        updateLinePaletteText();
+        return;
+      }
+      saveHistory();
+      if (!scene().lines) scene().lines = [];
+      scene().lines.push({
+        id: Date.now() + Math.random(),
+        fromId: ui.linePendingId,
+        toId: hit.id,
+      });
+      ui.linePendingId = null;
+      updateLinePaletteText();
+      redraw();
       return;
     }
 
@@ -4112,20 +4934,70 @@
         if (arr) {
           showOrderPicker(arr, x, y);
         } else {
-          // Check if a pen drawing was tapped — double-tap to delete
-          const drawing = drawingHitTest(x, y);
-          if (drawing) {
+          // First, check if we're hitting a handle of the currently-selected drawing line
+          const handleHit = dlineHandleHit(x, y);
+          if (handleHit) {
+            saveHistory();
+            ui.dlineDragHandle = { id: handleHit.id, handle: handleHit.handle };
+            return; // start dragging the handle
+          }
+          // Then, check if we're hitting a drawing line itself
+          const dl = dlineHitTest(x, y);
+          if (dl) {
             const now = Date.now();
-            if (now - lastTap < 350 && ui._lastTapId === drawing.id) {
-              deletePenDrawing(drawing.id);
+            if (now - lastTap < 350 && ui._lastTapId === dl.id) {
+              // Double-tap: open picker (color change / delete)
+              showDlinePicker(dl, x, y);
+            } else if (ui.selectedDlineId === dl.id) {
+              // Already selected → start moving the whole line
+              saveHistory();
+              ui.dlineMoving = { id: dl.id, lastX: x, lastY: y };
+              showHint('線をドラッグ移動中（離して確定、ダブルタップで色変更）', 1500);
             } else {
-              showHint('ペン描画はダブルタップで削除できます');
+              // First tap on this line → select it (show handles)
+              ui.selectedDlineId = dl.id;
+              redraw();
+              showHint('ドラッグで線を移動 / ハンドルで編集 / ダブルタップで色変更');
             }
             lastTap = now;
-            ui._lastTapId = drawing.id;
+            ui._lastTapId = dl.id;
+            return;
+          }
+          // Otherwise: clear drawing-line selection
+          if (ui.selectedDlineId != null) {
+            ui.selectedDlineId = null;
+            redraw();
+          }
+          // Check if a player-connecting line was tapped — double-tap to delete
+          const line = lineHitTest(x, y);
+          if (line) {
+            const now = Date.now();
+            if (now - lastTap < 350 && ui._lastTapId === line.id) {
+              saveHistory();
+              scene().lines = (scene().lines || []).filter(l => l.id !== line.id);
+              redraw();
+              showHint('ラインを削除しました', 1500);
+            } else {
+              showHint('ラインはダブルタップで削除できます');
+            }
+            lastTap = now;
+            ui._lastTapId = line.id;
           } else {
-            ui.selectedId = null;
-            hideOrderPicker();
+            // Check if a pen drawing was tapped — double-tap to delete
+            const drawing = drawingHitTest(x, y);
+            if (drawing) {
+              const now = Date.now();
+              if (now - lastTap < 350 && ui._lastTapId === drawing.id) {
+                deletePenDrawing(drawing.id);
+              } else {
+                showHint('ペン描画はダブルタップで削除できます');
+              }
+              lastTap = now;
+              ui._lastTapId = drawing.id;
+            } else {
+              ui.selectedId = null;
+              hideOrderPicker();
+            }
           }
         }
       }
@@ -4154,6 +5026,85 @@
       ui.arrowDrawing.x2 = x;
       ui.arrowDrawing.y2 = y;
       drawPaths();
+      return;
+    }
+
+    if (ui.dlineDrawing) {
+      e.preventDefault();
+      ui.dlineDrawing.x2 = x;
+      ui.dlineDrawing.y2 = y;
+      // For curve: control point sits at the midpoint, pulled perpendicular
+      // by ~30% of the line length (gives a natural bow)
+      if (ui.dlineDrawing.type === 'curve') {
+        const dx = x - ui.dlineDrawing.x1, dy = y - ui.dlineDrawing.y1;
+        const len = Math.hypot(dx, dy) || 1;
+        const px = -dy / len, py = dx / len;
+        const bow = len * 0.3;
+        ui.dlineDrawing.cx = (ui.dlineDrawing.x1 + x) / 2 + px * bow;
+        ui.dlineDrawing.cy = (ui.dlineDrawing.y1 + y) / 2 + py * bow;
+      }
+      redraw();
+      return;
+    }
+
+    if (ui.dlineDragHandle) {
+      e.preventDefault();
+      const list = scene().drawingLines || [];
+      const d = list.find(o => o.id === ui.dlineDragHandle.id);
+      if (!d) { ui.dlineDragHandle = null; return; }
+      const h = ui.dlineDragHandle.handle;
+      if (h === 'start') {
+        d.x1 = clamp(x, 4, W - 4);
+        d.y1 = clamp(y, 4, H - 4);
+      } else if (h === 'end') {
+        d.x2 = clamp(x, 4, W - 4);
+        d.y2 = clamp(y, 4, H - 4);
+      } else if (h === 'mid') {
+        if (d.type === 'curve') {
+          d.cx = clamp(x, 4, W - 4);
+          d.cy = clamp(y, 4, H - 4);
+        } else if (d.type === 'zigzag') {
+          // Project the cursor offset onto the perpendicular of the main axis,
+          // and use that signed magnitude as new amplitude (clamped).
+          const dx = d.x2 - d.x1, dy = d.y2 - d.y1;
+          const len = Math.hypot(dx, dy) || 1;
+          const px = -dy / len, py = dx / len;
+          const midX = (d.x1 + d.x2) / 2;
+          const midY = (d.y1 + d.y2) / 2;
+          const offX = x - midX, offY = y - midY;
+          let amp = offX * px + offY * py;
+          // Clamp amplitude to a sensible range
+          const maxAmp = Math.max(20, len * 0.4);
+          amp = Math.max(-maxAmp, Math.min(maxAmp, amp));
+          d.amplitude = amp;
+        }
+      }
+      redraw();
+      return;
+    }
+
+    if (ui.dlineMoving) {
+      e.preventDefault();
+      const list = scene().drawingLines || [];
+      const d = list.find(o => o.id === ui.dlineMoving.id);
+      if (!d) { ui.dlineMoving = null; return; }
+      const dx = x - ui.dlineMoving.lastX;
+      const dy = y - ui.dlineMoving.lastY;
+      d.x1 += dx; d.y1 += dy;
+      d.x2 += dx; d.y2 += dy;
+      if (d.type === 'curve') {
+        d.cx += dx; d.cy += dy;
+      }
+      // Clamp endpoints to within the field
+      d.x1 = clamp(d.x1, 4, W - 4); d.y1 = clamp(d.y1, 4, H - 4);
+      d.x2 = clamp(d.x2, 4, W - 4); d.y2 = clamp(d.y2, 4, H - 4);
+      if (d.type === 'curve') {
+        d.cx = clamp(d.cx, 4, W - 4);
+        d.cy = clamp(d.cy, 4, H - 4);
+      }
+      ui.dlineMoving.lastX = x;
+      ui.dlineMoving.lastY = y;
+      redraw();
       return;
     }
 
@@ -4285,6 +5236,48 @@
       createArrow(a.type, a.x1, a.y1, a.x2, a.y2);
       ui.arrowDrawing = null;
       drawPaths();
+      return;
+    }
+    if (ui.dlineDrawing) {
+      const d = ui.dlineDrawing;
+      ui.dlineDrawing = null;
+      // Reject zero-length placements (just a tap)
+      const len = Math.hypot(d.x2 - d.x1, d.y2 - d.y1);
+      if (len < 8) {
+        redraw();
+        return;
+      }
+      saveHistory();
+      if (!scene().drawingLines) scene().drawingLines = [];
+      const newLine = {
+        id: Date.now() + Math.random(),
+        type: d.type,
+        x1: d.x1, y1: d.y1, x2: d.x2, y2: d.y2,
+        color: d.color,
+      };
+      if (d.type === 'curve') {
+        newLine.cx = d.cx;
+        newLine.cy = d.cy;
+      } else if (d.type === 'zigzag') {
+        newLine.amplitude = d.amplitude;
+      }
+      scene().drawingLines.push(newLine);
+      ui.selectedDlineId = newLine.id;
+      // Auto-return to select tool so user can immediately edit handles
+      setTool('select');
+      redraw();
+      return;
+    }
+    if (ui.dlineDragHandle) {
+      // Handle drag finished — history was saved on drag start
+      ui.dlineDragHandle = null;
+      redraw();
+      return;
+    }
+    if (ui.dlineMoving) {
+      // Whole-line drag finished — history was saved on drag start
+      ui.dlineMoving = null;
+      redraw();
       return;
     }
     if (ui.rotating) {
@@ -4631,6 +5624,71 @@
   });
 
   // ============================================================
+  // Line tool: top banner (just a "完了" button to exit line mode)
+  // ============================================================
+  document.getElementById('lineCancel').addEventListener('click', () => setTool('select'));
+  ['mousedown', 'touchstart', 'pointerdown', 'click'].forEach(evtName => {
+    document.getElementById('linePalette').addEventListener(evtName, (ev) => ev.stopPropagation());
+  });
+
+  // ============================================================
+  // Drawing-line tool: color picker palette
+  // ============================================================
+  document.querySelectorAll('.dline-color-btn').forEach(b => {
+    const handler = (ev) => {
+      ev.stopPropagation();
+      ev.preventDefault();
+      ui.dlineColor = b.dataset.color;
+      updateDlineColorHighlight();
+    };
+    b.addEventListener('click', handler);
+    b.addEventListener('touchstart', handler, { passive: false });
+  });
+  document.getElementById('dlineCancel').addEventListener('click', () => setTool('select'));
+  ['mousedown', 'touchstart', 'pointerdown', 'click'].forEach(evtName => {
+    document.getElementById('dlinePalette').addEventListener(evtName, (ev) => ev.stopPropagation());
+  });
+
+  // Drawing-line picker (color / delete) — opened on double-tap of an existing line
+  (function() {
+    const picker = document.getElementById('dlinePicker');
+    document.querySelectorAll('.dline-picker-color-btn').forEach(b => {
+      const handler = (ev) => {
+        ev.stopPropagation();
+        ev.preventDefault();
+        const id = picker._targetId;
+        const d = (scene().drawingLines || []).find(o => o.id === id);
+        if (!d) return;
+        saveHistory();
+        d.color = b.dataset.color;
+        // Update highlight
+        document.querySelectorAll('.dline-picker-color-btn').forEach(el => {
+          const isCur = el.dataset.color === b.dataset.color;
+          el.style.borderColor = isCur ? '#ffdd00' : 'transparent';
+          el.style.boxShadow   = isCur ? '0 0 0 2px rgba(255, 221, 0, 0.4)' : 'none';
+        });
+        redraw();
+      };
+      b.addEventListener('click', handler);
+      b.addEventListener('touchstart', handler, { passive: false });
+    });
+    document.getElementById('dlinePickerDelete').addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      const id = picker._targetId;
+      hideDlinePicker();
+      if (id == null) return;
+      saveHistory();
+      scene().drawingLines = (scene().drawingLines || []).filter(o => o.id !== id);
+      ui.selectedDlineId = null;
+      redraw();
+      showHint('線を削除しました', 1500);
+    });
+    ['mousedown','touchstart','pointerdown','click'].forEach(evt => {
+      picker.addEventListener(evt, (e) => e.stopPropagation());
+    });
+  })();
+
+  // ============================================================
   // Text editor (inline) — confirm / cancel / Esc / Ctrl+Enter / blur
   // ============================================================
   (function() {
@@ -4908,6 +5966,8 @@
       objects: [],
       arrows: [],
       drawings: [],
+      lines: [],
+      drawingLines: [],
       duration: 0,
     });
     project.activeIdx = project.scenes.length - 1;
@@ -4917,12 +5977,27 @@
   function duplicateScene() {
     saveHistory();
     const src = scene();
+    // Build mapping from old object ids to new object ids so lines can be remapped
+    const idMap = {};
+    const copiedObjects = JSON.parse(JSON.stringify(src.objects)).map(o => {
+      const newId = Date.now() + Math.random();
+      idMap[o.id] = newId;
+      return { ...o, id: newId };
+    });
+    const copiedLines = JSON.parse(JSON.stringify(src.lines || [])).map(l => ({
+      ...l,
+      id: Date.now() + Math.random(),
+      fromId: idMap[l.fromId] != null ? idMap[l.fromId] : l.fromId,
+      toId:   idMap[l.toId]   != null ? idMap[l.toId]   : l.toId,
+    }));
     const copy = {
       name: src.name + ' (コピー)',
       duration: src.duration,
-      objects: JSON.parse(JSON.stringify(src.objects)).map(o => ({ ...o, id: Date.now() + Math.random() })),
+      objects: copiedObjects,
       arrows: JSON.parse(JSON.stringify(src.arrows)).map(a => ({ ...a, id: Date.now() + Math.random() })),
       drawings: JSON.parse(JSON.stringify(src.drawings || [])).map(d => ({ ...d, id: Date.now() + Math.random() })),
+      lines: copiedLines,
+      drawingLines: JSON.parse(JSON.stringify(src.drawingLines || [])).map(d => ({ ...d, id: Date.now() + Math.random() })),
     };
     project.scenes.splice(project.activeIdx + 1, 0, copy);
     project.activeIdx++;
@@ -4947,6 +6022,8 @@
     scene().objects = [];
     scene().arrows = [];
     scene().drawings = [];
+    scene().lines = [];
+    scene().drawingLines = [];
     scene().duration = 0;
     ui.selectedId = null;
     redraw();
@@ -4985,6 +6062,10 @@
     scene().arrows = scene().arrows.filter(a => a.targetId !== id);
     // Renumber arrows
     scene().arrows.forEach((a, i) => a.order = i);
+    // Remove player-connecting lines that referenced this object as an endpoint
+    if (scene().lines) {
+      scene().lines = scene().lines.filter(l => l.fromId !== id && l.toId !== id);
+    }
     rebuildAnimation();
     ui.selectedId = null;
     redraw();
