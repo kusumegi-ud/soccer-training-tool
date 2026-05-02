@@ -871,6 +871,31 @@
           ">なし</button>
         </div>
       </div>
+      <div style="padding: 8px 0; font-size: 13px;">
+        <div style="margin-bottom: 6px; color: #c8d0c0;">ピッチの見た目</div>
+        <div style="display: flex; gap: 4px;">
+          <button class="pitch-view-btn" data-view="flat" style="
+            flex: 1; padding: 8px 4px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            background: rgba(255,255,255,0.06);
+            color: #f5f5f0;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+          ">サッカー</button>
+          <button class="pitch-view-btn" data-view="futsal" style="
+            flex: 1; padding: 8px 4px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            background: rgba(255,255,255,0.06);
+            color: #f5f5f0;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+          ">フットサル</button>
+        </div>
+      </div>
       <label style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; cursor: pointer; font-size: 13px;">
         <span>ストライプ模様を表示</span>
         <input type="checkbox" id="settingShowStripes" checked style="
@@ -2136,6 +2161,7 @@
   const settings = {
     lineMode: 'full',
     lineOrientation: 'auto',  // 'auto' | 'portrait' | 'landscape'
+    pitchView: 'flat',        // 'flat' (soccer) | 'futsal'
     showStripes: true,
     playerSize: 17,        // numeric radius (8-30)
     textSize: 22,          // default font size (px) for new texts (10-48)
@@ -2278,6 +2304,19 @@
   function drawBackground() {
     bgCtx.clearRect(0, 0, W, H);
 
+    // For 'futsal' pitch view, draw rounded penalty arcs and futsal-specific
+    // markings (penalty marks, corner arcs, sub zones) instead of the standard
+    // soccer rectangles.
+    const isFutsal = (settings.pitchView === 'futsal');
+
+    // Visual scaling factor for in-pitch markings (penalty area, goal area,
+    // center circle, etc). The pitch outline itself is drawn at full scale,
+    // but interior markings are shrunk to ~90% of regulation so the figure
+    // matches the look of a typical tactics-board / training diagram, where
+    // markings are slightly smaller than spec to leave more room for player
+    // icons and arrows.
+    const MARK_SCALE = 0.9;
+
     // Draw realistic grass texture (full canvas)
     if (!grassCanvas || grassW !== W || grassH !== H) {
       grassCanvas = generateGrassTexture(W, H);
@@ -2291,7 +2330,9 @@
       bgCtx.fillRect(0, 0, W, H);
     }
 
-    if (settings.lineMode === 'none') return;
+    if (settings.lineMode === 'none') {
+      return;
+    }
 
     // ===== Compute pitch rectangle with proper aspect ratio =====
     // Real soccer pitch is roughly 105m × 68m (ratio 1.54:1, length:width)
@@ -2316,11 +2357,24 @@
 
     let pitchAspect;  // width / height
     let halfPortrait = false;  // true = half-court drawn vertically
-    if (settings.lineMode === 'half') {
+    if (isFutsal) {
+      // Futsal pitch: 40m long × 20m wide (ratio 2:1)
+      // Halfcourt: 20m × 20m (ratio 1:1)
+      if (settings.lineMode === 'half') {
+        pitchAspect = 1;  // square half-court
+        halfPortrait = isPortrait;
+      } else {
+        // Full futsal pitch: long-side 40m, short-side 20m
+        pitchAspect = isPortrait ? 20 / 40 : 40 / 20;
+      }
+    } else if (settings.lineMode === 'half') {
       if (isPortrait) {
-        // Portrait: rotate the half-court so it fills the screen vertically.
-        // Penalty area / goal at top, halfway line at bottom.
-        pitchAspect = 68 / 52.5 < 1 ? 68 / 52.5 : 52.5 / 68;  // 52.5/68 ≈ 0.77 (taller)
+        // Portrait orientation: rotate the half-court so the goal line is at
+        // the TOP of the screen and the halfway line is at the BOTTOM.
+        // Screen X-axis represents the pitch's 68m WIDTH;
+        // screen Y-axis represents the half-court's 52.5m DEPTH.
+        // → pitchAspect = pW/pH = 68/52.5 ≈ 1.30 (wider-than-tall).
+        pitchAspect = 68 / 52.5;
         halfPortrait = true;
       } else {
         pitchAspect = 68 / 52.5;  // landscape (wider-than-tall)
@@ -2347,31 +2401,59 @@
     bgCtx.strokeStyle = 'rgba(255,255,255,0.7)';
     bgCtx.lineWidth = 2;
 
+    if (isFutsal) {
+      // Futsal courts have completely different geometry (D-shaped penalty
+      // areas, goal rectangles, multiple penalty marks, corner arcs, sub
+      // zones). Render via the dedicated drawer and skip the soccer code.
+      // For square half-courts (20×20) pW===pH, so we cannot infer orientation
+      // from pixel dimensions — fall back to halfPortrait / isPortrait flags.
+      let isLandscapePitch;
+      if (settings.lineMode === 'half') {
+        isLandscapePitch = !halfPortrait;
+      } else {
+        isLandscapePitch = (pW > pH);
+      }
+      drawFutsalPitch(pX, pY, pW, pH, settings.lineMode === 'half', isLandscapePitch, halfPortrait);
+      return;
+    }
+
     if (settings.lineMode === 'half') {
       if (halfPortrait) {
         // ===== HALF COURT (portrait/vertical) =====
-        // Pitch is now 52.5m tall × 68m wide → ratio 52.5/68 = 0.77 (taller-than-wide).
-        // Wait — actually we want pitch width (68m) on the screen X-axis, so the
-        // long-side fitting depends on the screen.
-        // Here we use pitchAspect = 52.5/68 (W/H), meaning pH > pW.
-        // Penalty area at top (goal end), halfway line at bottom.
+        // pitchAspect = 68/52.5 = 1.30 (wider-than-tall).
+        // Screen X-axis represents the pitch's 68m WIDTH;
+        // screen Y-axis represents the half-court's 52.5m DEPTH.
+        // Goal line at TOP of the screen, halfway line at BOTTOM.
         bgCtx.strokeRect(pX, pY, pW, pH);
 
-        // Center circle (top half visible at bottom edge — same as landscape half)
-        const cr = pW * 0.135;  // 9.15m / 68m × pitch_width
+        // Center circle: half visible at the bottom edge (the halfway line).
+        // Radius 9.15m, scaled against pitch width pW = 68m axis.
+        const cr = pW * 0.135 * MARK_SCALE;
         bgCtx.beginPath();
         bgCtx.arc(pCX, pY + pH, cr, Math.PI, 2 * Math.PI);
         bgCtx.stroke();
 
-        // Penalty area: 40.32m wide × 16.5m deep
-        const pbW = pW * (40.32 / 68);
-        const pbH = pH * (16.5 / 52.5);
-        bgCtx.strokeRect(pCX - pbW/2, pY, pbW, pbH);
+        if (isFutsal) {
+          // (Futsal portrait half-court is handled by drawFutsalPitch above)
+          const par = pH * (16.5 / 52.5) * MARK_SCALE;
+          bgCtx.beginPath();
+          bgCtx.arc(pCX, pY, par, 0, Math.PI);
+          bgCtx.stroke();
+          const gar = par * 0.45;
+          bgCtx.beginPath();
+          bgCtx.arc(pCX, pY, gar, 0, Math.PI);
+          bgCtx.stroke();
+        } else {
+          // Penalty area: 40.32m wide × 16.5m deep
+          const pbW = pW * (40.32 / 68) * MARK_SCALE;
+          const pbH = pH * (16.5 / 52.5) * MARK_SCALE;
+          bgCtx.strokeRect(pCX - pbW/2, pY, pbW, pbH);
 
-        // Goal area: 18.32m × 5.5m
-        const gaW = pW * (18.32 / 68);
-        const gaH = pH * (5.5 / 52.5);
-        bgCtx.strokeRect(pCX - gaW/2, pY, gaW, gaH);
+          // Goal area: 18.32m × 5.5m
+          const gaW = pW * (18.32 / 68) * MARK_SCALE;
+          const gaH = pH * (5.5 / 52.5) * MARK_SCALE;
+          bgCtx.strokeRect(pCX - gaW/2, pY, gaW, gaH);
+        }
       } else {
         // ===== HALF COURT (landscape) =====
         // pitchAspect = 68/52.5 ≈ 1.30 → pW > pH (wider-than-tall)
@@ -2381,20 +2463,33 @@
 
         // Center circle: half visible at the right edge (the halfway line)
         // Radius 9.15m → use pH (which represents 68m) for the scaling
-        const cr = pH * 0.135;
+        const cr = pH * 0.135 * MARK_SCALE;
         bgCtx.beginPath();
         bgCtx.arc(pX + pW, pCY, cr, Math.PI / 2, (3 * Math.PI) / 2);
         bgCtx.stroke();
 
-        // Penalty area: 16.5m deep (along pW axis) × 40.32m wide (along pH axis)
-        const pbW = pW * (16.5 / 52.5);
-        const pbH = pH * (40.32 / 68);
-        bgCtx.strokeRect(pX, pCY - pbH/2, pbW, pbH);
+        if (isFutsal) {
+          // Half-circle penalty arc on the left goal line, bulging right
+          const par = pW * (16.5 / 52.5) * MARK_SCALE;
+          bgCtx.beginPath();
+          bgCtx.arc(pX, pCY, par, -Math.PI / 2, Math.PI / 2);
+          bgCtx.stroke();
+          // Smaller goal arc
+          const gar = par * 0.45;
+          bgCtx.beginPath();
+          bgCtx.arc(pX, pCY, gar, -Math.PI / 2, Math.PI / 2);
+          bgCtx.stroke();
+        } else {
+          // Penalty area: 16.5m deep (along pW axis) × 40.32m wide (along pH axis)
+          const pbW = pW * (16.5 / 52.5) * MARK_SCALE;
+          const pbH = pH * (40.32 / 68) * MARK_SCALE;
+          bgCtx.strokeRect(pX, pCY - pbH/2, pbW, pbH);
 
-        // Goal area: 5.5m × 18.32m
-        const gaW = pW * (5.5 / 52.5);
-        const gaH = pH * (18.32 / 68);
-        bgCtx.strokeRect(pX, pCY - gaH/2, gaW, gaH);
+          // Goal area: 5.5m × 18.32m
+          const gaW = pW * (5.5 / 52.5) * MARK_SCALE;
+          const gaH = pH * (18.32 / 68) * MARK_SCALE;
+          bgCtx.strokeRect(pX, pCY - gaH/2, gaW, gaH);
+        }
       }
     } else {
       // ===== FULL COURT =====
@@ -2414,22 +2509,44 @@
         bgCtx.stroke();
 
         // Center circle (radius scales with pitch height since 68m is now pH)
-        const cr = pH * 0.135;  // 9.15m / 68m
+        const cr = pH * 0.135 * MARK_SCALE;  // 9.15m / 68m
         bgCtx.beginPath();
         bgCtx.arc(pCX, pCY, cr, 0, Math.PI * 2);
         bgCtx.stroke();
 
-        // Penalty areas on left/right ends (16.5m deep × 40.32m wide)
-        const pbW = pW * (16.5 / 105);  // depth along the long axis
-        const pbH = pH * (40.32 / 68);  // width along the short axis
-        bgCtx.strokeRect(pX, pCY - pbH/2, pbW, pbH);
-        bgCtx.strokeRect(pX + pW - pbW, pCY - pbH/2, pbW, pbH);
+        if (isFutsal) {
+          // Futsal-style: half-circle penalty arcs on each goal line
+          // Penalty arc radius ≈ 16.5m mapped to pitch width
+          const par = pW * (16.5 / 105) * MARK_SCALE;
+          // Left side: arc bulges INTO the pitch (rightward)
+          bgCtx.beginPath();
+          bgCtx.arc(pX, pCY, par, -Math.PI / 2, Math.PI / 2);
+          bgCtx.stroke();
+          // Right side
+          bgCtx.beginPath();
+          bgCtx.arc(pX + pW, pCY, par, Math.PI / 2, (3 * Math.PI) / 2);
+          bgCtx.stroke();
+          // Smaller goal arc (about half the penalty radius)
+          const gar = par * 0.45;
+          bgCtx.beginPath();
+          bgCtx.arc(pX, pCY, gar, -Math.PI / 2, Math.PI / 2);
+          bgCtx.stroke();
+          bgCtx.beginPath();
+          bgCtx.arc(pX + pW, pCY, gar, Math.PI / 2, (3 * Math.PI) / 2);
+          bgCtx.stroke();
+        } else {
+          // Penalty areas on left/right ends (16.5m deep × 40.32m wide)
+          const pbW = pW * (16.5 / 105) * MARK_SCALE;  // depth along the long axis
+          const pbH = pH * (40.32 / 68) * MARK_SCALE;  // width along the short axis
+          bgCtx.strokeRect(pX, pCY - pbH/2, pbW, pbH);
+          bgCtx.strokeRect(pX + pW - pbW, pCY - pbH/2, pbW, pbH);
 
-        // Goal areas (5.5m deep × 18.32m wide)
-        const gaW = pW * (5.5 / 105);
-        const gaH = pH * (18.32 / 68);
-        bgCtx.strokeRect(pX, pCY - gaH/2, gaW, gaH);
-        bgCtx.strokeRect(pX + pW - gaW, pCY - gaH/2, gaW, gaH);
+          // Goal areas (5.5m deep × 18.32m wide)
+          const gaW = pW * (5.5 / 105) * MARK_SCALE;
+          const gaH = pH * (18.32 / 68) * MARK_SCALE;
+          bgCtx.strokeRect(pX, pCY - gaH/2, gaW, gaH);
+          bgCtx.strokeRect(pX + pW - gaW, pCY - gaH/2, gaW, gaH);
+        }
       } else {
         // ===== Portrait full pitch (original): long-side is vertical =====
         // Halfway line (horizontal, through center)
@@ -2439,24 +2556,317 @@
         bgCtx.stroke();
 
         // Center circle (radius 9.15m × pitch_width / 68)
-        const cr = pW * 0.135;  // 9.15m / 68m
+        const cr = pW * 0.135 * MARK_SCALE;  // 9.15m / 68m
         bgCtx.beginPath();
         bgCtx.arc(pCX, pCY, cr, 0, Math.PI * 2);
         bgCtx.stroke();
 
-        // Penalty areas at both ends
-        const pbW = pW * (40.32 / 68);
-        const pbH = pH * (16.5 / 105);
-        bgCtx.strokeRect(pCX - pbW/2, pY, pbW, pbH);
-        bgCtx.strokeRect(pCX - pbW/2, pY + pH - pbH, pbW, pbH);
+        if (isFutsal) {
+          // Futsal-style: half-circle penalty arcs at top and bottom goal lines
+          const par = pH * (16.5 / 105) * MARK_SCALE;
+          // Top: arc bulges DOWNWARD into the pitch
+          bgCtx.beginPath();
+          bgCtx.arc(pCX, pY, par, 0, Math.PI);
+          bgCtx.stroke();
+          // Bottom: arc bulges UPWARD
+          bgCtx.beginPath();
+          bgCtx.arc(pCX, pY + pH, par, Math.PI, 2 * Math.PI);
+          bgCtx.stroke();
+          // Smaller goal arcs
+          const gar = par * 0.45;
+          bgCtx.beginPath();
+          bgCtx.arc(pCX, pY, gar, 0, Math.PI);
+          bgCtx.stroke();
+          bgCtx.beginPath();
+          bgCtx.arc(pCX, pY + pH, gar, Math.PI, 2 * Math.PI);
+          bgCtx.stroke();
+        } else {
+          // Penalty areas at both ends
+          const pbW = pW * (40.32 / 68) * MARK_SCALE;
+          const pbH = pH * (16.5 / 105) * MARK_SCALE;
+          bgCtx.strokeRect(pCX - pbW/2, pY, pbW, pbH);
+          bgCtx.strokeRect(pCX - pbW/2, pY + pH - pbH, pbW, pbH);
 
-        // Goal areas
-        const gaW = pW * (18.32 / 68);
-        const gaH = pH * (5.5 / 105);
-        bgCtx.strokeRect(pCX - gaW/2, pY, gaW, gaH);
-        bgCtx.strokeRect(pCX - gaW/2, pY + pH - gaH, gaW, gaH);
+          // Goal areas
+          const gaW = pW * (18.32 / 68) * MARK_SCALE;
+          const gaH = pH * (5.5 / 105) * MARK_SCALE;
+          bgCtx.strokeRect(pCX - gaW/2, pY, gaW, gaH);
+          bgCtx.strokeRect(pCX - gaW/2, pY + pH - gaH, gaW, gaH);
+        }
       }
     }
+  }
+
+  // ============================================================
+  // Futsal pitch renderer (FIFA Futsal Laws of the Game compliant)
+  // Pitch: 40m × 20m. Penalty area is a "D" shape: two quarter-circle arcs
+  // (radius 6m) struck from the inside of each goalpost, joined by a 3.16m
+  // line parallel to the goal line. Plus: goals (3m wide), penalty mark
+  // (6m), second penalty mark (10m), corner arcs (25cm), substitution zones
+  // (3m wide on each side of the halfway line).
+  // ============================================================
+  function drawFutsalPitch(pX, pY, pW, pH, isHalf, isLandscape, halfPortrait) {
+    // Markings are drawn at ~90% of regulation size to match the look of a
+    // typical training/tactics diagram (consistent with the soccer pitch).
+    // Note: this scale is applied to MARK SIZES only (radii, widths) — not
+    // to positions like penalty marks, which stay at correct meter offsets
+    // from the goal line.
+    const MARK_SCALE = 0.9;
+    // Real-world dimensions, mapped to the pitch we drew.
+    // For full court: long side (40m) maps to whichever screen axis is longer.
+    // For half court: long side (20m) maps similarly.
+    const longRealM = isHalf ? 20 : 40;   // half-court depth = 20m, full = 40m
+    const shortRealM = 20;                // pitch width is always 20m
+    let longPx, shortPx;
+    if (isLandscape) {
+      longPx = pW;  shortPx = pH;
+    } else {
+      longPx = pH;  shortPx = pW;
+    }
+    // Pixels per meter (uniform — pitch was drawn with correct aspect ratio)
+    const ppmLong  = longPx / longRealM;
+    const ppmShort = shortPx / shortRealM;
+    // For mark positions etc., use the long-axis ppm.
+    // For widths (goal width, sub zone), use the short-axis ppm.
+    const m = (rl, rs) => ({ l: rl * ppmLong, s: rs * ppmShort });
+
+    bgCtx.save();
+    bgCtx.strokeStyle = 'rgba(255,255,255,0.7)';
+    bgCtx.lineWidth = 2;
+
+    const pCX = pX + pW / 2;
+    const pCY = pY + pH / 2;
+
+    // Helper: dot/spot
+    const dot = (x, y, r) => {
+      bgCtx.beginPath();
+      bgCtx.arc(x, y, r, 0, Math.PI * 2);
+      bgCtx.fillStyle = 'rgba(255,255,255,0.85)';
+      bgCtx.fill();
+    };
+
+    // 1) Outer rectangle
+    bgCtx.strokeRect(pX, pY, pW, pH);
+
+    // 2) Center circle and spot (only for full court)
+    if (!isHalf) {
+      const centerCircleR = 3 * Math.min(ppmLong, ppmShort) * MARK_SCALE;  // 3m radius
+      bgCtx.beginPath();
+      bgCtx.arc(pCX, pCY, centerCircleR, 0, Math.PI * 2);
+      bgCtx.stroke();
+      dot(pCX, pCY, 3);
+    } else {
+      // Half-court: halfway line is on one edge → draw half of the center circle.
+      const cr = 3 * Math.min(ppmLong, ppmShort) * MARK_SCALE;
+      bgCtx.beginPath();
+      if (isLandscape) {
+        // Halfway line on the right edge — draw left half of circle there.
+        bgCtx.arc(pX + pW, pCY, cr, Math.PI / 2, (3 * Math.PI) / 2);
+      } else {
+        // Halfway line on the bottom edge.
+        bgCtx.arc(pCX, pY + pH, cr, Math.PI, 2 * Math.PI);
+      }
+      bgCtx.stroke();
+    }
+
+    // 3) Halfway line (full court only)
+    if (!isHalf) {
+      bgCtx.beginPath();
+      if (isLandscape) {
+        bgCtx.moveTo(pCX, pY);
+        bgCtx.lineTo(pCX, pY + pH);
+      } else {
+        bgCtx.moveTo(pX, pCY);
+        bgCtx.lineTo(pX + pW, pCY);
+      }
+      bgCtx.stroke();
+    }
+
+    // 4) Penalty area + goal + marks + corner arcs at each goal end
+    // For full court: both ends. For half court: only the goal end.
+    // Goals/markings are positioned along the long axis from the goal line.
+    const drawGoalEnd = (whichEnd) => {
+      // whichEnd: 'left'/'right' for landscape, 'top'/'bottom' for portrait
+      // We'll abstract as: goalLineCoord (along long axis), inwardSign
+      let goalLineX, goalLineY, inwardX = 0, inwardY = 0;
+      // 'inward' is the unit direction *into* the pitch from this goal line
+      if (isLandscape) {
+        goalLineX = (whichEnd === 'left') ? pX : pX + pW;
+        goalLineY = pCY;
+        inwardX = (whichEnd === 'left') ? 1 : -1;
+      } else {
+        goalLineX = pCX;
+        goalLineY = (whichEnd === 'top') ? pY : pY + pH;
+        inwardY = (whichEnd === 'top') ? 1 : -1;
+      }
+
+      // Geometry constants (futsal regulation, in meters):
+      const goalWidthM     = 3;     // goal mouth
+      const penaltyMarkM   = 6;     // distance from goal line
+      const secondPenaltyM = 10;    // second penalty mark
+      const goalDepthM     = 1;     // visual goal box depth (drawn outside the goal line)
+
+      // Convert to pixels (sizes use MARK_SCALE; positions like penMark/secMark use raw ppm)
+      const goalHalfPx = (goalWidthM / 2) * ppmShort * MARK_SCALE;
+      const penMarkPx  = penaltyMarkM * ppmLong;
+      const secMarkPx  = secondPenaltyM * ppmLong;
+      const goalDepthPx = goalDepthM * ppmShort * MARK_SCALE;
+
+      // ===== Penalty area: D-shape =====
+      // Per Futsal Laws: a quarter-circle of radius 6m struck from inside
+      // each goalpost, joined by a 3.16m line parallel to the goal line.
+      // The pen-area boundary is therefore: arc from one goal-post side to
+      // the apex (6m from goal line) + straight line across + arc back to
+      // the other goal post.
+      const goalHalfPxShort = (3 / 2) * ppmShort * MARK_SCALE;   // 3m goal -> 1.5m each side
+      const arcAlong  = 6 * ppmLong * MARK_SCALE;                 // 6m along long axis
+      const arcAcross = 6 * ppmShort * MARK_SCALE;                // 6m along short axis
+      bgCtx.beginPath();
+      if (isLandscape) {
+        // Two arc centers sit on the goal line at the inside of each post.
+        // For LEFT end, pitch interior is to the RIGHT.
+        const cTopX = goalLineX, cTopY = pCY - goalHalfPxShort;
+        const cBotX = goalLineX, cBotY = pCY + goalHalfPxShort;
+        if (whichEnd === 'left') {
+          // Top quarter-arc: from a point on the goal-line (cTopX, cTopY-arcAcross)
+          //                  to (cTopX + arcAlong, cTopY).
+          //   In std canvas angles (0=right, sweep CW for positive), that's
+          //   from -π/2 to 0.
+          bgCtx.ellipse(cTopX, cTopY, arcAlong, arcAcross, 0, -Math.PI/2, 0);
+          // Straight line connecting top-arc apex to bottom-arc apex
+          bgCtx.lineTo(cBotX + arcAlong, cBotY);
+          // Bottom quarter-arc: from (cBotX + arcAlong, cBotY)
+          //                     to (cBotX, cBotY + arcAcross). Sweep 0 to π/2.
+          bgCtx.ellipse(cBotX, cBotY, arcAlong, arcAcross, 0, 0, Math.PI/2);
+        } else {  // right end, pitch interior to the LEFT
+          // Top arc: goal line point (cTopX, cTopY - arcAcross) to
+          //          apex (cTopX - arcAlong, cTopY). Angles π+π/2..π (CCW).
+          bgCtx.ellipse(cTopX, cTopY, arcAlong, arcAcross, 0, -Math.PI/2, -Math.PI, true);
+          bgCtx.lineTo(cBotX - arcAlong, cBotY);
+          bgCtx.ellipse(cBotX, cBotY, arcAlong, arcAcross, 0, Math.PI, Math.PI/2, true);
+        }
+      } else {
+        // Portrait: arcs centered at posts on horizontal goal line.
+        const cLftX = pCX - goalHalfPxShort, cLftY = goalLineY;
+        const cRgtX = pCX + goalHalfPxShort, cRgtY = goalLineY;
+        if (whichEnd === 'top') {
+          // Pitch interior is BELOW the goal line.
+          // Left arc: from (cLftX - arcAcross, cLftY) goal-line point to
+          //           (cLftX, cLftY + arcAlong) apex. Angles π .. π/2 (CW going through ?).
+          bgCtx.ellipse(cLftX, cLftY, arcAcross, arcAlong, 0, Math.PI, Math.PI/2, true);
+          bgCtx.lineTo(cRgtX, cRgtY + arcAlong);
+          bgCtx.ellipse(cRgtX, cRgtY, arcAcross, arcAlong, 0, Math.PI/2, 0, true);
+        } else {
+          // Pitch interior ABOVE bottom goal line.
+          bgCtx.ellipse(cLftX, cLftY, arcAcross, arcAlong, 0, -Math.PI, -Math.PI/2);
+          bgCtx.lineTo(cRgtX, cRgtY - arcAlong);
+          bgCtx.ellipse(cRgtX, cRgtY, arcAcross, arcAlong, 0, -Math.PI/2, 0);
+        }
+      }
+      bgCtx.stroke();
+
+      // ===== Goal box (drawn outside the goal line, visual hint) =====
+      bgCtx.beginPath();
+      if (isLandscape) {
+        const gx = goalLineX - inwardX * goalDepthPx;
+        bgCtx.rect(Math.min(goalLineX, gx), pCY - goalHalfPx,
+                   Math.abs(goalDepthPx), goalHalfPx * 2);
+      } else {
+        const gy = goalLineY - inwardY * goalDepthPx;
+        bgCtx.rect(pCX - goalHalfPx, Math.min(goalLineY, gy),
+                   goalHalfPx * 2, Math.abs(goalDepthPx));
+      }
+      bgCtx.stroke();
+
+      // ===== Penalty mark (6m) =====
+      if (isLandscape) {
+        dot(goalLineX + inwardX * penMarkPx, pCY, 2.5);
+      } else {
+        dot(pCX, goalLineY + inwardY * penMarkPx, 2.5);
+      }
+
+      // ===== Second penalty mark (10m) =====
+      if (isLandscape) {
+        dot(goalLineX + inwardX * secMarkPx, pCY, 2.5);
+      } else {
+        dot(pCX, goalLineY + inwardY * secMarkPx, 2.5);
+      }
+
+      // ===== Corner arcs (25cm radius) at the two corners on this goal line =====
+      const cornerRpx = 0.25 * Math.min(ppmLong, ppmShort) * 4; // exaggerate slightly for visibility
+      if (isLandscape) {
+        // Two corners: top-left/top-right on this goal line, etc.
+        if (whichEnd === 'left') {
+          bgCtx.beginPath();
+          bgCtx.arc(pX, pY, cornerRpx, 0, Math.PI/2); bgCtx.stroke();
+          bgCtx.beginPath();
+          bgCtx.arc(pX, pY + pH, cornerRpx, -Math.PI/2, 0); bgCtx.stroke();
+        } else {
+          bgCtx.beginPath();
+          bgCtx.arc(pX + pW, pY, cornerRpx, Math.PI/2, Math.PI); bgCtx.stroke();
+          bgCtx.beginPath();
+          bgCtx.arc(pX + pW, pY + pH, cornerRpx, Math.PI, 3*Math.PI/2); bgCtx.stroke();
+        }
+      } else {
+        if (whichEnd === 'top') {
+          bgCtx.beginPath();
+          bgCtx.arc(pX, pY, cornerRpx, 0, Math.PI/2); bgCtx.stroke();
+          bgCtx.beginPath();
+          bgCtx.arc(pX + pW, pY, cornerRpx, Math.PI/2, Math.PI); bgCtx.stroke();
+        } else {
+          bgCtx.beginPath();
+          bgCtx.arc(pX, pY + pH, cornerRpx, -Math.PI/2, 0); bgCtx.stroke();
+          bgCtx.beginPath();
+          bgCtx.arc(pX + pW, pY + pH, cornerRpx, Math.PI, 3*Math.PI/2); bgCtx.stroke();
+        }
+      }
+    };
+
+    if (isHalf) {
+      // Half-court: only one goal end. The goal end is opposite to the halfway line.
+      if (isLandscape) drawGoalEnd('left');
+      else drawGoalEnd('top');
+    } else {
+      if (isLandscape) { drawGoalEnd('left'); drawGoalEnd('right'); }
+      else { drawGoalEnd('top'); drawGoalEnd('bottom'); }
+    }
+
+    // 5) Substitution zones (3m wide, on each side of halfway line, full court only)
+    if (!isHalf) {
+      const subZoneM = 3;
+      const subTickPx = 0.4 * Math.min(ppmLong, ppmShort);  // small perpendicular tick (~40cm)
+      bgCtx.lineWidth = 2;
+      if (isLandscape) {
+        // Two sidelines: top (pY) and bottom (pY + pH).
+        // From the halfway line (pCX), 3m on each side, draw a small notch
+        // perpendicular to the sideline.
+        const subPxLong = subZoneM * ppmLong;
+        [pCX - subPxLong, pCX + subPxLong].forEach(x => {
+          bgCtx.beginPath();
+          bgCtx.moveTo(x, pY - subTickPx);
+          bgCtx.lineTo(x, pY + subTickPx);
+          bgCtx.stroke();
+          bgCtx.beginPath();
+          bgCtx.moveTo(x, pY + pH - subTickPx);
+          bgCtx.lineTo(x, pY + pH + subTickPx);
+          bgCtx.stroke();
+        });
+      } else {
+        const subPxLong = subZoneM * ppmLong;
+        [pCY - subPxLong, pCY + subPxLong].forEach(y => {
+          bgCtx.beginPath();
+          bgCtx.moveTo(pX - subTickPx, y);
+          bgCtx.lineTo(pX + subTickPx, y);
+          bgCtx.stroke();
+          bgCtx.beginPath();
+          bgCtx.moveTo(pX + pW - subTickPx, y);
+          bgCtx.lineTo(pX + pW + subTickPx, y);
+          bgCtx.stroke();
+        });
+      }
+    }
+
+    bgCtx.restore();
   }
 
   function applyStripesSetting() {
@@ -6798,6 +7208,30 @@
       updateOrientationHighlight();
       // Stripes also depend on orientation, so regenerate the grass texture
       grassCanvas = null;
+      drawBackground();
+    };
+    b.addEventListener('click', handler);
+    b.addEventListener('touchstart', handler, { passive: false });
+  });
+
+  // Pitch view buttons (flat / overhead)
+  function updatePitchViewHighlight() {
+    document.querySelectorAll('.pitch-view-btn').forEach(b => {
+      const isCur = b.dataset.view === (settings.pitchView || 'flat');
+      b.style.background = isCur ? '#ffdd00' : 'rgba(255,255,255,0.06)';
+      b.style.color = isCur ? '#000' : '#f5f5f0';
+      b.style.borderColor = isCur ? '#ffdd00' : 'transparent';
+    });
+  }
+  updatePitchViewHighlight();
+
+  document.querySelectorAll('.pitch-view-btn').forEach(b => {
+    const handler = (ev) => {
+      ev.stopPropagation();
+      ev.preventDefault();
+      settings.pitchView = b.dataset.view;
+      saveSettings();
+      updatePitchViewHighlight();
       drawBackground();
     };
     b.addEventListener('click', handler);
