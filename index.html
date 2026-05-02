@@ -15,6 +15,10 @@
     --player-blue: #2563eb;
     --player-red: #dc2626;
     --player-yellow: #fbbf24;
+    --player-white: #f5f5f5;
+    --player-orange: #ff7a2a;
+    --player-black: #1a1a1a;
+    --player-pink: #ec4899;
     --cone-orange: #ff6b1a;
     --arrow-pass: #4ade80;
     --arrow-shoot: #f87171;
@@ -906,7 +910,7 @@
             <path d="M10.3 6 Q11 6.4 11.7 6" stroke="#1a1a1a" stroke-width="0.4" stroke-linecap="round" fill="none"/>
           </svg>
         </div>
-        <span class="tool-label">選手（青）</span>
+        <span class="tool-label">チームA（青）</span>
       </button>
       <button class="tool" data-tool="player-red">
         <div class="icon-player">
@@ -939,40 +943,7 @@
             <path d="M10.3 6 Q11 6.4 11.7 6" stroke="#1a1a1a" stroke-width="0.4" stroke-linecap="round" fill="none"/>
           </svg>
         </div>
-        <span class="tool-label">選手（赤）</span>
-      </button>
-      <button class="tool" data-tool="player-yellow">
-        <div class="icon-player yellow">
-          <svg viewBox="0 0 22 28" fill="none">
-            <!-- legs (skin upper, sock lower) -->
-            <path d="M7.2 21 L9.3 21 L9.3 23 L7.3 23 Z" fill="#e8c5a0"/>
-            <path d="M12.7 21 L14.8 21 L14.7 23 L12.7 23 Z" fill="#e8c5a0"/>
-            <!-- socks -->
-            <path d="M7.3 23 L9.3 23 L9.3 25.5 L7.5 25.5 Z" fill="#fbbf24"/>
-            <path d="M12.7 23 L14.7 23 L14.5 25.5 L12.7 25.5 Z" fill="#fbbf24"/>
-            <!-- sock band -->
-            <path d="M7.3 23 L9.3 23 L9.3 23.4 L7.3 23.4 Z" fill="#1a1a1a"/>
-            <path d="M12.7 23 L14.7 23 L14.7 23.4 L12.7 23.4 Z" fill="#1a1a1a"/>
-            <path d="M5.5 25.5 L9.5 25.5 L10 27 L6 27 Z" fill="#1a1a1a"/>
-            <path d="M12.5 25.5 L16.5 25.5 L16 27 L12 27 Z" fill="#1a1a1a"/>
-            <path d="M5.5 26.4 L10 26.4 L10 26.7 L6 26.7 Z" fill="#ffffff"/>
-            <path d="M12 26.4 L16.5 26.4 L16 26.7 L12 26.7 Z" fill="#ffffff"/>
-            <path d="M5.5 17 L16.5 17 L15.5 21 L11.5 21 L11 19.8 L10.5 21 L6.5 21 Z" fill="#1a1a1a"/>
-            <path d="M3 9.5 L4.8 9.5 L4 17 L2.5 17 Z" fill="#e8c5a0"/>
-            <path d="M17.2 9.5 L19 9.5 L19.5 17 L18 17 Z" fill="#e8c5a0"/>
-            <path d="M5 9.5 L17 9.5 Q16.5 12 16.5 17 L5.5 17 Q5.5 12 5 9.5 Z" fill="#fbbf24"/>
-            <path d="M5 9.5 L3.2 9.5 L3.2 11.5 L5 11.5 Z" fill="#fbbf24"/>
-            <path d="M17 9.5 L18.8 9.5 L18.8 11.5 L17 11.5 Z" fill="#fbbf24"/>
-            <path d="M9.5 8 Q11 9.5 12.5 8 Q11 8.3 9.5 8 Z" fill="#a87600"/>
-            <circle cx="11" cy="5" r="2.6" fill="#e8c5a0"/>
-            <!-- eyes -->
-            <circle cx="9.9" cy="4.7" r="0.35" fill="#1a1a1a"/>
-            <circle cx="12.1" cy="4.7" r="0.35" fill="#1a1a1a"/>
-            <!-- mouth -->
-            <path d="M10.3 6 Q11 6.4 11.7 6" stroke="#1a1a1a" stroke-width="0.4" stroke-linecap="round" fill="none"/>
-          </svg>
-        </div>
-        <span class="tool-label">選手（黄）</span>
+        <span class="tool-label">チームB（赤）</span>
       </button>
       <button class="tool" data-tool="coach">
         <svg width="22" height="28" viewBox="0 0 22 28" fill="none">
@@ -1426,6 +1397,20 @@
         <button class="facing-btn" data-facing="front" style="width:36px;height:36px;border-radius:8px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:16px;">▼</button>
         <button class="facing-btn" data-facing="back" style="width:36px;height:36px;border-radius:8px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:16px;">▲</button>
         <button class="facing-btn" data-facing="right" style="width:36px;height:36px;border-radius:8px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:16px;">▶</button>
+      </div>
+      <div id="facingPickerColorSection">
+        <div style="font-size: 10px; color: #a0a89c; padding: 10px 4px 4px; letter-spacing: 0.05em;">
+          色
+        </div>
+        <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+          <button class="player-color-btn" data-team="player-blue"   style="width:30px;height:30px;border-radius:50%;border:2px solid transparent;background:#2563eb;cursor:pointer;padding:0;"></button>
+          <button class="player-color-btn" data-team="player-red"    style="width:30px;height:30px;border-radius:50%;border:2px solid transparent;background:#dc2626;cursor:pointer;padding:0;"></button>
+          <button class="player-color-btn" data-team="player-yellow" style="width:30px;height:30px;border-radius:50%;border:2px solid transparent;background:#fbbf24;cursor:pointer;padding:0;"></button>
+          <button class="player-color-btn" data-team="player-white"  style="width:30px;height:30px;border-radius:50%;border:2px solid #888;background:#f5f5f5;cursor:pointer;padding:0;"></button>
+          <button class="player-color-btn" data-team="player-orange" style="width:30px;height:30px;border-radius:50%;border:2px solid transparent;background:#ff7a2a;cursor:pointer;padding:0;"></button>
+          <button class="player-color-btn" data-team="player-black"  style="width:30px;height:30px;border-radius:50%;border:2px solid transparent;background:#1a1a1a;cursor:pointer;padding:0;"></button>
+          <button class="player-color-btn" data-team="player-pink"   style="width:30px;height:30px;border-radius:50%;border:2px solid transparent;background:#ec4899;cursor:pointer;padding:0;"></button>
+        </div>
       </div>
       <div id="facingPickerNumberSection">
         <div style="font-size: 10px; color: #a0a89c; padding: 10px 4px 4px; letter-spacing: 0.05em;">
@@ -2707,6 +2692,10 @@
     if (type === 'player-blue')   { o.color = '#2563eb'; o.number = nextPlayerNumber('player-blue');   o.r = baseR; o.facing = 'front'; }
     else if (type === 'player-red')    { o.color = '#dc2626'; o.number = nextPlayerNumber('player-red');    o.r = baseR; o.facing = 'front'; }
     else if (type === 'player-yellow') { o.color = '#fbbf24'; o.number = nextPlayerNumber('player-yellow'); o.r = baseR; o.facing = 'front'; }
+    else if (type === 'player-white')  { o.color = '#f5f5f5'; o.number = nextPlayerNumber('player-white');  o.r = baseR; o.facing = 'front'; }
+    else if (type === 'player-orange') { o.color = '#ff7a2a'; o.number = nextPlayerNumber('player-orange'); o.r = baseR; o.facing = 'front'; }
+    else if (type === 'player-black')  { o.color = '#1a1a1a'; o.number = nextPlayerNumber('player-black');  o.r = baseR; o.facing = 'front'; }
+    else if (type === 'player-pink')   { o.color = '#ec4899'; o.number = nextPlayerNumber('player-pink');   o.r = baseR; o.facing = 'front'; }
     else if (type === 'coach')         { o.color = '#16a34a'; o.r = baseR; o.facing = 'front'; }
     else if (type === 'cone')   { o.r = 14; o.color = ui.coneColor; }
     else if (type === 'ball')   { o.r = 12; }
@@ -3173,6 +3162,10 @@
       if (target.type === 'player-blue') label = `青${target.number}`;
       else if (target.type === 'player-red') label = `赤${target.number}`;
       else if (target.type === 'player-yellow') label = `黄${target.number}`;
+      else if (target.type === 'player-white') label = `白${target.number}`;
+      else if (target.type === 'player-orange') label = `橙${target.number}`;
+      else if (target.type === 'player-black') label = `黒${target.number}`;
+      else if (target.type === 'player-pink') label = `桃${target.number}`;
       else if (target.type === 'ball') label = '⚽';
 
       // Color based on target type
@@ -3182,6 +3175,10 @@
         if (target.type === 'player-blue') { bg = '#2563eb'; fg = '#fff'; }
         else if (target.type === 'player-red') { bg = '#dc2626'; fg = '#fff'; }
         else if (target.type === 'player-yellow') { bg = '#fbbf24'; fg = '#222'; }
+        else if (target.type === 'player-white') { bg = '#f5f5f5'; fg = '#222'; }
+        else if (target.type === 'player-orange') { bg = '#ff7a2a'; fg = '#fff'; }
+        else if (target.type === 'player-black') { bg = '#1a1a1a'; fg = '#fff'; }
+        else if (target.type === 'player-pink') { bg = '#ec4899'; fg = '#fff'; }
         else if (target.type === 'ball') { bg = '#fff'; fg = '#000'; }
       }
 
@@ -3282,6 +3279,18 @@
       numInput.value = player.number;
     }
 
+    // Color section: show only for players (coaches stay green)
+    const colorSection = document.getElementById('facingPickerColorSection');
+    if (colorSection) {
+      colorSection.style.display = isCoach ? 'none' : 'block';
+      if (!isCoach) {
+        document.querySelectorAll('.player-color-btn').forEach(b => {
+          const isCur = b.dataset.team === player.type;
+          b.style.boxShadow = isCur ? '0 0 0 2px #ffdd00' : 'none';
+        });
+      }
+    }
+
     // Initialize size slider
     const sizeSlider = document.getElementById('facingPickerSizeSlider');
     const sizeValue = document.getElementById('facingPickerSizeValue');
@@ -3326,6 +3335,47 @@
     };
     b.addEventListener('click', handler);
     b.addEventListener('touchstart', handler, { passive: false });
+  });
+
+  // Player color change buttons (in facing picker)
+  // Color hex map for each player type
+  const PLAYER_TYPE_COLORS = {
+    'player-blue':   '#2563eb',
+    'player-red':    '#dc2626',
+    'player-yellow': '#fbbf24',
+    'player-white':  '#f5f5f5',
+    'player-orange': '#ff7a2a',
+    'player-black':  '#1a1a1a',
+    'player-pink':   '#ec4899',
+  };
+  document.querySelectorAll('.player-color-btn').forEach(btn => {
+    const handler = (ev) => {
+      ev.stopPropagation();
+      ev.preventDefault();
+      if (!facingPickerPlayerId) return;
+      const newType = btn.dataset.team;
+      const newColor = PLAYER_TYPE_COLORS[newType];
+      if (!newColor) return;
+      const p = scene().objects.find(o => o.id === facingPickerPlayerId);
+      if (!p || p.type === newType) return;  // same color → noop
+      saveHistory();
+      // Reassign number for the new color (independent counter per color)
+      const oldType = p.type;
+      p.type = newType;
+      p.color = newColor;
+      // Pick the smallest free number for the new color group
+      p.number = nextPlayerNumber(newType);
+      // Highlight selected color
+      document.querySelectorAll('.player-color-btn').forEach(b => {
+        b.style.boxShadow = (b.dataset.team === newType) ? '0 0 0 2px #ffdd00' : 'none';
+      });
+      // Update number input in the picker (since it was renumbered)
+      const numInput = document.getElementById('facingPickerNumInput');
+      if (numInput) numInput.value = p.number;
+      redraw();
+    };
+    btn.addEventListener('click', handler);
+    btn.addEventListener('touchstart', handler, { passive: false });
   });
 
   document.getElementById('facingPickerDelete').addEventListener('click', (ev) => {
@@ -3992,6 +4042,13 @@
         ui.selectedId = hit.id;
         ui.dragging = { id: hit.id, dx: x - hit.x, dy: y - hit.y, startX: x, startY: y };
 
+        // For ball drags: remember when the press started, so we can detect a
+        // long-press (= "I want to place this precisely, disable snap").
+        if (hit.type === 'ball') {
+          ui.dragging.pressStart = performance.now();
+          ui.dragging.disableSnap = false;
+        }
+
         // If dragging a player who has a ball at their feet,
         // grab the ball along (so it follows the player).
         if (hit.type.startsWith('player')) {
@@ -4166,10 +4223,21 @@
     if (ui.dragging.startX !== undefined) {
       const moved = Math.hypot(x - ui.dragging.startX, y - ui.dragging.startY);
       if (moved > 5) {
+        const wasMoved = ui.dragging.moved;
         ui.dragging.moved = true;
         if (ui._longPressTimer) {
           clearTimeout(ui._longPressTimer);
           ui._longPressTimer = null;
+        }
+        // First time we exceed the move threshold for a ball drag:
+        // if the user has been holding the ball for >300ms before moving it,
+        // treat this drag as a precision drag and disable snap-to-feet.
+        if (!wasMoved && o.type === 'ball' && typeof ui.dragging.pressStart === 'number') {
+          const heldMs = performance.now() - ui.dragging.pressStart;
+          if (heldMs > 300) {
+            ui.dragging.disableSnap = true;
+            showHint('スナップ無効: ボールを自由に配置できます', 1500);
+          }
         }
       }
     }
@@ -4247,15 +4315,21 @@
       finishRecording();
     } else if (ui.dragging && !ui.dragging.recording) {
       // If we just dropped a ball near a player, snap it to the player's feet.
+      // Skip snap entirely if the user did a "precision drag" (long-press before moving).
       const draggedObj = scene().objects.find(o => o.id === ui.dragging.id);
-      if (draggedObj && draggedObj.type === 'ball') {
+      if (draggedObj && draggedObj.type === 'ball' && !ui.dragging.disableSnap) {
         const nearestPlayer = findNearestPlayerForBallSnap(draggedObj);
         if (nearestPlayer) {
           // Place the ball just in front of the player's feet based on facing angle.
-          // angle 0 = forward = +y. Boots are roughly at ly = +o.r*2.4 in object space.
+          // Image default orientation: head up (-y), feet down (+y), so at angle=0
+          // the feet are at +y. ctx.rotate uses the convention that aligns with
+          // the rotation-mode formula `o.angle = -atan2(dx, dy)` (see pointerMove,
+          // "feet point toward cursor"). To compute the screen-space feet vector
+          // for a given angle, we rotate the (0, +1) vector the SAME way the
+          // image is rotated, which gives (-sin(angle), +cos(angle)).
           const ang = (typeof nearestPlayer.angle === 'number') ? nearestPlayer.angle : 0;
           const dist = nearestPlayer.r * 2.7 + draggedObj.r * 0.6;
-          draggedObj.x = nearestPlayer.x + Math.sin(ang) * dist;
+          draggedObj.x = nearestPlayer.x - Math.sin(ang) * dist;
           draggedObj.y = nearestPlayer.y + Math.cos(ang) * dist;
           draggedObj.keyframes = [{ t: 0, x: draggedObj.x, y: draggedObj.y }];
           showHint('ボールを選手の足元にスナップしました', 1500);
@@ -4273,10 +4347,10 @@
 
   function findNearestPlayerForBallSnap(ball) {
     // Snap radius: how close a ball must be to a player to auto-attach.
-    // Reasonably generous so it feels "magnetic".
+    // Tightened so that placement near (but not at) a player is preserved as-is.
     let bestPlayer = null;
     let bestDist = Infinity;
-    const maxSnapDist = ball.r * 4 + 30;  // ~70px range
+    const maxSnapDist = ball.r * 2.5;  // ~30px range — only when truly near the feet
     scene().objects.forEach(o => {
       if (!o.type.startsWith('player')) return;
       const d = Math.hypot(o.x - ball.x, o.y - ball.y);
