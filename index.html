@@ -2123,6 +2123,12 @@
   const ui = {
     tool: 'select',
     selectedId: null,
+    // Viewport zoom & pan (1.0x = no zoom). screen = world * zoom + pan
+    zoom: 1,
+    panX: 0,
+    panY: 0,
+    // Active 2-finger gesture state (touch only)
+    pinchState: null,                // { startDist, startZoom, startPanX, startPanY, startMidX, startMidY }
     recording: false,
     recordingTargetId: null,
     recordStartTime: 0,
@@ -2302,7 +2308,9 @@
   }
 
   function drawBackground() {
+    bgCtx.setTransform(1, 0, 0, 1, 0, 0);  // reset before clear
     bgCtx.clearRect(0, 0, W, H);
+    applyViewportTransform(bgCtx);
 
     // For 'futsal' pitch view, draw rounded penalty arcs and futsal-specific
     // markings (penalty marks, corner arcs, sub zones) instead of the standard
@@ -2595,6 +2603,7 @@
         }
       }
     }
+    resetViewportTransform(bgCtx);
   }
 
   // ============================================================
@@ -3363,10 +3372,13 @@
   }
 
   function drawPaths() {
+    pathCtx.setTransform(1, 0, 0, 1, 0, 0);  // reset before clear
     pathCtx.clearRect(0, 0, W, H);
 
     // Hide arrows and movement trails during playback for cleaner motion view
     if (ui.playing) return;
+
+    applyViewportTransform(pathCtx);
 
     // Pen drawings (under arrows)
     (scene().drawings || []).forEach(d => drawPenStroke(pathCtx, d));
@@ -3393,6 +3405,7 @@
       pathCtx.setLineDash([]);
       pathCtx.restore();
     });
+    resetViewportTransform(pathCtx);
   }
 
   function drawPenStroke(ctx, d) {
@@ -3422,7 +3435,9 @@
   }
 
   function redraw() {
+    iconCtx.setTransform(1, 0, 0, 1, 0, 0);  // reset before clear
     iconCtx.clearRect(0, 0, W, H);
+    applyViewportTransform(iconCtx);
     drawPaths();
     // Draw areas first (so they appear UNDER players, balls, cones, goals)
     scene().objects.forEach(o => { if (o.type === 'area') drawObject(iconCtx, o); });
@@ -3441,6 +3456,7 @@
     scene().objects.forEach(o => { if (o.type === 'text') drawObject(iconCtx, o); });
     // Finally draw the explanation drawing-lines on top, so they aren't hidden by icons
     drawDrawingLines();
+    resetViewportTransform(iconCtx);
     updateInfo();
   }
 
@@ -5462,13 +5478,68 @@
 
   function getPos(e) {
     const rect = fieldWrap.getBoundingClientRect();
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    // Convert client-space coordinates to canvas (world) coordinates by
+    // un-applying the current viewport transform: world = (screen - pan) / zoom
+    const sx = e.clientX - rect.left;
+    const sy = e.clientY - rect.top;
+    return {
+      x: (sx - ui.panX) / ui.zoom,
+      y: (sy - ui.panY) / ui.zoom,
+    };
+  }
+
+  // Same conversion but takes raw client x/y (for centerpoints in pinch
+  // gestures, not pointer events).
+  function clientToWorld(clientX, clientY) {
+    const rect = fieldWrap.getBoundingClientRect();
+    return {
+      x: (clientX - rect.left - ui.panX) / ui.zoom,
+      y: (clientY - rect.top - ui.panY) / ui.zoom,
+    };
+  }
+
+  // Apply the current viewport transform (zoom + pan) to a canvas context.
+  // Call this RIGHT AFTER `clearRect` and BEFORE any drawing. Call
+  // `resetViewportTransform(ctx)` after drawing if you need raw coords again.
+  function applyViewportTransform(ctx) {
+    ctx.setTransform(ui.zoom, 0, 0, ui.zoom, ui.panX, ui.panY);
+  }
+  function resetViewportTransform(ctx) {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+  }
+
+  // Clamp pan so the pitch can't be dragged completely off-screen. The pitch
+  // is allowed to move so that at least 25% of it stays inside the viewport.
+  function clampPan() {
+    const minX = -W * (ui.zoom - 0.25);
+    const maxX = W * 0.25;
+    const minY = -H * (ui.zoom - 0.25);
+    const maxY = H * 0.25;
+    if (ui.panX < minX) ui.panX = minX;
+    if (ui.panX > maxX) ui.panX = maxX;
+    if (ui.panY < minY) ui.panY = minY;
+    if (ui.panY > maxY) ui.panY = maxY;
+    if (ui.zoom <= 1) {
+      // At 1x there is no pan room; snap to 0
+      ui.panX = 0;
+      ui.panY = 0;
+    }
+  }
+
+  // Re-render everything (background + paths + icons) at the new viewport.
+  function applyZoomChange() {
+    clampPan();
+    drawBackground();
+    redraw();
+    drawPaths();
   }
 
   let lastTap = 0;
 
   function pointerDown(e) {
     e.preventDefault();
+    // Multi-touch pinch in progress — let the pinch handler own this gesture
+    if (typeof pinchActive !== 'undefined' && pinchActive) return;
     const { x, y } = getPos(e);
     if (ui.playing) return;
     // While paused (mid-playback), only allow non-destructive annotation tools:
@@ -5842,6 +5913,7 @@
   }
 
   function pointerMove(e) {
+    if (typeof pinchActive !== 'undefined' && pinchActive) return;
     const { x, y } = getPos(e);
 
     if (ui.arrowDrawing) {
@@ -6187,6 +6259,110 @@
   window.addEventListener('pointercancel', pointerUp);
   // Prevent default touch behaviors (scrolling, zoom) on the field
   fieldWrap.style.touchAction = 'none';
+
+  // ============================================================
+  // Pinch zoom / pan (touch) and wheel zoom (mouse).
+  // While 2+ fingers are down, we suspend the normal pointer pipeline
+  // (cancel any in-progress drag) and run the pinch handler instead.
+  // ============================================================
+  let activeTouches = new Map();   // pointerId -> {x, y}
+  let pinchActive = false;
+
+  function distance(p1, p2) {
+    const dx = p1.x - p2.x, dy = p1.y - p2.y;
+    return Math.sqrt(dx*dx + dy*dy);
+  }
+  function midpoint(p1, p2) {
+    return { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+  }
+
+  fieldWrap.addEventListener('pointerdown', (e) => {
+    if (e.pointerType !== 'touch') return;
+    activeTouches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (activeTouches.size === 2) {
+      // Begin pinch — cancel any drag the first touch may have started
+      if (ui.dragging) {
+        ui.dragging = null;
+        ui.recordPath = [];
+        ui.recordingTargetId = null;
+        redraw();
+      }
+      ui.penStroke = null;
+      ui.arrowDrawing = null;
+      pinchActive = true;
+      const pts = [...activeTouches.values()];
+      const startDist = distance(pts[0], pts[1]);
+      const mid = midpoint(pts[0], pts[1]);
+      ui.pinchState = {
+        startDist,
+        startZoom: ui.zoom,
+        startPanX: ui.panX,
+        startPanY: ui.panY,
+        startMidX: mid.x,
+        startMidY: mid.y,
+      };
+    }
+  }, true);  // capture phase so we see it before pointerDown handler
+
+  fieldWrap.addEventListener('pointermove', (e) => {
+    if (e.pointerType !== 'touch') return;
+    if (!activeTouches.has(e.pointerId)) return;
+    activeTouches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pinchActive && activeTouches.size >= 2 && ui.pinchState) {
+      e.preventDefault();
+      e.stopPropagation();
+      const pts = [...activeTouches.values()].slice(0, 2);
+      const newDist = distance(pts[0], pts[1]);
+      const newMid = midpoint(pts[0], pts[1]);
+      const ps = ui.pinchState;
+      // Zoom factor relative to gesture start
+      let newZoom = ps.startZoom * (newDist / ps.startDist);
+      newZoom = Math.max(1, Math.min(3, newZoom));
+      // Pan: midpoint motion translates pan; also account for the zoom
+      // change so the world point under the midpoint stays under the
+      // midpoint (proper "anchored zoom").
+      const rect = fieldWrap.getBoundingClientRect();
+      const startMidLocal = { x: ps.startMidX - rect.left, y: ps.startMidY - rect.top };
+      const newMidLocal   = { x: newMid.x - rect.left,    y: newMid.y - rect.top    };
+      // World point that was under startMid at the start of the gesture:
+      const worldX = (startMidLocal.x - ps.startPanX) / ps.startZoom;
+      const worldY = (startMidLocal.y - ps.startPanY) / ps.startZoom;
+      // Solve for pan so that: newMidLocal = world * newZoom + pan
+      ui.zoom = newZoom;
+      ui.panX = newMidLocal.x - worldX * newZoom;
+      ui.panY = newMidLocal.y - worldY * newZoom;
+      applyZoomChange();
+    }
+  }, true);
+
+  function endTouch(e) {
+    if (e.pointerType !== 'touch') return;
+    activeTouches.delete(e.pointerId);
+    if (activeTouches.size < 2 && pinchActive) {
+      pinchActive = false;
+      ui.pinchState = null;
+    }
+  }
+  window.addEventListener('pointerup', endTouch, true);
+  window.addEventListener('pointercancel', endTouch, true);
+
+  // Mouse wheel zoom (PC). Anchored on the cursor position.
+  fieldWrap.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const rect = fieldWrap.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    // World point under the cursor, before zoom
+    const worldX = (mx - ui.panX) / ui.zoom;
+    const worldY = (my - ui.panY) / ui.zoom;
+    const factor = e.deltaY < 0 ? 1.1 : (1 / 1.1);
+    let newZoom = ui.zoom * factor;
+    newZoom = Math.max(1, Math.min(3, newZoom));
+    ui.zoom = newZoom;
+    ui.panX = mx - worldX * newZoom;
+    ui.panY = my - worldY * newZoom;
+    applyZoomChange();
+  }, { passive: false });
 
   // ---------- Draggable toolbar ----------
   const toolbarEl = document.getElementById('toolbar');
