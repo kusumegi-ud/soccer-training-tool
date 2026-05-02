@@ -775,6 +775,41 @@
     </div>
     <div style="padding: 0 12px 8px;">
       <div style="padding: 8px 0; font-size: 13px;">
+        <div style="margin-bottom: 6px; color: #c8d0c0;">ピッチの向き</div>
+        <div style="display: flex; gap: 4px;">
+          <button class="orientation-btn" data-orientation="auto" style="
+            flex: 1; padding: 8px 4px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            background: rgba(255,255,255,0.06);
+            color: #f5f5f0;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+          ">自動</button>
+          <button class="orientation-btn" data-orientation="portrait" style="
+            flex: 1; padding: 8px 4px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            background: rgba(255,255,255,0.06);
+            color: #f5f5f0;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+          ">縦</button>
+          <button class="orientation-btn" data-orientation="landscape" style="
+            flex: 1; padding: 8px 4px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            background: rgba(255,255,255,0.06);
+            color: #f5f5f0;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+          ">横</button>
+        </div>
+      </div>
+      <div style="padding: 8px 0; font-size: 13px;">
         <div style="margin-bottom: 6px; color: #c8d0c0;">フィールドライン</div>
         <div style="display: flex; gap: 4px;">
           <button class="line-mode-btn" data-mode="full" style="
@@ -2053,6 +2088,7 @@
   // App-wide settings (saved to localStorage)
   const settings = {
     lineMode: 'full',
+    lineOrientation: 'auto',  // 'auto' | 'portrait' | 'landscape'
     showStripes: true,
     playerSize: 17,        // numeric radius (8-30)
     textSize: 22,          // default font size (px) for new texts (10-48)
@@ -2126,13 +2162,31 @@
     g.fillRect(0, 0, w, h);
 
     // 2) Mowing stripes (alternate light/dark bands)
+    // Direction: if line orientation is landscape, use horizontal stripes;
+    // otherwise (portrait or auto) use vertical stripes for the typical look.
     if (settings.showStripes) {
       const stripeW = 60;
-      for (let x = 0; x < w; x += stripeW * 2) {
-        g.fillStyle = 'rgba(255,255,255,0.06)';
-        g.fillRect(x, 0, stripeW, h);
-        g.fillStyle = 'rgba(0,0,0,0.06)';
-        g.fillRect(x + stripeW, 0, stripeW, h);
+      // Determine stripe direction. Auto = follow viewport orientation.
+      let useHorizontalStripes = false;
+      if (settings.lineOrientation === 'landscape') {
+        useHorizontalStripes = true;
+      } else if (settings.lineOrientation === 'auto') {
+        useHorizontalStripes = (w > h);
+      }
+      if (useHorizontalStripes) {
+        for (let y = 0; y < h; y += stripeW * 2) {
+          g.fillStyle = 'rgba(255,255,255,0.06)';
+          g.fillRect(0, y, w, stripeW);
+          g.fillStyle = 'rgba(0,0,0,0.06)';
+          g.fillRect(0, y + stripeW, w, stripeW);
+        }
+      } else {
+        for (let x = 0; x < w; x += stripeW * 2) {
+          g.fillStyle = 'rgba(255,255,255,0.06)';
+          g.fillRect(x, 0, stripeW, h);
+          g.fillStyle = 'rgba(0,0,0,0.06)';
+          g.fillRect(x + stripeW, 0, stripeW, h);
+        }
       }
     }
 
@@ -2203,7 +2257,15 @@
     const availH = H - margin * 2;
 
     // Detect if the available area is portrait (taller than wide)
-    const isPortrait = availH > availW;
+    // The user can override via settings.lineOrientation
+    let isPortrait;
+    if (settings.lineOrientation === 'portrait') {
+      isPortrait = true;
+    } else if (settings.lineOrientation === 'landscape') {
+      isPortrait = false;
+    } else {
+      isPortrait = availH > availW;  // auto: follow viewport orientation
+    }
 
     let pitchAspect;  // width / height
     let halfPortrait = false;  // true = half-court drawn vertically
@@ -2217,7 +2279,8 @@
         pitchAspect = 68 / 52.5;  // landscape (wider-than-tall)
       }
     } else {
-      pitchAspect = 68 / 105;   // taller-than-wide (typical full pitch)
+      // Full pitch: portrait = vertical (68:105), landscape = horizontal (105:68)
+      pitchAspect = isPortrait ? 68 / 105 : 105 / 68;
     }
 
     // Fit the pitch into the available area, preserving aspect ratio (letterbox)
@@ -2264,46 +2327,88 @@
         bgCtx.strokeRect(pCX - gaW/2, pY, gaW, gaH);
       } else {
         // ===== HALF COURT (landscape) =====
+        // pitchAspect = 68/52.5 ≈ 1.30 → pW > pH (wider-than-tall)
+        // Goal end on the LEFT, halfway line on the RIGHT.
+        // Long axis of pitch (68m) maps to pH; deep direction (52.5m) maps to pW.
         bgCtx.strokeRect(pX, pY, pW, pH);
-        const cr = pW * 0.0915;
+
+        // Center circle: half visible at the right edge (the halfway line)
+        // Radius 9.15m → use pH (which represents 68m) for the scaling
+        const cr = pH * 0.135;
         bgCtx.beginPath();
-        bgCtx.arc(pCX, pY + pH, cr, Math.PI, 2 * Math.PI);
+        bgCtx.arc(pX + pW, pCY, cr, Math.PI / 2, (3 * Math.PI) / 2);
         bgCtx.stroke();
-        const pbW = pW * (40.32 / 68);
-        const pbH = pH * (16.5 / 52.5);
-        bgCtx.strokeRect(pCX - pbW/2, pY, pbW, pbH);
-        const gaW = pW * (18.32 / 68);
-        const gaH = pH * (5.5 / 52.5);
-        bgCtx.strokeRect(pCX - gaW/2, pY, gaW, gaH);
+
+        // Penalty area: 16.5m deep (along pW axis) × 40.32m wide (along pH axis)
+        const pbW = pW * (16.5 / 52.5);
+        const pbH = pH * (40.32 / 68);
+        bgCtx.strokeRect(pX, pCY - pbH/2, pbW, pbH);
+
+        // Goal area: 5.5m × 18.32m
+        const gaW = pW * (5.5 / 52.5);
+        const gaH = pH * (18.32 / 68);
+        bgCtx.strokeRect(pX, pCY - gaH/2, gaW, gaH);
       }
     } else {
       // ===== FULL COURT =====
+      // Detect orientation by aspect ratio: pitchAspect < 1 means portrait (taller),
+      // pitchAspect > 1 means landscape (wider).
+      const isLandscapePitch = pitchAspect > 1;
+
       // Outer rectangle
       bgCtx.strokeRect(pX, pY, pW, pH);
 
-      // Halfway line
-      bgCtx.beginPath();
-      bgCtx.moveTo(pX, pCY);
-      bgCtx.lineTo(pX + pW, pCY);
-      bgCtx.stroke();
+      if (isLandscapePitch) {
+        // ===== Landscape full pitch: long-side is horizontal =====
+        // Halfway line (vertical, through center)
+        bgCtx.beginPath();
+        bgCtx.moveTo(pCX, pY);
+        bgCtx.lineTo(pCX, pY + pH);
+        bgCtx.stroke();
 
-      // Center circle (radius 9.15m × pitch_width / 68)
-      const cr = pW * 0.135;  // 9.15m / 68m
-      bgCtx.beginPath();
-      bgCtx.arc(pCX, pCY, cr, 0, Math.PI * 2);
-      bgCtx.stroke();
+        // Center circle (radius scales with pitch height since 68m is now pH)
+        const cr = pH * 0.135;  // 9.15m / 68m
+        bgCtx.beginPath();
+        bgCtx.arc(pCX, pCY, cr, 0, Math.PI * 2);
+        bgCtx.stroke();
 
-      // Penalty areas at both ends
-      const pbW = pW * (40.32 / 68);
-      const pbH = pH * (16.5 / 105);
-      bgCtx.strokeRect(pCX - pbW/2, pY, pbW, pbH);
-      bgCtx.strokeRect(pCX - pbW/2, pY + pH - pbH, pbW, pbH);
+        // Penalty areas on left/right ends (16.5m deep × 40.32m wide)
+        const pbW = pW * (16.5 / 105);  // depth along the long axis
+        const pbH = pH * (40.32 / 68);  // width along the short axis
+        bgCtx.strokeRect(pX, pCY - pbH/2, pbW, pbH);
+        bgCtx.strokeRect(pX + pW - pbW, pCY - pbH/2, pbW, pbH);
 
-      // Goal areas
-      const gaW = pW * (18.32 / 68);
-      const gaH = pH * (5.5 / 105);
-      bgCtx.strokeRect(pCX - gaW/2, pY, gaW, gaH);
-      bgCtx.strokeRect(pCX - gaW/2, pY + pH - gaH, gaW, gaH);
+        // Goal areas (5.5m deep × 18.32m wide)
+        const gaW = pW * (5.5 / 105);
+        const gaH = pH * (18.32 / 68);
+        bgCtx.strokeRect(pX, pCY - gaH/2, gaW, gaH);
+        bgCtx.strokeRect(pX + pW - gaW, pCY - gaH/2, gaW, gaH);
+      } else {
+        // ===== Portrait full pitch (original): long-side is vertical =====
+        // Halfway line (horizontal, through center)
+        bgCtx.beginPath();
+        bgCtx.moveTo(pX, pCY);
+        bgCtx.lineTo(pX + pW, pCY);
+        bgCtx.stroke();
+
+        // Center circle (radius 9.15m × pitch_width / 68)
+        const cr = pW * 0.135;  // 9.15m / 68m
+        bgCtx.beginPath();
+        bgCtx.arc(pCX, pCY, cr, 0, Math.PI * 2);
+        bgCtx.stroke();
+
+        // Penalty areas at both ends
+        const pbW = pW * (40.32 / 68);
+        const pbH = pH * (16.5 / 105);
+        bgCtx.strokeRect(pCX - pbW/2, pY, pbW, pbH);
+        bgCtx.strokeRect(pCX - pbW/2, pY + pH - pbH, pbW, pbH);
+
+        // Goal areas
+        const gaW = pW * (18.32 / 68);
+        const gaH = pH * (5.5 / 105);
+        bgCtx.strokeRect(pCX - gaW/2, pY, gaW, gaH);
+        bgCtx.strokeRect(pCX - gaW/2, pY + pH - gaH, gaW, gaH);
+      }
     }
   }
 
@@ -3519,21 +3624,28 @@
           const ball = findNearestBallAt(a.x1, a.y1, timeline);
           if (ball && !movedInGroup.has(ball.id)) {
             movedInGroup.add(ball.id);
-            // Foot offset: player center is roughly head/torso level;
-            // feet are about target.r * 1.5 below center.
-            // Add a small forward offset in the direction of motion.
+            // Foot offset: image default has feet at +y (down); when the player
+            // is rotated by `angle`, the foot direction in screen space becomes
+            // (-sin(angle), +cos(angle)). Multiply by target.r * 1.5 for "feet".
+            const ang = (typeof target.angle === 'number') ? target.angle : 0;
+            const footDx = -Math.sin(ang);
+            const footDy =  Math.cos(ang);
+            const footDist = target.r * 1.5;
+            const footOffsetX = footDx * footDist;
+            const footOffsetY = footDy * footDist;
+
+            // Small forward offset in direction of motion
             const dx = a.x2 - a.x1;
             const dy = a.y2 - a.y1;
             const len = Math.hypot(dx, dy) || 1;
             const dirX = dx / len;
             const dirY = dy / len;
-            const footOffsetY = target.r * 1.5;
             const forwardOffset = target.r * 0.3;
 
-            const ballStartX = a.x1 + dirX * forwardOffset;
-            const ballStartY = a.y1 + footOffsetY + dirY * forwardOffset * 0.3;
-            const ballEndX = a.x2 + dirX * forwardOffset;
-            const ballEndY = a.y2 + footOffsetY + dirY * forwardOffset * 0.3;
+            const ballStartX = a.x1 + footOffsetX + dirX * forwardOffset;
+            const ballStartY = a.y1 + footOffsetY + dirY * forwardOffset;
+            const ballEndX = a.x2 + footOffsetX + dirX * forwardOffset;
+            const ballEndY = a.y2 + footOffsetY + dirY * forwardOffset;
 
             const ballLast = ball.keyframes[ball.keyframes.length - 1];
             if (ballLast.t < timeline) {
@@ -6204,6 +6316,32 @@
       settings.lineMode = b.dataset.mode;
       saveSettings();
       updateLineModeHighlight();
+      drawBackground();
+    };
+    b.addEventListener('click', handler);
+    b.addEventListener('touchstart', handler, { passive: false });
+  });
+
+  // Pitch orientation buttons (auto / portrait / landscape)
+  function updateOrientationHighlight() {
+    document.querySelectorAll('.orientation-btn').forEach(b => {
+      const isCur = b.dataset.orientation === settings.lineOrientation;
+      b.style.background = isCur ? '#ffdd00' : 'rgba(255,255,255,0.06)';
+      b.style.color = isCur ? '#000' : '#f5f5f0';
+      b.style.borderColor = isCur ? '#ffdd00' : 'transparent';
+    });
+  }
+  updateOrientationHighlight();
+
+  document.querySelectorAll('.orientation-btn').forEach(b => {
+    const handler = (ev) => {
+      ev.stopPropagation();
+      ev.preventDefault();
+      settings.lineOrientation = b.dataset.orientation;
+      saveSettings();
+      updateOrientationHighlight();
+      // Stripes also depend on orientation, so regenerate the grass texture
+      grassCanvas = null;
       drawBackground();
     };
     b.addEventListener('click', handler);
