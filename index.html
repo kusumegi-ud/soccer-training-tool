@@ -2308,7 +2308,7 @@
   }
 
   function drawBackground() {
-    bgCtx.setTransform(1, 0, 0, 1, 0, 0);  // reset before clear
+    bgCtx.setTransform(DPR, 0, 0, DPR, 0, 0);  // reset before clear
     bgCtx.clearRect(0, 0, W, H);
     applyViewportTransform(bgCtx);
 
@@ -3372,7 +3372,7 @@
   }
 
   function drawPaths() {
-    pathCtx.setTransform(1, 0, 0, 1, 0, 0);  // reset before clear
+    pathCtx.setTransform(DPR, 0, 0, DPR, 0, 0);  // reset before clear
     pathCtx.clearRect(0, 0, W, H);
 
     // Hide arrows and movement trails during playback for cleaner motion view
@@ -3435,7 +3435,7 @@
   }
 
   function redraw() {
-    iconCtx.setTransform(1, 0, 0, 1, 0, 0);  // reset before clear
+    iconCtx.setTransform(DPR, 0, 0, DPR, 0, 0);  // reset before clear
     iconCtx.clearRect(0, 0, W, H);
     applyViewportTransform(iconCtx);
     drawPaths();
@@ -5501,11 +5501,14 @@
   // Apply the current viewport transform (zoom + pan) to a canvas context.
   // Call this RIGHT AFTER `clearRect` and BEFORE any drawing. Call
   // `resetViewportTransform(ctx)` after drawing if you need raw coords again.
+  // Note: we multiply by DPR because the canvas backing buffer uses physical
+  // pixels; without DPR the image would render at 1/DPR size on Retina screens.
   function applyViewportTransform(ctx) {
-    ctx.setTransform(ui.zoom, 0, 0, ui.zoom, ui.panX, ui.panY);
+    const s = DPR * ui.zoom;
+    ctx.setTransform(s, 0, 0, s, ui.panX * DPR, ui.panY * DPR);
   }
   function resetViewportTransform(ctx) {
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   }
 
   // Clamp pan so the pitch can't be dragged completely off-screen. The pitch
