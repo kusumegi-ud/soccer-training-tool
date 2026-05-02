@@ -514,6 +514,33 @@
     cursor: pointer;
     font-weight: 600;
   }
+  .rec-mode-group {
+    display: flex;
+    gap: 2px;
+    background: rgba(0,0,0,0.25);
+    border-radius: 10px;
+    padding: 2px;
+  }
+  .rec-mode-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.75);
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-size: 10px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .rec-mode-btn.active {
+    background: rgba(255,255,255,0.95);
+    color: #dc2626;
+  }
+  .rec-cancel.rec-done {
+    background: rgba(34, 197, 94, 0.95);
+  }
+  .rec-cancel.rec-done:hover {
+    background: rgba(22, 163, 74, 1);
+  }
 
   .arrow-banner {
     position: absolute;
@@ -1348,6 +1375,11 @@
     <div class="rec-banner" id="recBanner">
       <div class="rec-dot"></div>
       <span id="recBannerText">動かしたいアイコンをドラッグしてください</span>
+      <div class="rec-mode-group" id="recModeGroup">
+        <button class="rec-mode-btn active" id="recModeSeq" data-mode="sequential">順次</button>
+        <button class="rec-mode-btn" id="recModeSim" data-mode="simultaneous">同時</button>
+      </div>
+      <button class="rec-cancel rec-done" id="recDone" style="display:none;">完了</button>
       <button class="rec-cancel" id="recCancel">キャンセル</button>
     </div>
     <div class="arrow-banner" id="arrowBanner">
@@ -2059,6 +2091,9 @@
     recordingTargetId: null,
     recordStartTime: 0,
     recordPath: [],
+    // Multi-track recording session
+    // Each track: { targetId, kf:[{t,x,y}...], ballId?: string, ballKf?: [{t,x,y}...], duration }
+    recordSession: null,             // { tracks: [], mode: 'sequential'|'simultaneous' }
     arrowDrawing: null,
     penStroke: null,
     penColor: '#ffffff',     // current pen color
@@ -2075,6 +2110,7 @@
     dlineMoving: null,       // { id, lastX, lastY } — dragging the whole line to move it
     selectedDlineId: null,   // id of currently selected drawing line (shows handles)
     playing: false,
+    paused: false,           // true when manually paused mid-playback (annotation mode)
     playStart: 0,
     playTime: 0,
     speed: 1,
@@ -3129,7 +3165,16 @@
 
   function setTool(name) {
     if (name === 'record') {
-      if (ui.recording) { cancelRecording(); return; }
+      if (ui.recording) {
+        // Re-pressing the record button while recording finishes the session.
+        // If at least one track is recorded, commit them. Otherwise cancel.
+        if (ui.recordSession && ui.recordSession.tracks.length > 0) {
+          endRecordingSession();
+        } else {
+          cancelRecording();
+        }
+        return;
+      }
       if (scene().objects.length === 0) {
         showHint('先にアイコンを配置してください');
         return;
@@ -3233,7 +3278,15 @@
       const gname = b.dataset.tool.replace('select-group-', '');
       b.classList.toggle('active', groupName === gname);
     });
-    if (ui.recording) cancelRecording();
+    if (ui.recording) {
+      // Switching to a different tool ends the recording session.
+      // Commit any tracks recorded so far; if none, just cancel.
+      if (ui.recordSession && ui.recordSession.tracks.length > 0) {
+        endRecordingSession();
+      } else {
+        cancelRecording();
+      }
+    }
   }
 
   document.querySelectorAll('.tool').forEach(b => {
@@ -3669,6 +3722,11 @@
         o.y = o.keyframes[0].y;
       }
     });
+
+    // Animation was rebuilt — clear any "paused at time T" state so the next
+    // play() press starts from the beginning instead of mid-timeline.
+    ui.playTime = 0;
+    ui.paused = false;
   }
 
   // Find ball that's near a point at a given time (uses last known position from keyframes)
@@ -4774,6 +4832,20 @@
     e.preventDefault();
     const { x, y } = getPos(e);
     if (ui.playing) return;
+    // While paused (mid-playback), only allow non-destructive annotation tools:
+    //   pen / text / dline-* / line.
+    // Block arrow tools (would alter player keyframes), object placement,
+    // free dragging in select mode, and recording.
+    if (ui.paused) {
+      const t = ui.tool;
+      const annotationOk =
+        t === 'pen' || t === 'text' || t === 'line' ||
+        t === 'dline-straight' || t === 'dline-curve' || t === 'dline-zigzag';
+      if (!annotationOk) {
+        showHint('一時停止中はペン・テキスト・ライン・説明線のみ使えます');
+        return;
+      }
+    }
 
     // Close any open picker when tapping on the canvas
     if (facingPicker.style.display !== 'none') hideFacingPicker();
@@ -4822,8 +4894,8 @@
         }
 
         updateRecBanner(ui.recordingBallId
-          ? '録画中... 選手とボールを一緒に動かします'
-          : '録画中... 指/マウスを離すと完了');
+          ? '録画中... 選手+ボール'
+          : '録画中... 離すと完了');
         redraw();
       } else {
         showHint('動かしたいアイコンを直接ドラッグしてください');
@@ -5570,63 +5642,187 @@
     ui.recording = true;
     ui.recordingTargetId = null;
     ui.tool = 'select';
+    // Snapshot every object's keyframes so we can restore them if the user cancels.
+    // (Each pointerDown during recording resets the touched object's keyframes,
+    // so without this snapshot a cancel would lose pre-existing motion data.)
+    const snapshot = {};
+    scene().objects.forEach(o => {
+      if (o.keyframes) snapshot[o.id] = o.keyframes.map(k => ({ ...k }));
+    });
+    // Start a fresh multi-track session
+    ui.recordSession = { tracks: [], mode: 'sequential', snapshot };
     document.querySelectorAll('.tool').forEach(b => {
       b.classList.toggle('active', b.dataset.tool === 'record');
     });
-    updateRecBanner('動かしたいアイコンをドラッグしてください');
+    // Sync mode-button visual state
+    updateRecModeButtons();
+    updateRecBanner('選手をドラッグして録画');
+    // Hide "完了" until at least one track recorded
+    document.getElementById('recDone').style.display = 'none';
     showRecBanner(true);
     showArrowBanner(false);
     redraw();
   }
+
+  // Sync the active state of the seq/sim mode buttons with the current session.
+  function updateRecModeButtons() {
+    const mode = (ui.recordSession && ui.recordSession.mode) || 'sequential';
+    const seq = document.getElementById('recModeSeq');
+    const sim = document.getElementById('recModeSim');
+    if (seq) seq.classList.toggle('active', mode === 'sequential');
+    if (sim) sim.classList.toggle('active', mode === 'simultaneous');
+  }
+
+  // Cancel the entire session — discard everything recorded so far and
+  // restore each touched object to its pre-recording keyframes.
   function cancelRecording() {
+    if (ui.recordSession && ui.recordSession.snapshot) {
+      const snap = ui.recordSession.snapshot;
+      scene().objects.forEach(o => {
+        if (snap[o.id]) {
+          o.keyframes = snap[o.id].map(k => ({ ...k }));
+          // Also reset visual position to the first keyframe
+          if (o.keyframes[0]) { o.x = o.keyframes[0].x; o.y = o.keyframes[0].y; }
+        }
+      });
+    }
     ui.recording = false;
     ui.recordingTargetId = null;
     ui.recordPath = [];
     ui.recordingBallId = null;
     ui.recordBallPath = null;
     ui.recordBallOffset = null;
+    ui.recordSession = null;
     showRecBanner(false);
+    document.getElementById('recDone').style.display = 'none';
     document.querySelectorAll('.tool').forEach(b => {
       b.classList.toggle('active', b.dataset.tool === 'select');
     });
     redraw();
   }
+
+  // Finish recording the CURRENT track (one player drag) and stash it in the
+  // active session so the user can record more players. Does NOT exit the
+  // recording mode — the user keeps recording until they press 完了 or キャンセル.
   function finishRecording() {
-    const target = scene().objects.find(o => o.id === ui.recordingTargetId);
-    if (target && ui.recordPath.length > 1) {
+    if (ui.recordPath.length > 1) {
       const simplified = [];
       for (let i = 0; i < ui.recordPath.length; i += 3) simplified.push(ui.recordPath[i]);
       const last = ui.recordPath[ui.recordPath.length - 1];
       if (simplified[simplified.length - 1] !== last) simplified.push(last);
-      target.keyframes = simplified;
-      scene().duration = Math.max(scene().duration, last.t);
 
-      // If we were recording a ball alongside the player, save its keyframes too.
+      let ballSimplified = null;
       if (ui.recordingBallId && ui.recordBallPath && ui.recordBallPath.length > 1) {
-        const ball = scene().objects.find(b => b.id === ui.recordingBallId);
-        if (ball) {
-          const ballSimplified = [];
-          for (let i = 0; i < ui.recordBallPath.length; i += 3) {
-            ballSimplified.push(ui.recordBallPath[i]);
-          }
-          const ballLast = ui.recordBallPath[ui.recordBallPath.length - 1];
-          if (ballSimplified[ballSimplified.length - 1] !== ballLast) ballSimplified.push(ballLast);
-          ball.keyframes = ballSimplified;
+        ballSimplified = [];
+        for (let i = 0; i < ui.recordBallPath.length; i += 3) {
+          ballSimplified.push(ui.recordBallPath[i]);
         }
-        showHint(`選手とボールの動きを記録しました（${last.t.toFixed(1)}秒）`);
-      } else {
-        showHint(`動きを記録しました（${last.t.toFixed(1)}秒）`);
+        const ballLast = ui.recordBallPath[ui.recordBallPath.length - 1];
+        if (ballSimplified[ballSimplified.length - 1] !== ballLast) ballSimplified.push(ballLast);
       }
+
+      // Store track in the session (replace existing track for the same target if any).
+      if (!ui.recordSession) ui.recordSession = { tracks: [], mode: 'sequential' };
+      const existingIdx = ui.recordSession.tracks.findIndex(tr => tr.targetId === ui.recordingTargetId);
+      const track = {
+        targetId: ui.recordingTargetId,
+        kf: simplified,
+        duration: last.t,
+        ballId: ui.recordingBallId || null,
+        ballKf: ballSimplified,
+      };
+      if (existingIdx >= 0) {
+        ui.recordSession.tracks[existingIdx] = track;
+      } else {
+        ui.recordSession.tracks.push(track);
+      }
+
+      const total = ui.recordSession.tracks.length;
+      const verb = (existingIdx >= 0) ? '上書き' : '追加';
+      showHint(`記録${verb}（${last.t.toFixed(1)}秒, 計${total}人）`);
+      // Show the "完了" button now that we have at least one track
+      document.getElementById('recDone').style.display = '';
+      updateRecBanner(`${total}人録画済 - 続けて or 完了`);
     } else {
       showHint('動きが短すぎます');
     }
+
+    // Reset per-drag recording state (but stay in recording mode)
     ui.recordPath = [];
     ui.recordBallPath = null;
     ui.recordingBallId = null;
     ui.recordBallOffset = null;
+    ui.recordingTargetId = null;
+    redraw();
+  }
+
+  // End the session: take all recorded tracks and merge them into the scene's
+  // keyframes according to the chosen mode (sequential vs. simultaneous).
+  function endRecordingSession() {
+    const session = ui.recordSession;
+    if (!session || session.tracks.length === 0) {
+      // Nothing recorded — same as cancel
+      cancelRecording();
+      return;
+    }
+
+    saveHistory();
+
+    if (session.mode === 'simultaneous') {
+      // All tracks share t=0 as their start. Each object's keyframes are taken as-is.
+      let maxDur = 0;
+      session.tracks.forEach(tr => {
+        const target = scene().objects.find(o => o.id === tr.targetId);
+        if (target) target.keyframes = tr.kf;
+        if (tr.ballId && tr.ballKf) {
+          const ball = scene().objects.find(b => b.id === tr.ballId);
+          if (ball) ball.keyframes = tr.ballKf;
+        }
+        if (tr.duration > maxDur) maxDur = tr.duration;
+      });
+      scene().duration = Math.max(scene().duration, maxDur);
+    } else {
+      // 'sequential': offset each track to start where the previous one ended.
+      let offset = 0;
+      session.tracks.forEach(tr => {
+        const target = scene().objects.find(o => o.id === tr.targetId);
+        if (target) {
+          // Pre-pend a holding keyframe at t=0 so the player stays at its starting
+          // position until its turn comes (only if offset > 0)
+          const shifted = tr.kf.map(k => ({ t: k.t + offset, x: k.x, y: k.y }));
+          if (offset > 0) {
+            shifted.unshift({ t: 0, x: tr.kf[0].x, y: tr.kf[0].y });
+          }
+          target.keyframes = shifted;
+        }
+        if (tr.ballId && tr.ballKf) {
+          const ball = scene().objects.find(b => b.id === tr.ballId);
+          if (ball) {
+            const shifted = tr.ballKf.map(k => ({ t: k.t + offset, x: k.x, y: k.y }));
+            if (offset > 0) {
+              shifted.unshift({ t: 0, x: tr.ballKf[0].x, y: tr.ballKf[0].y });
+            }
+            ball.keyframes = shifted;
+          }
+        }
+        offset += tr.duration;
+      });
+      scene().duration = Math.max(scene().duration, offset);
+    }
+
+    const modeLabel = (session.mode === 'simultaneous') ? '同時' : '順次';
+    showHint(`${session.tracks.length}人の動きを記録しました（${modeLabel}再生）`);
+
+    // Tear down recording state
     ui.recording = false;
     ui.recordingTargetId = null;
+    ui.recordPath = [];
+    ui.recordBallPath = null;
+    ui.recordingBallId = null;
+    ui.recordBallOffset = null;
+    ui.recordSession = null;
     showRecBanner(false);
+    document.getElementById('recDone').style.display = 'none';
     document.querySelectorAll('.tool').forEach(b => {
       b.classList.toggle('active', b.dataset.tool === 'select');
     });
@@ -5639,6 +5835,17 @@
     document.getElementById('recBannerText').textContent = text;
   }
   document.getElementById('recCancel').addEventListener('click', cancelRecording);
+  document.getElementById('recDone').addEventListener('click', endRecordingSession);
+  // Mode toggle: 順次 / 同時
+  ['recModeSeq', 'recModeSim'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+      if (!ui.recordSession) return;
+      ui.recordSession.mode = btn.dataset.mode;  // 'sequential' or 'simultaneous'
+      updateRecModeButtons();
+    });
+  });
   document.getElementById('arrowCancel').addEventListener('click', () => setTool('select'));
 
   // Pen color palette
@@ -5957,17 +6164,29 @@
       return;
     }
     ui.playing = true;
+    ui.paused = false;
     ui.playStart = performance.now() - (ui.playTime / ui.speed) * 1000;
     document.getElementById('playIcon').innerHTML = '<rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/>';
     // Clear arrows/trails immediately when playback starts
     pathCtx.clearRect(0, 0, W, H);
     requestAnimationFrame(playLoop);
   }
+  // Manually pause (mid-playback). User can annotate with pen/text/dlines/etc., then resume.
   function pause() {
     ui.playing = false;
     ui.playAll = false;
+    ui.paused = true;
     document.getElementById('playIcon').innerHTML = '<polygon points="6 4 20 12 6 20 6 4"/>';
     // Redraw paths now that playback stopped (so arrows reappear)
+    drawPaths();
+  }
+  // Stop playback because the timeline finished. Not a "pause" — leave paused=false
+  // so the next play() call rewinds to the start.
+  function stopPlayback() {
+    ui.playing = false;
+    ui.playAll = false;
+    ui.paused = false;
+    document.getElementById('playIcon').innerHTML = '<polygon points="6 4 20 12 6 20 6 4"/>';
     drawPaths();
   }
   function playLoop(now) {
@@ -5986,7 +6205,7 @@
         if (ui.playing) requestAnimationFrame(playLoop);
         return;
       }
-      pause();
+      stopPlayback();
     }
     applyTime(ui.playTime);
     redraw();
@@ -5997,16 +6216,21 @@
     if (ui.playing) pause();
     else {
       ui.playAll = false;
-      if (ui.playTime >= scene().duration) ui.playTime = 0;
-      scene().objects.forEach(o => {
-        if (o.keyframes && o.keyframes[0]) { o.x = o.keyframes[0].x; o.y = o.keyframes[0].y; }
-      });
+      // If paused mid-playback, resume from current playTime so users can
+      // pause -> annotate (pen/text/dlines/lines) -> continue.
+      // Otherwise (fresh start or after playback ended), rewind to the beginning.
+      if (!ui.paused) {
+        ui.playTime = 0;
+        scene().objects.forEach(o => {
+          if (o.keyframes && o.keyframes[0]) { o.x = o.keyframes[0].x; o.y = o.keyframes[0].y; }
+        });
+      }
       play();
     }
   });
 
   document.getElementById('playAllBtn').addEventListener('click', () => {
-    pause();
+    stopPlayback();
     ui.playAll = true;
     ui.playAllSceneIdx = 0;
     switchScene(0, true);
@@ -6024,6 +6248,9 @@
     ui.playTime = scene().duration * ratio;
     applyTime(ui.playTime);
     redraw();
+    // Mark as "paused at this time" so pressing play resumes from the seek
+    // position instead of rewinding to the start.
+    if (!ui.playing) ui.paused = (ui.playTime > 0 && ui.playTime < scene().duration);
   });
 
   document.querySelectorAll('.speed-btn').forEach(b => {
@@ -6058,7 +6285,7 @@
     return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
   }
   function switchScene(idx, keepPlay = false) {
-    if (!keepPlay) pause();
+    if (!keepPlay) stopPlayback();
     project.activeIdx = idx;
     ui.selectedId = null;
     ui.playTime = 0;
@@ -6071,7 +6298,7 @@
     redraw();
   }
   function addScene() {
-    pause();
+    stopPlayback();
     saveHistory();
     project.scenes.push({
       name: `シーン ${project.scenes.length + 1}`,
