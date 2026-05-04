@@ -1915,7 +1915,8 @@
         <div style="font-size: 10px; color: #a0a89c; padding: 10px 4px 4px; letter-spacing: 0.05em;">
           ポジション
         </div>
-        <div style="display: flex; gap: 3px; flex-wrap: wrap;">
+        <!-- Soccer (11-a-side) positions -->
+        <div class="position-set" data-pitch="flat" style="display: flex; gap: 3px; flex-wrap: wrap;">
           <button class="position-btn" data-position=""   style="min-width:34px;height:26px;border-radius:5px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:10px;font-weight:700;padding:0 6px;">なし</button>
           <button class="position-btn" data-position="GK" style="min-width:34px;height:26px;border-radius:5px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:10px;font-weight:700;padding:0 6px;">GK</button>
           <button class="position-btn" data-position="CB" style="min-width:34px;height:26px;border-radius:5px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:10px;font-weight:700;padding:0 6px;">CB</button>
@@ -1926,6 +1927,14 @@
           <button class="position-btn" data-position="SH" style="min-width:34px;height:26px;border-radius:5px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:10px;font-weight:700;padding:0 6px;">SH</button>
           <button class="position-btn" data-position="WG" style="min-width:34px;height:26px;border-radius:5px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:10px;font-weight:700;padding:0 6px;">WG</button>
           <button class="position-btn" data-position="CF" style="min-width:34px;height:26px;border-radius:5px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:10px;font-weight:700;padding:0 6px;">CF</button>
+        </div>
+        <!-- Futsal positions -->
+        <div class="position-set" data-pitch="futsal" style="display: none; gap: 3px; flex-wrap: wrap;">
+          <button class="position-btn" data-position=""   style="min-width:34px;height:26px;border-radius:5px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:10px;font-weight:700;padding:0 6px;">なし</button>
+          <button class="position-btn" data-position="GK" style="min-width:34px;height:26px;border-radius:5px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:10px;font-weight:700;padding:0 6px;">GK</button>
+          <button class="position-btn" data-position="FX" style="min-width:34px;height:26px;border-radius:5px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:10px;font-weight:700;padding:0 6px;">FX</button>
+          <button class="position-btn" data-position="AL" style="min-width:34px;height:26px;border-radius:5px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:10px;font-weight:700;padding:0 6px;">AL</button>
+          <button class="position-btn" data-position="PV" style="min-width:34px;height:26px;border-radius:5px;border:1px solid transparent;background:rgba(255,255,255,0.08);color:#f5f5f0;cursor:pointer;font-size:10px;font-weight:700;padding:0 6px;">PV</button>
         </div>
       </div>
       <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 10px 4px 4px;">
@@ -5138,8 +5147,17 @@
     if (positionSection) {
       positionSection.style.display = isCoach ? 'none' : 'block';
       if (!isCoach) {
+        // Show only the position set matching the current pitch view
+        // (soccer = 'flat', futsal = 'futsal'). Hide the other set.
+        const activePitch = (settings.pitchView === 'futsal') ? 'futsal' : 'flat';
+        document.querySelectorAll('#facingPickerPositionSection .position-set').forEach(set => {
+          set.style.display = (set.dataset.pitch === activePitch) ? 'flex' : 'none';
+        });
+        // Highlight the selected position only among the visible buttons
         const curPos = player.position || '';
-        document.querySelectorAll('.position-btn').forEach(b => {
+        document.querySelectorAll(
+          `#facingPickerPositionSection .position-set[data-pitch="${activePitch}"] .position-btn`
+        ).forEach(b => {
           const isCur = b.dataset.position === curPos;
           b.style.background = isCur ? '#ffdd00' : 'rgba(255,255,255,0.08)';
           b.style.color = isCur ? '#000' : '#f5f5f0';
@@ -5251,8 +5269,12 @@
       } else {
         delete p.position;
       }
-      // Update highlight
-      document.querySelectorAll('.position-btn').forEach(b => {
+      // Update highlight only within the visible position set (the
+      // current pitch's buttons). Buttons in the hidden set are skipped.
+      const activePitch = (settings.pitchView === 'futsal') ? 'futsal' : 'flat';
+      document.querySelectorAll(
+        `#facingPickerPositionSection .position-set[data-pitch="${activePitch}"] .position-btn`
+      ).forEach(b => {
         const isCur = b.dataset.position === (p.position || '');
         b.style.background = isCur ? '#ffdd00' : 'rgba(255,255,255,0.08)';
         b.style.color = isCur ? '#000' : '#f5f5f0';
