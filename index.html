@@ -1737,6 +1737,20 @@
         動かす対象
       </div>
       <div id="orderPickerTargets" style="display: flex; flex-wrap: wrap; gap: 4px; padding: 0 2px;"></div>
+      <div style="height: 1px; background: rgba(255,221,0,0.15); margin: 8px 2px;"></div>
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 6px 4px;">
+        <span style="font-size: 10px; color: #a0a89c; letter-spacing: 0.05em;">速さ</span>
+        <span id="orderPickerSpeedLabel" style="font-size: 11px; color: #ffdd00; font-weight: 600;">標準</span>
+      </div>
+      <input type="range" id="orderPickerSpeedSlider" min="20" max="200" value="100" step="5" style="
+        width: 100%;
+        accent-color: #ffdd00;
+        cursor: pointer;
+      ">
+      <div style="display: flex; justify-content: space-between; padding: 0 6px; font-size: 9px; color: #6b7368; margin-top: -2px;">
+        <span>遅い</span>
+        <span>速い</span>
+      </div>
       <button id="orderPickerDelete" style="
         width: 100%;
         margin-top: 10px;
@@ -4562,6 +4576,21 @@
     redraw();
   }
 
+  // Default speed (px/sec) per arrow type
+  function arrowDefaultSpeed(type) {
+    if (type === 'arrow-shoot') return 600;
+    if (type === 'arrow-pass') return 400;
+    if (type === 'arrow-move') return 200;
+    return 180;  // dribble
+  }
+
+  // Compute moveDuration from arrow's current x1/y1/x2/y2 and speedFactor
+  function computeArrowDuration(a) {
+    const dist = Math.hypot(a.x2 - a.x1, a.y2 - a.y1);
+    const speed = arrowDefaultSpeed(a.type) * (a.speedFactor || 1);
+    return Math.max(0.2, dist / speed);
+  }
+
   function createArrow(type, x1, y1, x2, y2) {
     const dist = Math.hypot(x2 - x1, y2 - y1);
     if (dist < 15) return;
@@ -4570,14 +4599,8 @@
     // Auto-match: find the nearest target object to the start point
     const target = findNearestTarget(type, x1, y1);
 
-    // Determine animation duration based on arrow type and distance
-    let speed;
-    if (type === 'arrow-shoot') speed = 600;
-    else if (type === 'arrow-pass') speed = 400;
-    else if (type === 'arrow-move') speed = 200;     // similar to dribble but no ball
-    else speed = 180;                                 // dribble
-
-    const moveDuration = Math.max(0.4, dist / speed);
+    const speedFactor = 1.0;  // 標準速度で開始
+    const moveDuration = Math.max(0.2, dist / arrowDefaultSpeed(type));
 
     // Default order = (max existing order) + 1, so it plays AFTER previous arrows
     const maxOrder = scene().arrows.reduce((m, a) => Math.max(m, a.order), -1);
@@ -4589,6 +4612,7 @@
       order,
       targetId: target ? target.id : null,
       moveDuration,
+      speedFactor,
     });
 
     rebuildAnimation();
@@ -5320,6 +5344,23 @@
       targetsDiv.appendChild(btn);
     });
 
+    // ----- Speed slider -----
+    const speedSlider = document.getElementById('orderPickerSpeedSlider');
+    const speedLabel = document.getElementById('orderPickerSpeedLabel');
+    if (speedSlider) {
+      const factor = arrow.speedFactor || 1.0;
+      speedSlider.value = Math.round(factor * 100);
+      // ラベル更新
+      const updateSpeedLabel = (v) => {
+        if (v < 60) speedLabel.textContent = 'ゆっくり';
+        else if (v < 90) speedLabel.textContent = 'やや遅い';
+        else if (v <= 110) speedLabel.textContent = '標準';
+        else if (v <= 140) speedLabel.textContent = 'やや速い';
+        else speedLabel.textContent = '速い';
+      };
+      updateSpeedLabel(speedSlider.value);
+    }
+
     // ----- Position the picker -----
     const wrapRect = fieldWrap.getBoundingClientRect();
     picker.style.display = 'block';
@@ -5354,6 +5395,46 @@
     hideOrderPicker();
     deleteArrow(id);
   });
+
+  // 速度スライダー
+  (function setupSpeedSlider() {
+    const slider = document.getElementById('orderPickerSpeedSlider');
+    const label = document.getElementById('orderPickerSpeedLabel');
+    if (!slider) return;
+    let savedHistoryThisDrag = false;
+    const updateLabel = (v) => {
+      if (v < 60) label.textContent = 'ゆっくり';
+      else if (v < 90) label.textContent = 'やや遅い';
+      else if (v <= 110) label.textContent = '標準';
+      else if (v <= 140) label.textContent = 'やや速い';
+      else label.textContent = '速い';
+    };
+    slider.addEventListener('input', (ev) => {
+      ev.stopPropagation();
+      if (!orderPickerArrowId) return;
+      const a = scene().arrows.find(x => x.id === orderPickerArrowId);
+      if (!a) return;
+      if (!savedHistoryThisDrag) {
+        saveHistory();
+        savedHistoryThisDrag = true;
+      }
+      const v = parseInt(slider.value, 10);
+      a.speedFactor = v / 100;
+      a.moveDuration = computeArrowDuration(a);
+      updateLabel(v);
+      rebuildAnimation();
+      redraw();
+    });
+    // ドラッグ終わりでフラグリセット
+    const reset = () => { savedHistoryThisDrag = false; };
+    slider.addEventListener('change', reset);
+    slider.addEventListener('pointerup', reset);
+    slider.addEventListener('touchend', reset);
+    // pickerを閉じた時にもリセット
+    ['click', 'pointerdown'].forEach(evtName => {
+      slider.addEventListener(evtName, e => e.stopPropagation());
+    });
+  })();
 
   // ---------- Facing picker (player body direction) ----------
   let facingPickerPlayerId = null;
@@ -7081,14 +7162,8 @@
             const newTarget = findNearestTarget(a.type, a.x1, a.y1);
             if (newTarget) a.targetId = newTarget.id;
           }
-          // 距離変更で moveDuration も更新(矢印タイプの speed に合わせる)
-          const dist = Math.hypot(a.x2 - a.x1, a.y2 - a.y1);
-          let speed;
-          if (a.type === 'arrow-shoot') speed = 600;
-          else if (a.type === 'arrow-pass') speed = 400;
-          else if (a.type === 'arrow-move') speed = 200;
-          else speed = 180;
-          a.moveDuration = Math.max(0.4, dist / speed);
+          // 距離変更で moveDuration も更新(矢印タイプの speed × speedFactor で再計算)
+          a.moveDuration = computeArrowDuration(a);
         }
         rebuildAnimation();
         redraw();
