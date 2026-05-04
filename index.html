@@ -947,6 +947,31 @@
           ">なし</button>
         </div>
       </div>
+      <div id="halfFlipPanel" style="padding: 8px 0; font-size: 13px; display: none;">
+        <div style="margin-bottom: 6px; color: #c8d0c0;">ハーフコートの向き</div>
+        <div style="display: flex; gap: 4px;">
+          <button class="half-flip-btn" data-flip="false" style="
+            flex: 1; padding: 8px 4px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            background: rgba(255,255,255,0.06);
+            color: #f5f5f0;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+          ">通常</button>
+          <button class="half-flip-btn" data-flip="true" style="
+            flex: 1; padding: 8px 4px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            background: rgba(255,255,255,0.06);
+            color: #f5f5f0;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+          ">反転</button>
+        </div>
+      </div>
       <div style="padding: 8px 0; font-size: 13px;">
         <div style="margin-bottom: 6px; color: #c8d0c0;">ピッチの見た目</div>
         <div style="display: flex; gap: 4px;">
@@ -1025,9 +1050,9 @@
           font-weight: 600;
           position: relative;
           z-index: 10;
-        ">既存の選手すべてに適用</button>
+        ">既存の選手・ボールすべてに適用</button>
         <div style="font-size: 10px; color: #a0a89c; padding: 4px 0 0; line-height: 1.4;">
-          スライダーは新規選手のデフォルト。既存選手にも反映するにはボタンを押す。
+          スライダーは新規選手のデフォルト。既存の選手・ボールにも反映するにはボタンを押す(ボールは選手の半分のサイズで連動)。
         </div>
       </div>
     </div>
@@ -1036,19 +1061,19 @@
   <div class="menu" id="menu">
     <div class="menu-item" data-action="renameScene">
       <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-      シーン名を変更
+      メニュー名を変更
     </div>
     <div class="menu-item" data-action="duplicateScene">
       <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-      シーンを複製
+      メニューを複製
     </div>
     <div class="menu-item" data-action="deleteScene">
       <svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-      シーンを削除
+      メニューを削除
     </div>
     <div class="menu-item" data-action="clearScene">
       <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-7"/><path d="M21 4v5h-5"/></svg>
-      シーンをクリア
+      メニューをクリア
     </div>
     <div class="menu-item" data-action="save">
       <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2zM17 21v-8H7v8M7 3v5h8"/></svg>
@@ -2014,7 +2039,7 @@
         <div class="timeline-fill" id="timelineFill"></div>
       </div>
     </div>
-    <button class="play-all-btn" id="playAllBtn" title="全シーン連続再生">▶ 全再生</button>
+    <button class="play-all-btn" id="playAllBtn" title="すべて連続再生">▶ 全再生</button>
     <div class="speed-toggle">
       <button class="speed-btn" data-speed="0.5">0.5x</button>
       <button class="speed-btn active" data-speed="1">1x</button>
@@ -2025,7 +2050,7 @@
 
 <div class="modal-bg" id="modalBg">
   <div class="modal">
-    <h3 id="modalTitle">シーン名を入力</h3>
+    <h3 id="modalTitle">メニュー名を入力</h3>
     <input type="text" id="modalInput" placeholder="例: ドリブル開始">
     <div class="modal-actions">
       <button class="modal-btn secondary" id="modalCancel">キャンセル</button>
@@ -2123,7 +2148,7 @@
 
   const project = {
     scenes: [
-      { name: 'シーン 1', objects: [], arrows: [], drawings: [], lines: [], drawingLines: [], duration: 0 }
+      { name: 'メニュー 1', objects: [], arrows: [], drawings: [], lines: [], drawingLines: [], duration: 0 }
     ],
     activeIdx: 0,
     counters: { blue: 0, red: 0, yellow: 0 },
@@ -2146,6 +2171,7 @@
     // Each track: { targetId, kf:[{t,x,y}...], ballId?: string, ballKf?: [{t,x,y}...], duration }
     recordSession: null,             // { tracks: [], mode: 'sequential'|'simultaneous' }
     arrowDrawing: null,
+    arrowEditing: null,      // { id, part: 'start'|'end'|'middle', startX, startY, baseX1, baseY1, baseX2, baseY2, moved }
     penStroke: null,
     penColor: '#ffffff',     // current pen color
     coneColor: '#ff7a2a',    // current cone color (for new cones)
@@ -2174,12 +2200,14 @@
     _lastTapId: null,
     playAll: false,
     playAllSceneIdx: 0,
+    clipboard: null,         // { kind: 'object'|'dline', data: deep-cloned data }
   };
 
   // App-wide settings (saved to localStorage)
   const settings = {
     lineMode: 'full',
     lineOrientation: 'auto',  // 'auto' | 'portrait' | 'landscape'
+    halfFlip: false,          // ハーフコート時のゴール側を反転(true=ゴール下/右、false=ゴール上/左)
     pitchView: 'flat',        // 'flat' (soccer) | 'futsal'
     showStripes: true,
     showPositions: false,     // when true, show position labels above players
@@ -2440,83 +2468,115 @@
     }
 
     if (settings.lineMode === 'half') {
+      const flip = !!settings.halfFlip;
       if (halfPortrait) {
         // ===== HALF COURT (portrait/vertical) =====
-        // pitchAspect = 52.5/68 = 0.77 (taller-than-wide).
-        // Screen X-axis represents the half-court's 52.5m DEPTH,
-        // screen Y-axis represents the pitch's 68m WIDTH.
-        // Goal line at TOP of the screen, halfway line at BOTTOM.
-        // ⇒ Penalty area is drawn at the top: width = pW × 16.5/52.5 (depth),
-        //   height = pH × 40.32/68 (lateral width).
+        // Normal: Goal line at TOP, halfway line at BOTTOM.
+        // Flipped: Goal line at BOTTOM, halfway line at TOP.
         bgCtx.strokeRect(pX, pY, pW, pH);
 
-        // Center circle: half visible at the bottom edge (the halfway line).
-        // Radius 9.15m, scaled against pitch width pH = 68m axis.
+        // Center circle at the halfway line (top if flipped, bottom otherwise)
         const cr = pH * 0.135 * MARK_SCALE;
         bgCtx.beginPath();
-        bgCtx.arc(pCX, pY + pH, cr, Math.PI, 2 * Math.PI);
+        if (flip) {
+          // halfway line at top → arc bulges downward (0 to PI)
+          bgCtx.arc(pCX, pY, cr, 0, Math.PI);
+        } else {
+          // halfway line at bottom → arc bulges upward (PI to 2PI)
+          bgCtx.arc(pCX, pY + pH, cr, Math.PI, 2 * Math.PI);
+        }
         bgCtx.stroke();
 
+        // Goal-side Y coordinate
+        const goalY = flip ? pY + pH : pY;
+        // Inward direction multiplier (penalty area extends from goal line toward halfway line)
+        const inwardSign = flip ? -1 : 1;
+
         if (isFutsal) {
-          // (Futsal portrait half-court is handled by drawFutsalPitch above)
+          // Penalty arc on the goal line
           const par = pW * (16.5 / 52.5) * MARK_SCALE;
           bgCtx.beginPath();
-          bgCtx.arc(pCX, pY, par, 0, Math.PI);
+          if (flip) {
+            // Goal line at bottom → arc bulges upward (PI to 2PI)
+            bgCtx.arc(pCX, goalY, par, Math.PI, 2 * Math.PI);
+          } else {
+            // Goal line at top → arc bulges downward (0 to PI)
+            bgCtx.arc(pCX, goalY, par, 0, Math.PI);
+          }
           bgCtx.stroke();
           const gar = par * 0.45;
           bgCtx.beginPath();
-          bgCtx.arc(pCX, pY, gar, 0, Math.PI);
+          if (flip) {
+            bgCtx.arc(pCX, goalY, gar, Math.PI, 2 * Math.PI);
+          } else {
+            bgCtx.arc(pCX, goalY, gar, 0, Math.PI);
+          }
           bgCtx.stroke();
         } else {
-          // Penalty area:
-          //   horizontal extent (along screen X = depth axis) = 16.5m → pW * 16.5/52.5
-          //   vertical extent (along screen Y = width axis)   = 40.32m → pH * 40.32/68
+          // Penalty area
           const pbDeep = pW * (16.5 / 52.5) * MARK_SCALE;
           const pbWide = pH * (40.32 / 68) * MARK_SCALE;
-          bgCtx.strokeRect(pCX - pbWide/2, pY, pbWide, pbDeep);
+          const pbY = flip ? (goalY - pbDeep) : goalY;
+          bgCtx.strokeRect(pCX - pbWide/2, pbY, pbWide, pbDeep);
 
-          // Goal area:
-          //   horizontal extent =  5.5m → pW * 5.5/52.5
-          //   vertical extent   = 18.32m → pH * 18.32/68
+          // Goal area
           const gaDeep = pW * (5.5 / 52.5) * MARK_SCALE;
           const gaWide = pH * (18.32 / 68) * MARK_SCALE;
-          bgCtx.strokeRect(pCX - gaWide/2, pY, gaWide, gaDeep);
+          const gaY = flip ? (goalY - gaDeep) : goalY;
+          bgCtx.strokeRect(pCX - gaWide/2, gaY, gaWide, gaDeep);
         }
       } else {
         // ===== HALF COURT (landscape) =====
-        // pitchAspect = 68/52.5 ≈ 1.30 → pW > pH (wider-than-tall)
-        // Goal end on the LEFT, halfway line on the RIGHT.
-        // Long axis of pitch (68m) maps to pH; deep direction (52.5m) maps to pW.
+        // Normal: Goal end on the LEFT, halfway line on the RIGHT.
+        // Flipped: Goal end on the RIGHT, halfway line on the LEFT.
         bgCtx.strokeRect(pX, pY, pW, pH);
 
-        // Center circle: half visible at the right edge (the halfway line)
-        // Radius 9.15m → use pH (which represents 68m) for the scaling
+        // Center circle at halfway line
         const cr = pH * 0.135 * MARK_SCALE;
         bgCtx.beginPath();
-        bgCtx.arc(pX + pW, pCY, cr, Math.PI / 2, (3 * Math.PI) / 2);
+        if (flip) {
+          // halfway line at left → arc bulges rightward (-PI/2 to PI/2)
+          bgCtx.arc(pX, pCY, cr, -Math.PI / 2, Math.PI / 2);
+        } else {
+          // halfway line at right → arc bulges leftward (PI/2 to 3PI/2)
+          bgCtx.arc(pX + pW, pCY, cr, Math.PI / 2, (3 * Math.PI) / 2);
+        }
         bgCtx.stroke();
 
+        // Goal-side X coordinate
+        const goalX = flip ? pX + pW : pX;
+
         if (isFutsal) {
-          // Half-circle penalty arc on the left goal line, bulging right
           const par = pW * (16.5 / 52.5) * MARK_SCALE;
           bgCtx.beginPath();
-          bgCtx.arc(pX, pCY, par, -Math.PI / 2, Math.PI / 2);
+          if (flip) {
+            // Goal line at right → arc bulges leftward (PI/2 to 3PI/2)
+            bgCtx.arc(goalX, pCY, par, Math.PI / 2, (3 * Math.PI) / 2);
+          } else {
+            // Goal line at left → arc bulges rightward (-PI/2 to PI/2)
+            bgCtx.arc(goalX, pCY, par, -Math.PI / 2, Math.PI / 2);
+          }
           bgCtx.stroke();
-          // Smaller goal arc
           const gar = par * 0.45;
           bgCtx.beginPath();
-          bgCtx.arc(pX, pCY, gar, -Math.PI / 2, Math.PI / 2);
+          if (flip) {
+            bgCtx.arc(goalX, pCY, gar, Math.PI / 2, (3 * Math.PI) / 2);
+          } else {
+            bgCtx.arc(goalX, pCY, gar, -Math.PI / 2, Math.PI / 2);
+          }
           bgCtx.stroke();
         } else {
-          // Penalty area: 16.5m deep (along pW axis) × 40.32m wide (along pH axis)
+          // Penalty area
           const pbW = pW * (16.5 / 52.5) * MARK_SCALE;
           const pbH = pH * (40.32 / 68) * MARK_SCALE;
-          bgCtx.strokeRect(pX, pCY - pbH/2, pbW, pbH);
+          const pbX = flip ? (goalX - pbW) : goalX;
+          bgCtx.strokeRect(pbX, pCY - pbH/2, pbW, pbH);
 
-          // Goal area: 5.5m × 18.32m
+          // Goal area
           const gaW = pW * (5.5 / 52.5) * MARK_SCALE;
           const gaH = pH * (18.32 / 68) * MARK_SCALE;
-          bgCtx.strokeRect(pX, pCY - gaH/2, gaW, gaH);
+          const gaX = flip ? (goalX - gaW) : goalX;
+          bgCtx.strokeRect(gaX, pCY - gaH/2, gaW, gaH);
         }
       }
     } else {
@@ -2852,9 +2912,14 @@
     };
 
     if (isHalf) {
-      // Half-court: only one goal end. The goal end is opposite to the halfway line.
-      if (isLandscape) drawGoalEnd('left');
-      else drawGoalEnd('top');
+      // Half-court: only one goal end. Default end depends on halfPortrait,
+      // halfFlip flips it to the opposite side.
+      const flip = !!settings.halfFlip;
+      if (isLandscape) {
+        drawGoalEnd(flip ? 'right' : 'left');
+      } else {
+        drawGoalEnd(flip ? 'bottom' : 'top');
+      }
     } else {
       if (isLandscape) { drawGoalEnd('left'); drawGoalEnd('right'); }
       else { drawGoalEnd('top'); drawGoalEnd('bottom'); }
@@ -3637,6 +3702,31 @@
       ctx.fillText(String(a.order + 1), badgeX, badgeY + 0.5);
     }
 
+    // 端点ハンドル: select ツール選択中、かつ録画/再生中ではない時のみ表示
+    // (動かしているアニメーションを邪魔しないため)
+    if (typeof a.order === 'number' &&
+        ui.tool === 'select' &&
+        !ui.recording && !ui.playing && !ui.playAll) {
+      ctx.save();
+      ctx.shadowColor = 'transparent';
+      ctx.fillStyle = '#fff';
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      // 始点ハンドル
+      ctx.beginPath();
+      ctx.arc(a.x1, a.y1, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      // 終点ハンドル(矢印先端の少し手前)
+      const handleX = a.x2 - Math.cos(ang) * headSize * 0.4;
+      const handleY = a.y2 - Math.sin(ang) * headSize * 0.4;
+      ctx.beginPath();
+      ctx.arc(handleX, handleY, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+
     ctx.restore();
   }
 
@@ -4386,7 +4476,7 @@
     else if (type === 'player-pink')   { o.color = '#ec4899'; o.number = nextPlayerNumber('player-pink');   o.r = baseR; o.facing = 'front'; }
     else if (type === 'coach')         { o.color = '#16a34a'; o.r = baseR; o.facing = 'front'; }
     else if (type === 'cone')   { o.r = 14; o.color = ui.coneColor; }
-    else if (type === 'ball')   { o.r = 12; o.color = '#ffffff'; }
+    else if (type === 'ball')   { o.r = Math.max(8, Math.round(baseR * 0.65)); o.color = '#ffffff'; }
     else if (type === 'goal')   { o.r = 28; o.facing = 'down'; o.size = 'medium'; }
     else if (type === 'area-triangle' || type === 'area-rectangle' ||
              type === 'area-pentagon' || type === 'area-hexagon' ||
@@ -4530,7 +4620,7 @@
     let best = null;
     let bestDist = Infinity;
     scene().objects.forEach(o => {
-      const isPlayer = o.type.startsWith('player');
+      const isPlayer = o.type.startsWith('player') || o.type === 'coach';
       const isBall = (o.type === 'ball');
       if (wantBall && !isBall) return;
       if (!wantBall && !isPlayer) return;
@@ -4968,6 +5058,36 @@
     return null;
   }
 
+  // 拡張版: どの部位(start/end/middle)にヒットしたかを返す
+  // 返り値: { arrow, part: 'start'|'end'|'middle' } | null
+  function arrowHitTestPart(x, y) {
+    const HANDLE_R = 16;  // 端点のヒット範囲(やや広め)
+    const LINE_R = 12;    // 線本体のヒット範囲
+    for (let i = scene().arrows.length - 1; i >= 0; i--) {
+      const a = scene().arrows[i];
+      // まず端点を優先判定(端点ハンドルに当たれば start/end)
+      if (Math.hypot(x - a.x1, y - a.y1) < HANDLE_R) {
+        return { arrow: a, part: 'start' };
+      }
+      if (Math.hypot(x - a.x2, y - a.y2) < HANDLE_R) {
+        return { arrow: a, part: 'end' };
+      }
+      // 線本体にヒットしたら middle
+      const A = x - a.x1, B = y - a.y1;
+      const C = a.x2 - a.x1, D = a.y2 - a.y1;
+      const dot = A*C + B*D;
+      const lenSq = C*C + D*D;
+      let param = lenSq ? dot / lenSq : -1;
+      param = Math.max(0, Math.min(1, param));
+      const xx = a.x1 + param * C;
+      const yy = a.y1 + param * D;
+      if (Math.hypot(x - xx, y - yy) < LINE_R) {
+        return { arrow: a, part: 'middle' };
+      }
+    }
+    return null;
+  }
+
   // Hit test for player-connecting lines. Endpoints are looked up by id from
   // scene().objects so they always reflect the current player positions.
   function lineHitTest(x, y) {
@@ -5129,9 +5249,9 @@
     // - pass / shoot → ball + players (allow flexibility)
     const candidates = scene().objects.filter(o => {
       if (arrow.type === 'arrow-dribble' || arrow.type === 'arrow-move') {
-        return o.type.startsWith('player');
+        return o.type.startsWith('player') || o.type === 'coach';
       }
-      return o.type === 'ball' || o.type.startsWith('player');
+      return o.type === 'ball' || o.type.startsWith('player') || o.type === 'coach';
     });
 
     if (candidates.length === 0) {
@@ -5154,6 +5274,7 @@
       else if (target.type === 'player-orange') label = `橙${target.number}`;
       else if (target.type === 'player-black') label = `黒${target.number}`;
       else if (target.type === 'player-pink') label = `桃${target.number}`;
+      else if (target.type === 'coach') label = 'C';
       else if (target.type === 'ball') label = '⚽';
 
       // Color based on target type
@@ -5167,6 +5288,7 @@
         else if (target.type === 'player-orange') { bg = '#ff7a2a'; fg = '#fff'; }
         else if (target.type === 'player-black') { bg = '#1a1a1a'; fg = '#fff'; }
         else if (target.type === 'player-pink') { bg = '#ec4899'; fg = '#fff'; }
+        else if (target.type === 'coach') { bg = '#16a34a'; fg = '#fff'; }
         else if (target.type === 'ball') { bg = '#fff'; fg = '#000'; }
       }
 
@@ -6525,9 +6647,21 @@
         lastTap = now;
         ui._lastTapId = hit.id;
       } else {
-        const arr = arrowHitTest(x, y);
-        if (arr) {
-          showOrderPicker(arr, x, y);
+        const arrHit = arrowHitTestPart(x, y);
+        if (arrHit) {
+          // ドラッグ準備状態にする(動かなかったら orderPicker)
+          ui.arrowEditing = {
+            id: arrHit.arrow.id,
+            part: arrHit.part,
+            startX: x,
+            startY: y,
+            baseX1: arrHit.arrow.x1,
+            baseY1: arrHit.arrow.y1,
+            baseX2: arrHit.arrow.x2,
+            baseY2: arrHit.arrow.y2,
+            moved: false,
+          };
+          // 履歴は実際に動いたタイミングで保存
         } else {
           // First, check if we're hitting a handle of the currently-selected drawing line
           const handleHit = dlineHandleHit(x, y);
@@ -6624,6 +6758,40 @@
       ui.arrowDrawing.x2 = x;
       ui.arrowDrawing.y2 = y;
       drawPaths();
+      return;
+    }
+
+    if (ui.arrowEditing) {
+      e.preventDefault();
+      const dx = x - ui.arrowEditing.startX;
+      const dy = y - ui.arrowEditing.startY;
+      // タップとドラッグの判定: 移動量が3px超えたらドラッグ扱い
+      if (!ui.arrowEditing.moved && Math.hypot(dx, dy) > 3) {
+        ui.arrowEditing.moved = true;
+        saveHistory();  // 動き始めたタイミングで履歴保存
+      }
+      if (ui.arrowEditing.moved) {
+        const a = scene().arrows.find(o => o.id === ui.arrowEditing.id);
+        if (a) {
+          if (ui.arrowEditing.part === 'middle') {
+            // 矢印全体を平行移動
+            a.x1 = ui.arrowEditing.baseX1 + dx;
+            a.y1 = ui.arrowEditing.baseY1 + dy;
+            a.x2 = ui.arrowEditing.baseX2 + dx;
+            a.y2 = ui.arrowEditing.baseY2 + dy;
+          } else if (ui.arrowEditing.part === 'start') {
+            // 始点だけ移動
+            a.x1 = ui.arrowEditing.baseX1 + dx;
+            a.y1 = ui.arrowEditing.baseY1 + dy;
+          } else if (ui.arrowEditing.part === 'end') {
+            // 終点だけ移動
+            a.x2 = ui.arrowEditing.baseX2 + dx;
+            a.y2 = ui.arrowEditing.baseY2 + dy;
+          }
+          // 移動中は再描画のみ。rebuildAnimation はドロップ時に。
+          drawPaths();
+        }
+      }
       return;
     }
 
@@ -6899,6 +7067,41 @@
       drawPaths();
       return;
     }
+
+    if (ui.arrowEditing) {
+      const editing = ui.arrowEditing;
+      ui.arrowEditing = null;
+      if (editing.moved) {
+        // ドラッグして動かした → アニメーションを再構築
+        const a = scene().arrows.find(o => o.id === editing.id);
+        if (a) {
+          // start を動かした場合、対象オブジェクトの再判定もしておくと自然
+          // (始点付近の選手が変わった可能性があるため)
+          if (editing.part === 'start') {
+            const newTarget = findNearestTarget(a.type, a.x1, a.y1);
+            if (newTarget) a.targetId = newTarget.id;
+          }
+          // 距離変更で moveDuration も更新(矢印タイプの speed に合わせる)
+          const dist = Math.hypot(a.x2 - a.x1, a.y2 - a.y1);
+          let speed;
+          if (a.type === 'arrow-shoot') speed = 600;
+          else if (a.type === 'arrow-pass') speed = 400;
+          else if (a.type === 'arrow-move') speed = 200;
+          else speed = 180;
+          a.moveDuration = Math.max(0.4, dist / speed);
+        }
+        rebuildAnimation();
+        redraw();
+      } else {
+        // 動かなかった → タップ扱いで orderPicker を開く
+        const a = scene().arrows.find(o => o.id === editing.id);
+        if (a) {
+          const { x, y } = getPos(e);
+          showOrderPicker(a, x, y);
+        }
+      }
+      return;
+    }
     if (ui.dlineDrawing) {
       const d = ui.dlineDrawing;
       ui.dlineDrawing = null;
@@ -7042,6 +7245,168 @@
   window.addEventListener('pointercancel', pointerUp);
   // Prevent default touch behaviors (scrolling, zoom) on the field
   fieldWrap.style.touchAction = 'none';
+
+  // ============================================================
+  // Keyboard shortcuts (Ctrl/Cmd+C copy, Ctrl/Cmd+V paste, etc.)
+  // ============================================================
+
+  // 入力フィールドにフォーカスがあるか判定
+  function isInputFocused() {
+    const el = document.activeElement;
+    if (!el) return false;
+    const tag = el.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
+    if (el.isContentEditable) return true;
+    return false;
+  }
+
+  // 選択中のオブジェクトをクリップボードにコピー
+  function copySelected() {
+    // 1. オブジェクト(選手・コーン・ボール・ゴール・エリア)
+    if (ui.selectedId != null) {
+      const obj = scene().objects.find(o => o.id === ui.selectedId);
+      if (obj) {
+        ui.clipboard = {
+          kind: 'object',
+          data: JSON.parse(JSON.stringify(obj))
+        };
+        showHint('コピーしました');
+        return true;
+      }
+    }
+    // 2. 説明線(drawing line)
+    if (ui.selectedDlineId != null) {
+      const dl = (scene().drawingLines || []).find(d => d.id === ui.selectedDlineId);
+      if (dl) {
+        ui.clipboard = {
+          kind: 'dline',
+          data: JSON.parse(JSON.stringify(dl))
+        };
+        showHint('コピーしました');
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // クリップボードのオブジェクトを少しずらしてペースト
+  function pasteClipboard() {
+    if (!ui.clipboard) return false;
+    saveHistory();
+    const offset = 24;  // 元の位置から右下にずらす
+    const newId = Date.now() + Math.random();
+
+    if (ui.clipboard.kind === 'object') {
+      const src = JSON.parse(JSON.stringify(ui.clipboard.data));
+      src.id = newId;
+
+      // x/y をオフセット
+      if (typeof src.x === 'number') src.x += offset;
+      if (typeof src.y === 'number') src.y += offset;
+
+      // keyframes もオフセット
+      if (Array.isArray(src.keyframes)) {
+        src.keyframes = src.keyframes.map(kf => ({
+          ...kf,
+          x: (typeof kf.x === 'number') ? kf.x + offset : kf.x,
+          y: (typeof kf.y === 'number') ? kf.y + offset : kf.y,
+        }));
+      }
+      // 録画パスもオフセット
+      if (Array.isArray(src.path)) {
+        src.path = src.path.map(p => ({
+          ...p,
+          x: (typeof p.x === 'number') ? p.x + offset : p.x,
+          y: (typeof p.y === 'number') ? p.y + offset : p.y,
+        }));
+      }
+      // エリアの頂点もオフセット
+      if (Array.isArray(src.vertices)) {
+        src.vertices = src.vertices.map(v => ({
+          x: v.x + offset,
+          y: v.y + offset,
+        }));
+      }
+      // 選手番号を再採番(同じ色の選手が増えた場合の連番維持)
+      if (typeof src.type === 'string' && src.type.indexOf('player-') === 0) {
+        src.number = nextPlayerNumber(src.type);
+      }
+
+      scene().objects.push(src);
+      ui.selectedId = newId;
+      ui.handleEditId = null;  // ハンドルモードはペースト時には解除
+      showHint('ペーストしました');
+    } else if (ui.clipboard.kind === 'dline') {
+      const src = JSON.parse(JSON.stringify(ui.clipboard.data));
+      src.id = newId;
+
+      // start/end 両端をオフセット
+      if (typeof src.x1 === 'number') src.x1 += offset;
+      if (typeof src.y1 === 'number') src.y1 += offset;
+      if (typeof src.x2 === 'number') src.x2 += offset;
+      if (typeof src.y2 === 'number') src.y2 += offset;
+
+      if (!scene().drawingLines) scene().drawingLines = [];
+      scene().drawingLines.push(src);
+      ui.selectedDlineId = newId;
+      showHint('ペーストしました');
+    }
+    redraw();
+    return true;
+  }
+
+  document.addEventListener('keydown', (e) => {
+    // 入力中はショートカット無効
+    if (isInputFocused()) return;
+
+    const ctrlOrCmd = e.ctrlKey || e.metaKey;
+    const key = e.key.toLowerCase();
+
+    // 削除(Delete / Backspace) — 修飾キーなし
+    if (!ctrlOrCmd && (e.key === 'Delete' || e.key === 'Backspace')) {
+      // 1. オブジェクト(選手・コーン・ボール・ゴール・エリア)
+      if (ui.selectedId != null) {
+        deleteObject(ui.selectedId);
+        e.preventDefault();
+        return;
+      }
+      // 2. 説明線
+      if (ui.selectedDlineId != null) {
+        const id = ui.selectedDlineId;
+        saveHistory();
+        scene().drawingLines = (scene().drawingLines || []).filter(o => o.id !== id);
+        ui.selectedDlineId = null;
+        redraw();
+        showHint('線を削除しました', 1500);
+        e.preventDefault();
+        return;
+      }
+      return;
+    }
+
+    if (!ctrlOrCmd) return;
+
+    // アンドゥ / リドゥ
+    if (key === 'z' && !e.shiftKey) {
+      undo();
+      e.preventDefault();
+      return;
+    }
+    if ((key === 'z' && e.shiftKey) || key === 'y') {
+      redo();
+      e.preventDefault();
+      return;
+    }
+
+    // コピー / ペースト / 複製
+    if (key === 'c') {
+      if (copySelected()) e.preventDefault();
+    } else if (key === 'v') {
+      if (pasteClipboard()) e.preventDefault();
+    } else if (key === 'd') {
+      if (copySelected() && pasteClipboard()) e.preventDefault();
+    }
+  });
 
   // ============================================================
   // Pinch zoom / pan (touch) and wheel zoom (mouse).
@@ -7875,7 +8240,7 @@
     const addBtn = document.createElement('button');
     addBtn.className = 'scene-add';
     addBtn.textContent = '+';
-    addBtn.title = '新しいシーンを追加';
+    addBtn.title = '新しいメニューを追加';
     addBtn.addEventListener('click', addScene);
     bar.appendChild(addBtn);
   }
@@ -7901,7 +8266,7 @@
     stopPlayback();
     saveHistory();
     project.scenes.push({
-      name: `シーン ${project.scenes.length + 1}`,
+      name: `メニュー ${project.scenes.length + 1}`,
       objects: [],
       arrows: [],
       drawings: [],
@@ -7945,7 +8310,7 @@
   }
   function deleteCurrentScene() {
     if (project.scenes.length === 1) {
-      showHint('最後のシーンは削除できません');
+      showHint('最後のメニューは削除できません');
       return;
     }
     if (!confirm(`「${scene().name}」を削除しますか？`)) return;
@@ -7956,7 +8321,7 @@
     redraw();
   }
   function clearCurrentScene() {
-    if (!confirm('このシーンの内容をすべてクリアしますか？')) return;
+    if (!confirm('このメニューの内容をすべてクリアしますか？')) return;
     saveHistory();
     scene().objects = [];
     scene().arrows = [];
@@ -8142,6 +8507,11 @@
       b.style.color = isCur ? '#000' : '#f5f5f0';
       b.style.borderColor = isCur ? '#ffdd00' : 'transparent';
     });
+    // ハーフコート反転パネルはハーフモード時だけ表示
+    const halfFlipPanel = document.getElementById('halfFlipPanel');
+    if (halfFlipPanel) {
+      halfFlipPanel.style.display = (settings.lineMode === 'half') ? '' : 'none';
+    }
   }
   updateLineModeHighlight();
 
@@ -8152,6 +8522,31 @@
       settings.lineMode = b.dataset.mode;
       saveSettings();
       updateLineModeHighlight();
+      drawBackground();
+    };
+    b.addEventListener('click', handler);
+    b.addEventListener('touchstart', handler, { passive: false });
+  });
+
+  // Half-court flip buttons (通常 / 反転)
+  function updateHalfFlipHighlight() {
+    document.querySelectorAll('.half-flip-btn').forEach(b => {
+      const isCur = (b.dataset.flip === 'true') === !!settings.halfFlip;
+      b.style.background = isCur ? '#ffdd00' : 'rgba(255,255,255,0.06)';
+      b.style.color = isCur ? '#000' : '#f5f5f0';
+      b.style.borderColor = isCur ? '#ffdd00' : 'transparent';
+    });
+  }
+  updateHalfFlipHighlight();
+
+  document.querySelectorAll('.half-flip-btn').forEach(b => {
+    const handler = (ev) => {
+      ev.stopPropagation();
+      ev.preventDefault();
+      settings.halfFlip = (b.dataset.flip === 'true');
+      saveSettings();
+      updateHalfFlipHighlight();
+      // 反転で芝のストライプ向きは変わらないが、再描画でゴール位置を更新
       drawBackground();
     };
     b.addEventListener('click', handler);
@@ -8231,25 +8626,32 @@
       ev.stopPropagation();
       ev.preventDefault();
     }
-    let count = 0;
+    let playerCount = 0;
+    let ballCount = 0;
     project.scenes.forEach(s => {
       s.objects.forEach(o => {
-        if (o.type.startsWith('player')) count++;
+        if (o.type.startsWith('player') || o.type === 'coach') playerCount++;
+        else if (o.type === 'ball') ballCount++;
       });
     });
-    if (count === 0) {
-      showHint('配置されている選手がいません');
+    if (playerCount === 0 && ballCount === 0) {
+      showHint('配置されている選手・ボールがいません');
       return;
     }
     saveHistory();
     const newR = settings.playerSize;
+    const newBallR = Math.max(8, Math.round(newR * 0.65));  // ボールは選手 r の65%(直径=選手 r の130%)
     project.scenes.forEach(s => {
       s.objects.forEach(o => {
-        if (o.type.startsWith('player')) o.r = newR;
+        if (o.type.startsWith('player') || o.type === 'coach') o.r = newR;
+        else if (o.type === 'ball') o.r = newBallR;
       });
     });
     redraw();
-    showHint(`${count}人の選手のサイズを${newR}に変更しました（取り消し可能）`);
+    const parts = [];
+    if (playerCount > 0) parts.push(`${playerCount}人の選手・コーチ`);
+    if (ballCount > 0) parts.push(`${ballCount}個のボール`);
+    showHint(`${parts.join('と')}のサイズを変更しました(取り消し可能)`);
   }
 
   const _applySizeBtn = document.getElementById('settingApplySizeAll');
@@ -8264,7 +8666,7 @@
     item.addEventListener('click', () => {
       const a = item.dataset.action;
       if (a === 'renameScene') {
-        openModal('シーン名を変更', scene().name, (val) => {
+        openModal('メニュー名を変更', scene().name, (val) => {
           if (val) { scene().name = val; renderScenes(); }
         });
       } else if (a === 'duplicateScene') duplicateScene();
@@ -8312,7 +8714,7 @@
                 project.counters = d.counters || {blue:0,red:0,yellow:0};
               } else if (d.objects) {
                 project.scenes = [{
-                  name: 'シーン 1',
+                  name: 'メニュー 1',
                   objects: d.objects,
                   arrows: [],
                   duration: d.duration || 0,
@@ -8349,7 +8751,7 @@
           '◆ 選手の体の向き\n選手をダブルタップ → 前/後/左/右の向きを選択\n\n' +
           '◆ 削除\n選手: ダブルタップ → 「この選手を削除」\nコーン/ボール/ゴール: ダブルタップで即削除\n矢印/ペン: ダブルタップで削除\n\n' +
           '◆ 録画機能\nジグザグなど直線で表せない動きは録画ボタンで個別に記録\n\n' +
-          '◆ シーン\n上部の「+」で新シーン。フェーズごとに分けて全再生で連続再生\n\n' +
+          '◆ メニュー\n上部の「+」で新メニュー。フェーズごとに分けて全再生で連続再生\n\n' +
           '◆ 速度\n0.5x / 1x / 2x で再生速度変更（PC）'
         );
       }
